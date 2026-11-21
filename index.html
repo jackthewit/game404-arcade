@@ -346,7 +346,6 @@
       <div class="util-row">
         <button type="button" class="pill-btn highlight" id="hub-cal">📏 화면 실제 1cm 보정하기</button>
         <button type="button" class="pill-btn" id="hub-bgm">🔊 BGM 켜짐</button>
-        <span class="pill-btn" id="hub-sb-status">🔗 URL 친구 대결 활성화</span>
       </div>
     </section>
 
@@ -456,13 +455,8 @@
 
     // 즉시 기본 목록을 그린 뒤 Supabase 최신 목록으로 실시간 반영
     renderGames(DEFAULT_GAMES);
-    fetchPublicCatalog().then(({ games, live }) => {
+    fetchPublicCatalog().then(({ games }) => {
       renderGames(games);
-      const statusEl = document.getElementById('hub-sb-status');
-      if (live && statusEl) {
-        statusEl.textContent = '🟢 실시간 랭킹 · 목록 동기화됨';
-        statusEl.style.color = '#4ade80';
-      }
     });
   </script>
 </body>
