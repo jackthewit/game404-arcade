@@ -1,0 +1,11 @@
+.admin-pw-initial
+.env
+.env.local
+.env.example
+_뺀것
+supabase
+SETUP.md
+README.md
+package.json
+.gitignore
+node_modules

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>무한 두루마리 — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="휴… 휴지가 있다! 중간 심을 피해 한 방향으로 돌돌돌돌! 안 끊기고 100km까지 말아 미라로 진화해 보세요!">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl { touch-action: none; }
+    #ov { pointer-events: none; z-index: 26; }
+
+    /* 상단 길이 전광판 (키치 열혈 아케이드 스타일) */
+    .meter-hud {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+      left: 50%;
+      transform: translateX(-50%) skewX(-5deg);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+    .meter-hud.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 110px);
+    }
+    .meter-box {
+      background: #16111f;
+      border: 3.5px solid #ffd84a;
+      border-radius: 14px;
+      padding: 6px 20px 7px;
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.72);
+      text-align: center;
+      min-width: 196px;
+    }
+    .meter-val {
+      font-size: clamp(28px, 7.5vw, 40px);
+      font-weight: 900;
+      font-style: italic;
+      font-variant-numeric: tabular-nums;
+      color: #ffe24a;
+      text-shadow: 2px 2px 0 #e11d48;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+    .meter-sub-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 2px;
+      font-size: 11.5px;
+      font-weight: 900;
+    }
+    .mummy-tag {
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #e11d48;
+      color: #fffef0;
+      border: 1.5px solid #ffd84a;
+    }
+    .speed-tag {
+      color: #4ade80;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 하단 안내 바 */
+    .bottom-bar {
+      position: fixed;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 32;
+      width: min(92vw, 400px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .guide-pill {
+      padding: 8px 16px;
+      border-radius: 9px;
+      background: #16111f;
+      border: 2.5px solid #ffd84a;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.7);
+      font-size: 12.5px;
+      font-weight: 900;
+      font-style: italic;
+      color: #ffe766;
+      text-align: center;
+      transform: skewX(-5deg);
+    }
+    .guide-pill.danger {
+      background: linear-gradient(90deg, #e11d48, #f97316);
+      color: #ffffff;
+      border-color: #fffef0;
+    }
+
+    /* 시작 모달 키치 열혈 강조 */
+    .kitsch-badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 8px;
+      background: #e11d48;
+      color: #fffef0;
+      border: 2.5px solid #ffd84a;
+      font-size: 12px;
+      font-weight: 900;
+      font-style: italic;
+      transform: skewX(-8deg);
+      box-shadow: 3px 3px 0 #000000;
+    }
+    .kitsch-title {
+      font-size: 32px !important;
+      font-style: italic;
+      font-weight: 900 !important;
+      letter-spacing: -0.04em;
+      color: #ffe24a;
+      text-shadow: 3px 3px 0 #e11d48, 5px 5px 0 #000000;
+      transform: skewX(-4deg);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="best-pill" style="color:#ffd84a">🏆 최고 0.0m</span>
+    </div>
+  </div>
+
+  <!-- 지인 기록 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <!-- 길이 & 미라 진화 전광판 -->
+  <div class="meter-hud" id="meter-hud">
+    <div class="meter-box">
+      <div class="meter-val" id="hud-length">0.0 m</div>
+      <div class="meter-sub-row">
+        <span class="mummy-tag" id="hud-mummy">🧻 인간 상태</span>
+        <span class="speed-tag" id="hud-boost">×1.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 상태 바 -->
+  <div class="bottom-bar">
+    <div class="guide-pill" id="guide-pill">도넛 궤도 위를 누른 채 한 방향으로 돌돌돌돌 감으세요!!</div>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="kitsch-badge">🧻 화장실 초열혈 100km 도전 🧻</div>
+      <div class="modal-title kitsch-title">무한 두루마리</div>
+      <p class="modal-sub">
+        화장실에 들어왔는데 다행히 휴지가 있다!!<br>
+        크기가 계속 바뀌는 <b>원형 궤도</b>를 따라<br>
+        <b>중간 심을 건드리지 않고</b> 한 방향으로 돌돌돌돌 감으세요!<br>
+        길어질수록 몸이 <b>미라</b>로 진화하며 <b>100km</b>까지 도전 가능!!
+      </p>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">목표 한계</div>
+          <div class="stat-val" style="color:var(--accent)">최대 100 km</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">내 최고 길이</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start" style="font-style:italic;font-size:17px">🚪 화장실 문 벌컥 열기!! (시작)</button>
+    </div>
+  </div>
+
+  <!-- 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">🩹 붕대 미라 장인</div>
+      <div class="modal-title" id="res-headline" style="color:#ffe24a">42.8 m</div>
+      <p class="modal-sub" id="res-comment">끊어지지 않고 엄청 감았어요!</p>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">최종 길이</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-len">42.8m</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">회전 수</div>
+          <div class="stat-val" id="res-turns">28바퀴</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">미라 등급</div>
+          <div class="stat-val" id="res-mummy" style="font-size:13px">붕대 미라</div>
+        </div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (랭킹에 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 길이 랭킹 URL 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 돌돌돌돌!</button>
+      </div>
+      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

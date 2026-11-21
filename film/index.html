@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>필살! 강화필름!! — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="아이폰·갤럭시 최신폰 선택! 탑·프론트·레프트 3D 구도와 강한 손떨림을 이기고 정빵에 꽂아 넣는 초열혈 필름 부착 액션!">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl { touch-action: none; }
+    #ov { pointer-events: none; z-index: 26; }
+
+    .status-bar {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 46px);
+      left: 50%;
+      transform: translateX(-50%) skewX(-5deg);
+      z-index: 30;
+      display: flex;
+      gap: 6px;
+      pointer-events: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: min(95vw, 440px);
+    }
+    .status-bar.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 110px);
+    }
+    .st-pill {
+      padding: 5px 11px;
+      border-radius: 8px;
+      background: #16111f;
+      border: 2.5px solid #ffd84a;
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.72);
+      font-size: 12px;
+      font-weight: 900;
+      font-style: italic;
+      font-variant-numeric: tabular-nums;
+      color: #fffef0;
+    }
+
+    /* 3가지 3D 구도 전환 바 (탑 · 프론트 · 레프트) - 키치 아케이드 스타일 */
+    .cam-dock {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 86px);
+      left: 50%;
+      transform: translateX(-50%) skewX(-5deg);
+      z-index: 32;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      width: min(92vw, 354px);
+      padding: 5px;
+      border-radius: 12px;
+      background: #16111f;
+      border: 3px solid #16111f;
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55);
+    }
+    .cam-dock.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 150px);
+    }
+    .cam-btn {
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #e4def2;
+      font-size: 12.5px;
+      font-weight: 900;
+      font-style: italic;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+      transition: transform 0.08s ease, background 0.12s ease;
+    }
+    .cam-btn.active {
+      background: linear-gradient(135deg, #ffe24a, #ffae28);
+      color: #16111f;
+      border-color: #16111f;
+      box-shadow: 2px 2px 0 #e11d48;
+    }
+    .cam-btn:active { transform: scale(0.95); }
+
+    /* 기종 선택 카드 (시작 모달 안) */
+    .model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .model-card {
+      padding: 11px 10px;
+      border-radius: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      font-family: var(--font);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+    }
+    .model-card.active {
+      border-color: #ffe24a;
+      background: rgba(255, 226, 74, 0.16);
+      box-shadow: 3px 3px 0 #e11d48;
+      transform: translate(-1px, -1px);
+    }
+    .model-card strong {
+      font-size: 14px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .model-card.active strong {
+      color: #ffe24a;
+    }
+    .model-card span {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* 시작 모달 키치 열혈 강조 */
+    .kitsch-badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 8px;
+      background: #e11d48;
+      color: #fffef0;
+      border: 2.5px solid #ffd84a;
+      font-size: 12px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.02em;
+      transform: skewX(-8deg);
+      box-shadow: 3px 3px 0 #000000;
+    }
+    .kitsch-title {
+      font-size: 31px !important;
+      font-style: italic;
+      font-weight: 900 !important;
+      letter-spacing: -0.04em;
+      color: #ffe24a;
+      text-shadow: 3px 3px 0 #e11d48, 5px 5px 0 #000000;
+      transform: skewX(-4deg);
+    }
+
+    /* 하단 정밀 조작부 - 키치 열혈 스타일 */
+    .bottom-controls {
+      position: fixed;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 35;
+      width: min(94vw, 410px);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .bottom-controls > * { pointer-events: auto; }
+    .guide-pill {
+      padding: 7px 14px;
+      border-radius: 8px;
+      background: #16111f;
+      border: 2.5px solid #ffd84a;
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.72);
+      font-size: 12px;
+      font-weight: 900;
+      font-style: italic;
+      color: #ffe766;
+      text-align: center;
+      transform: skewX(-5deg);
+      transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+    }
+    .guide-pill.bullseye {
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+      color: #ffffff;
+      border-color: #fffef0;
+    }
+    .guide-pill.danger {
+      background: linear-gradient(90deg, #e11d48, #f97316);
+      color: #ffffff;
+      border-color: #ffe24a;
+    }
+    .fine-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.35fr;
+      gap: 6px;
+    }
+    .mini-btn {
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 2.5px solid #16111f;
+      background: #231d33;
+      color: #fffef0;
+      font-size: 12.5px;
+      font-weight: 900;
+      font-style: italic;
+      font-family: var(--font);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 3px 3px 0 #16111f;
+      transform: skewX(-4deg);
+    }
+    .mini-btn:active { transform: skewX(-4deg) translate(2px, 2px); box-shadow: 1px 1px 0 #16111f; }
+    .mini-btn.blow {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border-color: #16111f;
+    }
+
+    @keyframes filmBtnPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.16); }
+    }
+    .drop-btn {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 4px solid #16111f;
+      background: repeating-linear-gradient(
+        -45deg,
+        #ffe047,
+        #ffe047 14px,
+        #ffcb2b 14px,
+        #ffcb2b 28px
+      );
+      color: #16111f;
+      font-size: 18px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -0.02em;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 6px 6px 0 #16111f, 0 12px 24px rgba(0, 0, 0, 0.38);
+      transform: skewX(-5deg);
+      text-shadow: 0 2px 0 rgba(255, 255, 255, 0.72);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.14s ease;
+    }
+    .drop-btn.bullseye-glow {
+      background: repeating-linear-gradient(
+        -45deg,
+        #ff3b5c,
+        #ff3b5c 14px,
+        #e11d48 14px,
+        #e11d48 28px
+      );
+      color: #fffef0;
+      text-shadow: 2px 2px 0 #16111f;
+      box-shadow: 6px 6px 0 #16111f, 0 0 24px rgba(255, 59, 92, 0.7);
+      animation: filmBtnPulse 0.5s infinite ease-in-out;
+    }
+    .drop-btn:active { transform: skewX(-5deg) translate(4px, 4px); box-shadow: 2px 2px 0 #16111f; }
+    .drop-btn:disabled { opacity: 0.45; pointer-events: none; animation: none; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+
+  <div class="topbar">
+    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="model-pill" style="color:#ffd84a">📱 아이폰 최신형</span>
+      <span class="pill-btn" id="streak-pill" style="display:none;color:#4ade80">🔥 0대째</span>
+    </div>
+  </div>
+
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <div class="status-bar" id="status-bar">
+    <div class="st-pill">먼지 <span id="st-dust" style="color:#ffd84a">2</span></div>
+    <div class="st-pill">기포 <span id="st-bubbles" style="color:#4ade80">0</span></div>
+    <div class="st-pill" id="st-extra" style="color:#38bdf8">⚡ 쌓이는 중</div>
+  </div>
+
+  <!-- 3가지 3D 구도 전환 바 (탑 · 프론트 · 레프트) -->
+  <div class="cam-dock" id="cam-dock">
+    <button type="button" class="cam-btn active" data-cam="top">🎯 탑</button>
+    <button type="button" class="cam-btn" data-cam="front">👁️ 프론트</button>
+    <button type="button" class="cam-btn" data-cam="sideLeft">⬅️ 레프트</button>
+  </div>
+
+  <div class="bottom-controls">
+    <div class="guide-pill" id="guide-pill">미세한 손끝 미끄러짐을 잡고 정빵에 꽂아 넣으세요!</div>
+    <div class="fine-row" id="align-tools">
+      <button type="button" class="mini-btn" id="btn-rot-l">↺ 왼쪽 회전</button>
+      <button type="button" class="mini-btn" id="btn-rot-r">↻ 오른쪽 회전</button>
+      <button type="button" class="mini-btn blow" id="btn-blow">💨 강풍 털기!</button>
+    </div>
+    <button type="button" class="drop-btn" id="btn-drop">⚡ 영혼의 필름 투하!! (되돌리기 불가)</button>
+    <button type="button" class="btn btn-ghost" id="btn-giveup" style="display:none;padding:11px;font-size:13px">이 상태로 끝내기 (채점)</button>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="kitsch-badge">🔥 3D 멀티앵글 초정밀 필살 액션 🔥</div>
+      <div class="modal-title kitsch-title">필살! 강화필름!!</div>
+      <p class="modal-sub">
+        기종을 고르고 <b>탑 · 프론트 · 레프트</b> 구도로 정조준하세요!<br>
+        옮길 때마다 <b>손끝에서 아주 살짝 미끄러지는 느낌</b>을 제어해 정빵에 꽂으세요!!<br>
+        시간이 지날수록 먼지가 몰려오고, 붙인 뒤엔 기포가 8.5초 안에 굳습니다!
+      </p>
+
+      <!-- 핸드폰 기종 선택 (아이폰 최신형 / 갤럭시 최신형) -->
+      <div class="model-grid" id="model-grid">
+        <button type="button" class="model-card active" data-model="iphone">
+          <strong>📱 아이폰 최신형</strong>
+          <span>둥근 모서리 · 알약 구멍<br>티타늄 라운드 베젤</span>
+        </button>
+        <button type="button" class="model-card" data-model="galaxy">
+          <strong>📱 갤럭시 최신형</strong>
+          <span>각진 모서리 · 원형 펀치홀<br>플랫 티타늄 베젤</span>
+        </button>
+      </div>
+
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">전설 조건</div>
+          <div class="stat-val" style="color:var(--accent);font-size:14px">≤0.35mm · 0기포</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">내 최고 점수</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start" style="font-style:italic;font-size:17px">📱 출격!! 필름 들기!</button>
+    </div>
+  </div>
+
+  <!-- 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">👑 필름의 신</div>
+      <div class="modal-title" id="res-headline">98점</div>
+      <p class="modal-sub" id="res-comment">0.1mm 칼정렬 + 기포 0개!</p>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">위치 오차</div>
+          <div class="stat-val" id="res-align">0.20mm</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">기울기 각도</div>
+          <div class="stat-val" id="res-angle">0.1°</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">남은 기포</div>
+          <div class="stat-val" id="res-bubbles">0개</div>
+        </div>
+      </div>
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (랭킹에 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 랭킹 위치 URL 공유하기</button>
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 새 폰으로 재도전!</button>
+      </div>
+      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

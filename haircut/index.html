@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>어떻게 잘라드릴까요? — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="왼쪽 · 가운데 · 오른쪽 3번에 나눠 실제 길이(cm)로 다듬는 미용실 눈대중 챌린지! 친구와 오차 mm 대결해 보세요.">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    #stage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #efe4d2;
+      overflow: hidden;
+    }
+    #gl, #ov {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #ov { pointer-events: none; z-index: 25; }
+
+    /* 상단 손님 주문 말풍선 — 따뜻하고 깔끔한 파스텔 미용실 스타일 */
+    .order-bubble {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      background: rgba(255, 253, 247, 0.96);
+      color: #2c2235;
+      border: 2.5px solid #3c2f4a;
+      border-radius: 22px;
+      padding: 8px 20px 9px;
+      box-shadow: 0 8px 22px rgba(44, 34, 53, 0.16);
+      text-align: center;
+      pointer-events: none;
+      transition: top 0.2s ease, opacity 0.25s ease;
+      min-width: 224px;
+    }
+    .order-bubble.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 110px);
+    }
+    .order-bubble::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -10px;
+      transform: translateX(-50%);
+      border-left: 9px solid transparent;
+      border-right: 9px solid transparent;
+      border-top: 10px solid #3c2f4a;
+    }
+    .order-bubble .order-main {
+      font-size: clamp(19px, 5vw, 24px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .order-bubble .order-main b {
+      color: #d94662;
+      font-size: 1.12em;
+    }
+    .step-chips {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .step-chip {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #efe8f4;
+      color: #7c6f8d;
+      border: 1.5px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .step-chip.active {
+      background: #fff1f2;
+      color: #be123c;
+      border-color: #fb7185;
+      transform: scale(1.06);
+    }
+    .step-chip.done {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #86efac;
+    }
+
+    /* 하단 조작부 — 깔끔하고 손맛 좋은 미용실 버튼 */
+    .bottom-dock {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 35;
+      width: min(90vw, 376px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .bottom-dock > * { pointer-events: auto; }
+    .hint-pill {
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: rgba(44, 34, 53, 0.88);
+      color: #fff8e7;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 6px 16px rgba(26, 20, 35, 0.22);
+      text-align: center;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+    .hint-pill.focus-max {
+      background: rgba(22, 163, 74, 0.94);
+      color: #ffffff;
+      border-color: #bbf7d0;
+    }
+
+    .snip-btn {
+      position: relative;
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 18px;
+      border: 2.5px solid #2c2235;
+      background: linear-gradient(135deg, #fffdf7 0%, #fde68a 100%);
+      color: #2c2235;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 6px 0 #2c2235, 0 12px 24px rgba(44, 34, 53, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.2s ease;
+    }
+    .snip-btn.ready-glow {
+      background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+      color: #ffffff;
+      box-shadow: 0 6px 0 #2c2235, 0 10px 24px rgba(225, 29, 72, 0.35);
+    }
+    .snip-btn:active {
+      transform: translateY(4px) scale(0.985);
+      box-shadow: 0 2px 0 #2c2235;
+    }
+    .snip-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* 시작 모달 따뜻한 미용실 배지 */
+    .salon-badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: rgba(251, 113, 133, 0.18);
+      color: #fda4af;
+      border: 1.5px solid rgba(251, 113, 133, 0.45);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .salon-title {
+      font-size: 28px !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.03em;
+      color: #fff8eb;
+    }
+
+    /* 3구간 결과 칩 (왼쪽 · 가운데 · 오른쪽) */
+    .sec-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .sec-box {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .sec-name {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .sec-val {
+      font-size: 15px;
+      font-weight: 900;
+      margin-top: 2px;
+      color: #fffdf7;
+    }
+    .sec-diff {
+      font-size: 11px;
+      font-weight: 800;
+      margin-top: 1px;
+    }
+
+    /* 실측 비교 미니 시각 바 (결과 모달 안) */
+    .ruler-viz {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+    }
+    .ruler-viz-title {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .ruler-track {
+      position: relative;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .ruler-mark {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      transform: translateX(-50%);
+    }
+    .ruler-tag {
+      position: absolute;
+      top: 4px;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .cal-note {
+      font-size: 11.5px;
+      color: #a99ec2;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="gl"></canvas>
+    <canvas id="ov"></canvas>
+  </div>
+
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="streak-pill" style="display:none;color:#4ade80">✨ 0연속</span>
+      <button type="button" class="pill-btn highlight" id="btn-cal">📏 실제 자 보정</button>
+    </div>
+  </div>
+
+  <!-- 친구 도전장 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">도전장</span>
+  </div>
+
+  <!-- 손님 주문 말풍선 + 3구간 진행 칩 -->
+  <div class="order-bubble" id="order-bubble">
+    <div class="order-main">“<b id="order-cm">1.0cm</b>만 다듬어 주세요”</div>
+    <div class="step-chips" id="step-chips">
+      <span class="step-chip active" id="chip-0">① 왼쪽</span>
+      <span class="step-chip" id="chip-1">② 가운데</span>
+      <span class="step-chip" id="chip-2">③ 오른쪽</span>
+    </div>
+  </div>
+
+  <!-- 하단 자르기 버튼 -->
+  <div class="bottom-dock" id="bottom-dock">
+    <div class="hint-pill" id="hint-pill">화면을 위아래로 움직여 왼쪽 높이를 맞춰 보세요</div>
+    <button type="button" class="snip-btn" id="btn-snip">✂️ 왼쪽 자르기 (1/3)</button>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="salon-badge">✂️ 실제 물리 길이(cm) · 3구간 미용실 챌린지</div>
+      <div class="modal-title salon-title">어떻게 잘라드릴까요?</div>
+      <p class="modal-sub" id="start-desc">
+        눈금도 가이드도 없이 오직 감으로!<br>
+        <b>왼쪽 · 가운데 · 오른쪽</b> 세 번에 나눠 다듬고,<br>
+        <b>목표 길이 오차 + 좌우 균형 단차</b>로 실력을 겨뤄 보세요.
+      </p>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">이번 손님 주문</div>
+          <div class="stat-val" style="color:var(--accent)" id="start-target">1.0 cm</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">내 최고 기록</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start" style="font-size:16px">✂️ 손님 모시기</button>
+      <button type="button" class="btn btn-ghost" id="btn-start-cal" style="padding:12px;font-size:13px;border-color:rgba(255,216,74,0.45);color:var(--accent)">📏 내 화면 실제 1cm 맞추기 (카드 · 자 · 인치)</button>
+      <div class="cal-note" id="start-cal-note">기기 화면에 맞춰 실제 cm를 자동 계산 중입니다.</div>
+    </div>
+  </div>
+
+  <!-- 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">✨ 청담동 수석 원장님</div>
+      <div class="modal-title" id="res-headline">종합 오차 0.4 mm</div>
+      <p class="modal-sub" id="res-comment">손님이 거울 보고 환하게 웃으셨어요!</p>
+
+      <!-- 왼쪽 · 가운데 · 오른쪽 3구간 개별 실측 -->
+      <div class="sec-grid">
+        <div class="sec-box">
+          <div class="sec-name">① 왼쪽</div>
+          <div class="sec-val" id="res-sec-0">1.02cm</div>
+          <div class="sec-diff" id="res-diff-0">+0.2mm</div>
+        </div>
+        <div class="sec-box">
+          <div class="sec-name">② 가운데</div>
+          <div class="sec-val" id="res-sec-1">0.98cm</div>
+          <div class="sec-diff" id="res-diff-1">-0.2mm</div>
+        </div>
+        <div class="sec-box">
+          <div class="sec-name">③ 오른쪽</div>
+          <div class="sec-val" id="res-sec-2">1.01cm</div>
+          <div class="sec-diff" id="res-diff-2">+0.1mm</div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">손님 주문</div>
+          <div class="stat-val" id="res-target">1.00cm</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">평균 커트</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-actual">1.00cm</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">3구간 단차</div>
+          <div class="stat-val" id="res-uneven">0.4mm</div>
+        </div>
+      </div>
+
+      <!-- 실측 비교 시각화 바 -->
+      <div class="ruler-viz">
+        <div class="ruler-viz-title">
+          <span>3구간 실측 길이 비교</span>
+          <span id="res-pct" style="color:var(--green)">정확도 96%</span>
+        </div>
+        <div class="ruler-track" id="res-ruler-track"></div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (도전장에 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 랭킹 위치 URL 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry-same" style="padding:12px;font-size:13px">🔄 같은 길이 재도전</button>
+      </div>
+      <button type="button" class="btn btn-ghost" id="btn-retry-rand" style="padding:11px;font-size:13px">🎲 다음 손님 받기 (랜덤 길이)</button>
+      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

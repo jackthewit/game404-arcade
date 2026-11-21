@@ -1,0 +1,7 @@
+node_modules
+.vercel
+.env
+.env.local
+.admin-pw-initial
+_뺀것
+.DS_Store

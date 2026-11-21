@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>이게뭔겜? 404 아케이드 — AI 제작 미니 웹게임</title>
+  <meta name="description" content="404가지 즐거움이 있는 AI 제작 게임과 리뷰! 어떻게 잘라드릴까요?, 무한 두루마리, 강화필름 한번에를 웹에서 바로 플레이하고 랭킹에 도전하세요.">
+  <link rel="stylesheet" href="./shared/styles.css">
+  <style>
+    html, body {
+      height: auto;
+      min-height: 100%;
+      overflow-y: auto;
+      touch-action: pan-y;
+    }
+    .hub {
+      max-width: 940px;
+      margin: 0 auto;
+      padding: max(22px, env(safe-area-inset-top) + 14px) 16px 52px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .hero {
+      text-align: center;
+      padding: 26px 18px 22px;
+      border-radius: 26px;
+      background: linear-gradient(145deg, rgba(124, 92, 255, 0.22), rgba(255, 216, 74, 0.10));
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero h1 {
+      font-size: clamp(24px, 6vw, 34px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+    .hero p {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 480px;
+    }
+
+    /* 유튜브 & 인스타그램 공식 채널 링크 바 */
+    .social-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.26);
+      transition: transform 0.14s ease, filter 0.15s ease;
+    }
+    .social-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .social-btn.yt {
+      background: linear-gradient(135deg, #ff2b4a, #cc0022);
+    }
+    .social-btn.ig {
+      background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af);
+    }
+    .social-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .util-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    /* 썸네일 게임 버튼 그리드 */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .thumb-card {
+      text-decoration: none;
+      color: var(--text);
+      background: #1b1629;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .thumb-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 216, 74, 0.65);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.44);
+    }
+    .thumb-card.featured {
+      border-color: rgba(255, 216, 74, 0.45);
+    }
+    .thumb-card.is-locked {
+      cursor: pointer;
+      border-color: rgba(255, 216, 74, 0.28);
+      opacity: 0.94;
+    }
+    .thumb-card.is-locked:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 216, 74, 0.55);
+    }
+    .thumb-card.is-locked .thumb-visual img {
+      filter: blur(4px) brightness(0.62) saturate(0.75);
+      transform: scale(1.06);
+    }
+    .thumb-card.is-locked .thumb-play {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fde68a;
+      border: 1px solid rgba(255, 226, 106, 0.45);
+    }
+    .thumb-lock-banner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px 46px;
+      text-align: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+    .thumb-lock-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(22, 16, 36, 0.88);
+      border: 1.5px solid rgba(255, 216, 74, 0.7);
+      color: #ffd84a;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    }
+    .thumb-lock-msg {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.4;
+      word-break: keep-all;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+      max-width: 92%;
+    }
+    .grid-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .footer-admin {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 11.5px;
+      color: #7c7399 !important;
+      opacity: 0.8;
+    }
+    .footer-admin:hover {
+      opacity: 1;
+      color: #c4b5fd !important;
+    }
+
+    /* 16:9 주요 장면 썸네일 + 타이포 오버레이 */
+    .thumb-visual {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #130f1e;
+    }
+    .thumb-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease;
+    }
+    .thumb-card:hover .thumb-visual img {
+      transform: scale(1.05);
+    }
+    .thumb-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(17, 13, 28, 0.22) 0%,
+        rgba(17, 13, 28, 0.06) 36%,
+        rgba(17, 13, 28, 0.72) 76%,
+        rgba(17, 13, 28, 0.94) 100%
+      );
+      pointer-events: none;
+    }
+    .thumb-badge {
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      background: rgba(22, 17, 34, 0.82);
+      color: #ffe26a;
+      border: 1px solid rgba(255, 226, 106, 0.42);
+      backdrop-filter: blur(6px);
+    }
+    .thumb-typo {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .thumb-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .thumb-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fde68a;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+    }
+    .thumb-title {
+      font-size: clamp(17px, 4.2vw, 20px);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      word-break: keep-all;
+      color: #ffffff;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(0, 0, 0, 0.9);
+    }
+    .thumb-play {
+      flex-shrink: 0;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #ffd84a;
+      color: #16111f;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
+    }
+
+    .thumb-body {
+      padding: 13px 15px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .thumb-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .thumb-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .card-best {
+      color: var(--green);
+    }
+    .card-meta {
+      color: #b5accf;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #877ea3;
+      line-height: 1.7;
+    }
+    .footer a {
+      color: #c4b5fd;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main class="hub">
+    <section class="hero">
+      <div class="rank-chip">🎮 이게뭔겜? 404 아케이드</div>
+      <h1>직접 만든 미니 게임, 바로 플레이!</h1>
+      <p>
+        404가지 즐거움이 있는 AI 제작 게임과 리뷰.<br>
+        기록을 세워 <b>전체 랭킹</b>에 도전하고, <b>공유 URL</b>로 친구의 순위 위치도 확인해 보세요!
+      </p>
+
+      <!-- 유튜브 & 인스타그램 공식 채널 링크 -->
+      <div class="social-row">
+        <a class="social-btn yt" href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12l-6.2 3.6z"/></svg>
+          <span>유튜브 @이게뭔게임404game</span>
+        </a>
+        <a class="social-btn ig" href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4a3.9 3.9 0 0 1-1.4-.9 3.9 3.9 0 0 1-.9-1.4c-.2-.4-.4-1.1-.4-2.2-.1-1.3-.1-1.6-.1-4.9s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4 1.3-.1 1.6-.1 4.9-.1M12 0C8.7 0 8.3 0 7.1.1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4A6 6 0 0 0 .6 4.1C.3 4.9.1 5.8.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.1 1.3.2 2.2.6 3 .3.8.7 1.5 1.4 2.2.7.7 1.4 1.1 2.2 1.4.8.3 1.7.5 3 .6 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c1.3-.1 2.2-.2 3-.6.8-.3 1.5-.7 2.2-1.4.7-.7 1.1-1.4 1.4-2.2.3-.8.5-1.7.6-3 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.1-1.3-.2-2.2-.6-3a6 6 0 0 0-1.4-2.2A6 6 0 0 0 19.9.6c-.8-.3-1.7-.5-3-.6C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>
+          <span>인스타그램 @game404notfound</span>
+        </a>
+      </div>
+
+      <div class="util-row">
+        <button type="button" class="pill-btn highlight" id="hub-cal">📏 화면 실제 1cm 보정하기</button>
+        <button type="button" class="pill-btn" id="hub-bgm">🔊 BGM 켜짐</button>
+        <span class="pill-btn" id="hub-sb-status">🔗 URL 친구 대결 활성화</span>
+      </div>
+    </section>
+
+    <section class="grid" id="game-grid" aria-live="polite">
+      <!-- Supabase 공개 게임 목록이 로드되기 전에도 즉시 보이도록 기본 3종 렌더 후 동적 교체 -->
+    </section>
+
+    <footer class="footer">
+      <a href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">유튜브 @이게뭔게임404game</a>
+      ·
+      <a href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">인스타그램 @game404notfound</a><br>
+      모든 게임은 모바일·PC 브라우저에서 설치 없이 바로 실행됩니다.<br>
+      <a class="footer-admin" href="./admin.html">⚙ 관리자 모드</a>
+    </footer>
+  </main>
+
+  <script type="module">
+    import { BGM } from './shared/audio.js';
+    import { openCalibrationModal } from './shared/calibration.js';
+    import { showToast } from './shared/challenge.js';
+    import { DEFAULT_GAMES, fetchPublicCatalog, formatBestText } from './shared/catalog.js';
+
+    const hubBgm = document.getElementById('hub-bgm');
+    function syncHubBgm() {
+      if (!hubBgm) return;
+      const muted = BGM.isMuted();
+      hubBgm.textContent = muted ? '🔇 BGM 꺼짐' : '🔊 BGM 켜짐';
+      hubBgm.classList.toggle('bgm-off', muted);
+    }
+    syncHubBgm();
+    if (hubBgm) {
+      hubBgm.onclick = () => {
+        const muted = BGM.toggleMute();
+        syncHubBgm();
+        showToast(muted ? '🔇 모든 게임 BGM이 꺼졌어요' : '🔊 모든 게임 BGM이 켜졌어요');
+      };
+    }
+
+    document.getElementById('hub-cal').onclick = () => openCalibrationModal(() => {
+      showToast('📏 실제 1cm 크기가 저장되었어요!');
+    });
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderGames(games) {
+      const grid = document.getElementById('game-grid');
+      if (!grid) return;
+      const visible = (games || []).filter(g => g.status !== 'hidden');
+      if (visible.length === 0) {
+        grid.innerHTML = `<div class="grid-empty">🕹️ 지금 새로운 게임을 준비하고 있어요! 곧 공개됩니다.</div>`;
+        return;
+      }
+
+      grid.innerHTML = visible.map(g => {
+        const isLocked = g.status === 'coming_soon';
+        const classes = ['thumb-card'];
+        if (g.featured && !isLocked) classes.push('featured');
+        if (isLocked) classes.push('is-locked');
+        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id);
+        const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
+        const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
+
+        return `
+          <a class="${classes.join(' ')}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
+            <div class="thumb-visual">
+              <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)} 주요 장면">
+              <div class="thumb-scrim"></div>
+              <span class="thumb-badge">${esc(g.badge || '🎮 미니게임')}</span>
+              ${isLocked ? `
+                <div class="thumb-lock-banner">
+                  <span class="thumb-lock-pill">🔒 공개 예정</span>
+                  <span class="thumb-lock-msg">${esc(lockMsg)}</span>
+                </div>
+              ` : ''}
+              <div class="thumb-typo">
+                <div class="thumb-title-wrap">
+                  <span class="thumb-kicker">${esc(g.kicker || '')}</span>
+                  <span class="thumb-title">${esc(g.title)}</span>
+                </div>
+                <span class="thumb-play">${isLocked ? '🔒 대기' : '▶ PLAY'}</span>
+              </div>
+            </div>
+            <div class="thumb-body">
+              <div class="thumb-desc">${esc(g.description || '')}</div>
+              <div class="thumb-foot">
+                <span class="card-best" ${isLocked ? 'style="color:#fde68a"' : ''}>${esc(bestText)}</span>
+                <span class="card-meta">${esc(g.metric_label || '글로벌 랭킹')}</span>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+
+      grid.querySelectorAll('a[data-locked="1"]').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          showToast(`🔒 ${el.dataset.lockMsg || '곧 공개 예정입니다!'}`);
+        });
+      });
+    }
+
+    // 즉시 기본 목록을 그린 뒤 Supabase 최신 목록으로 실시간 반영
+    renderGames(DEFAULT_GAMES);
+    fetchPublicCatalog().then(({ games, live }) => {
+      renderGames(games);
+      const statusEl = document.getElementById('hub-sb-status');
+      if (live && statusEl) {
+        statusEl.textContent = '🟢 실시간 랭킹 · 목록 동기화됨';
+        statusEl.style.color = '#4ade80';
+      }
+    });
+  </script>
+</body>
+</html>

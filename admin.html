@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>관리자 모드 — 이게뭔겜? 404 아케이드</title>
+  <link rel="stylesheet" href="./shared/styles.css">
+  <style>
+    html, body {
+      height: auto;
+      min-height: 100%;
+      overflow-y: auto;
+      touch-action: pan-y;
+      background: #100d1a;
+      color: #f6f2ff;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top) + 12px) 16px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-box {
+      background: #1b1629;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    .login-box {
+      max-width: 420px;
+      margin: 48px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+    }
+    .login-box h1 {
+      font-size: 22px;
+      font-weight: 900;
+      margin: 0;
+    }
+    .login-box p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.55;
+    }
+    .input, .select, .textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      background: #120e1e;
+      color: #ffffff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      outline: none;
+      border-color: #ffd84a;
+    }
+    .textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: filter 0.12s ease, transform 0.1s ease;
+    }
+    .btn:hover { filter: brightness(1.12); }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary {
+      background: #ffd84a;
+      color: #161122;
+      border-color: #ffd84a;
+    }
+    .btn.danger {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+    }
+    .btn.sm {
+      padding: 7px 10px;
+      font-size: 12px;
+      border-radius: 10px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .topbar h1 {
+      font-size: 20px;
+      font-weight: 900;
+      margin: 0;
+    }
+    .topbar-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+      color: #cfc6e8;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #ffd84a;
+      color: #161122;
+      border-color: #ffd84a;
+    }
+
+    .game-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .game-row {
+      display: grid;
+      grid-template-columns: 128px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 16px;
+      background: #141021;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+    }
+    @media (max-width: 720px) {
+      .game-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .row-thumb {
+      width: 128px;
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0d0a16;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    @media (max-width: 720px) {
+      .row-thumb { width: 100%; }
+    }
+    .row-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .row-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .row-title-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row-title {
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .pill-id {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(124, 92, 255, 0.22);
+      color: #d8c8ff;
+    }
+    .pill-cnt {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(74, 222, 128, 0.14);
+      color: #86efac;
+    }
+    .row-desc {
+      font-size: 12.5px;
+      color: #b7aed0;
+      line-height: 1.45;
+    }
+    .row-lock-note {
+      font-size: 12px;
+      color: #fde68a;
+      background: rgba(255, 216, 74, 0.1);
+      border: 1px solid rgba(255, 216, 74, 0.25);
+      border-radius: 8px;
+      padding: 5px 9px;
+      width: fit-content;
+      max-width: 100%;
+    }
+    .row-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    @media (max-width: 720px) {
+      .row-controls { align-items: stretch; }
+    }
+    .seg {
+      display: inline-flex;
+      background: #0d0a16;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .seg button {
+      border: 0;
+      background: transparent;
+      color: #aba1c7;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 6px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .seg button.active.st-public {
+      background: #22c55e;
+      color: #091d10;
+    }
+    .seg button.active.st-coming_soon {
+      background: #ffd84a;
+      color: #191304;
+    }
+    .seg button.active.st-hidden {
+      background: #64748b;
+      color: #ffffff;
+    }
+    .row-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    th {
+      color: #a79ec4;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 6, 15, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-panel {
+      width: min(560px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #1b1629;
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-panel h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #c5bce0;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 560px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .err-msg {
+      color: #fca5a5;
+      font-size: 12.5px;
+      font-weight: 800;
+      min-height: 18px;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <!-- 로그인 화면 -->
+    <section id="login-view" class="card-box login-box">
+      <div class="rank-chip" style="margin:0 auto;">⚙ 이게뭔겜? 404 아케이드</div>
+      <h1>관리자 모드 로그인</h1>
+      <p>
+        게임 목록의 공개·공개예정(잠금)·숨김 상태와<br>
+        표시 순서, 안내 문구, 랭킹 기록을 관리합니다.
+      </p>
+      <form id="login-form" style="display:flex;flex-direction:column;gap:10px;">
+        <input id="pw-input" class="input" type="password" placeholder="관리자 비밀번호 입력" autocomplete="current-password" required>
+        <div id="login-err" class="err-msg"></div>
+        <button type="submit" class="btn primary" id="login-btn">🔓 로그인</button>
+      </form>
+      <a class="btn" href="./">🏠 404 아케이드 메인으로</a>
+    </section>
+
+    <!-- 대시보드 화면 -->
+    <section id="dash-view" class="hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <header class="card-box topbar">
+        <div>
+          <h1>⚙ 404 아케이드 관리자</h1>
+          <div style="font-size:12px;color:#9f96be;margin-top:3px;">변경 사항은 메인 페이지와 각 게임 URL에 즉시 반영됩니다.</div>
+        </div>
+        <div class="topbar-actions">
+          <a class="btn" href="./" target="_blank" rel="noopener noreferrer">🏠 아케이드 보기 ↗</a>
+          <button type="button" class="btn" id="btn-refresh">🔄 새로고침</button>
+          <button type="button" class="btn danger" id="btn-logout">로그아웃</button>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button type="button" class="tab-btn active" data-tab="games">🎮 게임 목록 관리</button>
+        <button type="button" class="tab-btn" data-tab="runs">🏆 랭킹 기록 관리</button>
+        <button type="button" class="tab-btn" data-tab="settings">🔐 설정</button>
+      </nav>
+
+      <!-- 탭 1: 게임 목록 -->
+      <section id="tab-games" class="card-box" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div>
+            <strong style="font-size:16px;">등록된 게임 목록</strong>
+            <div style="font-size:12px;color:#9f96be;margin-top:2px;">
+              <b>공개</b>: 바로 플레이 가능 · <b>공개예정</b>: 잠금 카드+문구 노출 · <b>숨김</b>: 목록 미노출 + 직접 링크 차단
+            </div>
+          </div>
+          <button type="button" class="btn primary" id="btn-add-game">➕ 새 게임 추가</button>
+        </div>
+        <div id="game-list" class="game-list"></div>
+      </section>
+
+      <!-- 탭 2: 랭킹 기록 -->
+      <section id="tab-runs" class="card-box hidden" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <strong style="font-size:16px;">최근 랭킹 기록 (최대 100건)</strong>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="runs-filter" class="select" style="width:auto;min-width:160px;">
+              <option value="">전체 게임</option>
+            </select>
+            <button type="button" class="btn sm" id="btn-reload-runs">🔄 불러오기</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>게임</th>
+                <th>닉네임</th>
+                <th>점수</th>
+                <th>오차(mm)</th>
+                <th>칭호</th>
+                <th>코드</th>
+                <th>시각</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="runs-tbody">
+              <tr><td colspan="8" style="text-align:center;color:#9f96be;">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 탭 3: 설정 -->
+      <section id="tab-settings" class="card-box hidden" style="display:flex;flex-direction:column;gap:14px;">
+        <strong style="font-size:16px;">관리자 비밀번호 변경</strong>
+        <div style="max-width:380px;display:flex;flex-direction:column;gap:10px;">
+          <div class="field">
+            <label for="new-pw1">새 비밀번호 (4자 이상)</label>
+            <input id="new-pw1" class="input" type="password" placeholder="새 비밀번호">
+          </div>
+          <div class="field">
+            <label for="new-pw2">새 비밀번호 확인</label>
+            <input id="new-pw2" class="input" type="password" placeholder="새 비밀번호 한 번 더">
+          </div>
+          <div id="pw-err" class="err-msg"></div>
+          <button type="button" class="btn primary" id="btn-change-pw">🔐 비밀번호 변경 저장</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- 게임 편집 모달 -->
+  <div id="edit-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <h2 id="modal-title">게임 편집</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-id">게임 ID (영문 소문자·숫자·-_)</label>
+          <input id="f-id" class="input" placeholder="예: toilet">
+        </div>
+        <div class="field">
+          <label for="f-status">공개 상태</label>
+          <select id="f-status" class="select">
+            <option value="public">🟢 공개 (바로 플레이)</option>
+            <option value="coming_soon">🔒 공개 예정 (잠금 안내)</option>
+            <option value="hidden">🙈 숨김 (비공개)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-title">게임 제목</label>
+          <input id="f-title" class="input" placeholder="예: 무한 두루마리">
+        </div>
+        <div class="field">
+          <label for="f-kicker">썸네일 상단 한 줄 (Kicker)</label>
+          <input id="f-kicker" class="input" placeholder="예: 휴… 휴지가 있다!!">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-badge">좌측 상단 배지</label>
+          <input id="f-badge" class="input" placeholder="예: 🧻 100km 도전 · 미라 진화">
+        </div>
+        <div class="field">
+          <label for="f-metric">하단 랭킹 표시 문구</label>
+          <input id="f-metric" class="input" placeholder="예: 길이 m/km 랭킹">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-desc">카드 설명</label>
+        <textarea id="f-desc" class="textarea" placeholder="게임 설명을 입력하세요."></textarea>
+      </div>
+      <div class="field">
+        <label for="f-lock-msg">잠금 / 공개 예정 안내 문구</label>
+        <input id="f-lock-msg" class="input" placeholder="예: 조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-thumb">썸네일 경로 또는 URL</label>
+          <input id="f-thumb" class="input" placeholder="./assets/thumb-toilet.jpg">
+        </div>
+        <div class="field">
+          <label for="f-href">게임 경로 또는 URL</label>
+          <input id="f-href" class="input" placeholder="./toilet/">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-order">표시 순서 (작을수록 위)</label>
+          <input id="f-order" class="input" type="number" step="10" value="10">
+        </div>
+        <div class="field" style="justify-content:flex-end;">
+          <label class="check-row" style="margin-top:20px;">
+            <input id="f-featured" type="checkbox">
+            <span>대표 게임 테두리 강조</span>
+          </label>
+        </div>
+      </div>
+      <div id="modal-err" class="err-msg"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+        <button type="button" class="btn" id="btn-modal-cancel">취소</button>
+        <button type="button" class="btn primary" id="btn-modal-save">💾 저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { rpcCall } from './shared/catalog.js';
+    import { showToast } from './shared/challenge.js';
+
+    let adminPw = '';
+    let games = [];
+    let editingExisting = false;
+
+    const loginView = document.getElementById('login-view');
+    const dashView = document.getElementById('dash-view');
+    const loginErr = document.getElementById('login-err');
+    const pwInput = document.getElementById('pw-input');
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function adminRpc(action, payload = {}) {
+      const res = await rpcCall('g404_admin', {
+        p_pw: adminPw,
+        p_action: action,
+        p_payload: payload,
+      }, 1);
+      if (!res || !res.ok) {
+        const code = (res && res.error) || 'unknown_error';
+        if (code === 'locked') throw new Error('비밀번호를 8회 이상 틀려 2분 동안 잠겼습니다.');
+        if (code === 'bad_pw') throw new Error('비밀번호가 일치하지 않습니다.');
+        if (code === 'pw_too_short') throw new Error('새 비밀번호는 4자 이상 입력해 주세요.');
+        if (code === 'invalid_game_id') throw new Error('게임 ID는 영문 소문자·숫자·-_ 만 가능합니다.');
+        throw new Error(`요청 실패: ${code}`);
+      }
+      return res;
+    }
+
+    async function loadGames() {
+      const res = await adminRpc('list_games');
+      games = Array.isArray(res.games) ? res.games : [];
+      renderGames();
+      syncRunsFilter();
+    }
+
+    function renderGames() {
+      const list = document.getElementById('game-list');
+      if (games.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:28px;color:#9f96be;">등록된 게임이 없습니다. 상단 [➕ 새 게임 추가]를 눌러 추가해 주세요.</div>';
+        return;
+      }
+
+      list.innerHTML = games.map((g, idx) => {
+        const previewHref = (g.href || `./${g.id}/`) + ((g.href || '').includes('?') ? '&preview=1' : '?preview=1');
+        return `
+          <div class="game-row" data-id="${esc(g.id)}">
+            <div class="row-thumb">
+              <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)}">
+            </div>
+            <div class="row-info">
+              <div class="row-title-line">
+                <span class="row-title">${esc(g.title)}</span>
+                <span class="pill-id">${esc(g.id)}</span>
+                <span class="pill-cnt">기록 ${Number(g.run_count || 0).toLocaleString()}건</span>
+                ${g.featured ? '<span class="pill-id" style="background:rgba(255,216,74,0.2);color:#ffd84a;">★ 대표</span>' : ''}
+              </div>
+              <div class="row-desc">${esc(g.description || '')}</div>
+              ${g.status !== 'public' ? `<div class="row-lock-note">🔒 안내 문구: ${esc(g.lock_message || '(기본 문구)')}</div>` : ''}
+            </div>
+            <div class="row-controls">
+              <div class="seg" role="group" aria-label="공개 상태 선택">
+                <button type="button" class="${g.status === 'public' ? 'active st-public' : ''}" data-act="status" data-val="public">🟢 공개</button>
+                <button type="button" class="${g.status === 'coming_soon' ? 'active st-coming_soon' : ''}" data-act="status" data-val="coming_soon">🔒 공개예정</button>
+                <button type="button" class="${g.status === 'hidden' ? 'active st-hidden' : ''}" data-act="status" data-val="hidden">🙈 숨김</button>
+              </div>
+              <div class="row-btns">
+                <button type="button" class="btn sm" data-act="up" ${idx === 0 ? 'disabled style="opacity:0.4"' : ''}>▲</button>
+                <button type="button" class="btn sm" data-act="down" ${idx === games.length - 1 ? 'disabled style="opacity:0.4"' : ''}>▼</button>
+                <a class="btn sm" href="${esc(previewHref)}" target="_blank" rel="noopener noreferrer">👀 미리보기</a>
+                <button type="button" class="btn sm" data-act="edit">✏️ 편집</button>
+                <button type="button" class="btn sm danger" data-act="delete">🗑</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      list.querySelectorAll('.game-row').forEach((row, idx) => {
+        const id = row.dataset.id;
+        row.querySelectorAll('button[data-act]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const act = btn.dataset.act;
+            try {
+              if (act === 'status') {
+                const st = btn.dataset.val;
+                await adminRpc('set_status', { id, status: st });
+                await loadGames();
+                const label = st === 'public' ? '공개' : st === 'coming_soon' ? '공개예정(잠금)' : '숨김';
+                showToast(`✅ [${id}] 상태를 '${label}'으로 변경했어요.`);
+              } else if (act === 'up' && idx > 0) {
+                const ids = games.map(x => x.id);
+                [ids[idx - 1], ids[idx]] = [ids[idx], ids[idx - 1]];
+                await adminRpc('reorder', { ids });
+                await loadGames();
+                showToast('⬆️ 순서를 위로 올렸어요.');
+              } else if (act === 'down' && idx < games.length - 1) {
+                const ids = games.map(x => x.id);
+                [ids[idx], ids[idx + 1]] = [ids[idx + 1], ids[idx]];
+                await adminRpc('reorder', { ids });
+                await loadGames();
+                showToast('⬇️ 순서를 아래로 내렸어요.');
+              } else if (act === 'edit') {
+                const g = games.find(x => x.id === id);
+                if (g) openModal(g, true);
+              } else if (act === 'delete') {
+                const g = games.find(x => x.id === id);
+                if (!confirm(`정말 [${g ? g.title : id}] 항목을 목록에서 삭제할까요? (기존 랭킹 기록은 보존됩니다)`)) return;
+                await adminRpc('delete_game', { id });
+                await loadGames();
+                showToast(`🗑 [${id}] 목록에서 삭제했어요.`);
+              }
+            } catch (e) {
+              showToast(`⚠️ ${e.message}`);
+            }
+          });
+        });
+      });
+    }
+
+    function syncRunsFilter() {
+      const sel = document.getElementById('runs-filter');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">전체 게임</option>' +
+        games.map(g => `<option value="${esc(g.id)}">${esc(g.title)} (${esc(g.id)})</option>`).join('');
+      sel.value = cur;
+    }
+
+    async function loadRuns() {
+      const tbody = document.getElementById('runs-tbody');
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9f96be;">불러오는 중...</td></tr>';
+      try {
+        const gameId = document.getElementById('runs-filter').value;
+        const res = await adminRpc('list_runs', { game_id: gameId });
+        const runs = Array.isArray(res.runs) ? res.runs : [];
+        if (runs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9f96be;">아직 등록된 기록이 없습니다.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = runs.map(r => {
+          const dt = r.created_at ? new Date(r.created_at).toLocaleString('ko-KR') : '';
+          return `
+            <tr>
+              <td><span class="pill-id">${esc(r.game_id)}</span></td>
+              <td><b>${esc(r.nickname)}</b></td>
+              <td>${Number(r.score || 0).toFixed(1)}</td>
+              <td>${r.error_mm != null ? Number(r.error_mm).toFixed(2) : '-'}</td>
+              <td>${esc(r.rank_title || '')}</td>
+              <td><code>${esc(r.id)}</code></td>
+              <td style="color:#9f96be;font-size:12px;">${esc(dt)}</td>
+              <td><button type="button" class="btn sm danger" data-del-run="${esc(r.id)}">🗑 삭제</button></td>
+            </tr>
+          `;
+        }).join('');
+        tbody.querySelectorAll('button[data-del-run]').forEach(b => {
+          b.addEventListener('click', async () => {
+            const rid = b.dataset.delRun;
+            if (!confirm(`기록 [${rid}]을 삭제할까요?`)) return;
+            try {
+              await adminRpc('delete_run', { id: rid });
+              showToast(`🗑 기록 ${rid} 삭제 완료`);
+              await loadRuns();
+              await loadGames();
+            } catch (e) {
+              showToast(`⚠️ ${e.message}`);
+            }
+          });
+        });
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#fca5a5;">${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    // 모달 열기/저장
+    const editModal = document.getElementById('edit-modal');
+    const modalErr = document.getElementById('modal-err');
+
+    function openModal(g, isExisting) {
+      editingExisting = isExisting;
+      modalErr.textContent = '';
+      document.getElementById('modal-title').textContent = isExisting ? `게임 편집: ${g.title}` : '➕ 새 게임 추가';
+      const fId = document.getElementById('f-id');
+      fId.value = g.id || '';
+      fId.disabled = isExisting;
+      document.getElementById('f-status').value = g.status || 'coming_soon';
+      document.getElementById('f-title').value = g.title || '';
+      document.getElementById('f-kicker').value = g.kicker || '';
+      document.getElementById('f-badge').value = g.badge || '';
+      document.getElementById('f-metric').value = g.metric_label || '글로벌 랭킹';
+      document.getElementById('f-desc').value = g.description || '';
+      document.getElementById('f-lock-msg').value = g.lock_message || '조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!';
+      document.getElementById('f-thumb').value = g.thumb_url || '';
+      document.getElementById('f-href').value = g.href || '';
+      document.getElementById('f-order').value = g.sort_order != null ? g.sort_order : (games.length + 1) * 10;
+      document.getElementById('f-featured').checked = Boolean(g.featured);
+      editModal.classList.add('open');
+    }
+
+    document.getElementById('btn-add-game').onclick = () => openModal({}, false);
+    document.getElementById('btn-modal-cancel').onclick = () => editModal.classList.remove('open');
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) editModal.classList.remove('open');
+    });
+
+    document.getElementById('btn-modal-save').onclick = async () => {
+      modalErr.textContent = '';
+      const id = document.getElementById('f-id').value.trim().toLowerCase();
+      if (!/^[a-z0-9_-]{1,32}$/.test(id)) {
+        modalErr.textContent = '게임 ID는 영문 소문자·숫자·-_ (1~32자)로 입력해 주세요.';
+        return;
+      }
+      const payload = {
+        id,
+        status: document.getElementById('f-status').value,
+        title: document.getElementById('f-title').value.trim() || id,
+        kicker: document.getElementById('f-kicker').value.trim(),
+        badge: document.getElementById('f-badge').value.trim(),
+        metric_label: document.getElementById('f-metric').value.trim(),
+        description: document.getElementById('f-desc').value.trim(),
+        lock_message: document.getElementById('f-lock-msg').value.trim(),
+        thumb_url: document.getElementById('f-thumb').value.trim(),
+        href: document.getElementById('f-href').value.trim(),
+        sort_order: Number(document.getElementById('f-order').value) || 100,
+        featured: document.getElementById('f-featured').checked,
+      };
+      try {
+        await adminRpc('save_game', payload);
+        editModal.classList.remove('open');
+        await loadGames();
+        showToast(`💾 [${payload.title}] 저장 완료!`);
+      } catch (e) {
+        modalErr.textContent = e.message;
+      }
+    };
+
+    // 탭 전환
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('tab-games').classList.toggle('hidden', tab !== 'games');
+        document.getElementById('tab-runs').classList.toggle('hidden', tab !== 'runs');
+        document.getElementById('tab-settings').classList.toggle('hidden', tab !== 'settings');
+        if (tab === 'runs') loadRuns();
+      });
+    });
+
+    document.getElementById('runs-filter').onchange = loadRuns;
+    document.getElementById('btn-reload-runs').onclick = loadRuns;
+    document.getElementById('btn-refresh').onclick = async () => {
+      try {
+        await loadGames();
+        showToast('🔄 최신 목록을 불러왔어요.');
+      } catch (e) {
+        showToast(`⚠️ ${e.message}`);
+      }
+    };
+
+    // 비밀번호 변경
+    document.getElementById('btn-change-pw').onclick = async () => {
+      const pwErr = document.getElementById('pw-err');
+      pwErr.textContent = '';
+      const p1 = document.getElementById('new-pw1').value.trim();
+      const p2 = document.getElementById('new-pw2').value.trim();
+      if (p1.length < 4) { pwErr.textContent = '비밀번호는 4자 이상 입력해 주세요.'; return; }
+      if (p1 !== p2) { pwErr.textContent = '새 비밀번호가 서로 다릅니다.'; return; }
+      try {
+        await adminRpc('change_pw', { new_pw: p1 });
+        adminPw = p1;
+        document.getElementById('new-pw1').value = '';
+        document.getElementById('new-pw2').value = '';
+        showToast('🔐 비밀번호가 변경되었습니다!');
+      } catch (e) {
+        pwErr.textContent = e.message;
+      }
+    };
+
+    // 로그인 / 로그아웃
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginErr.textContent = '';
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = '확인 중...';
+      adminPw = pwInput.value;
+      try {
+        const res = await adminRpc('login');
+        games = Array.isArray(res.games) ? res.games : [];
+        loginView.classList.add('hidden');
+        dashView.classList.remove('hidden');
+        renderGames();
+        syncRunsFilter();
+        showToast('🔓 관리자 모드로 로그인했어요.');
+      } catch (err) {
+        adminPw = '';
+        loginErr.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔓 로그인';
+      }
+    });
+
+    document.getElementById('btn-logout').onclick = () => {
+      adminPw = '';
+      pwInput.value = '';
+      dashView.classList.add('hidden');
+      loginView.classList.remove('hidden');
+      showToast('로그아웃했어요.');
+    };
+  </script>
+</body>
+</html>
