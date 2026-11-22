@@ -1199,17 +1199,55 @@ document.querySelectorAll('[data-theme]').forEach(btn => {
   });
 });
 
+// ── 문구 자동 줄바꿈 & 케이크 원형 안쪽 100% 실측 맞춤(Auto-Fit) 도우미 ──
+function splitCakeLines(rawText) {
+  const clean = (rawText || '생일 축하해 ♥').trim().replace(/\s+/g, ' ') || '생일 축하해 ♥';
+  const noSpaceLen = clean.replace(/\s+/g, '').length;
+  if (noSpaceLen <= 7) return [clean];
+
+  // 띄어쓰기가 있으면 전체 길이의 정중앙에 가장 가까운 공백에서 2줄 분리
+  if (clean.includes(' ')) {
+    const words = clean.split(' ');
+    let bestIdx = 1;
+    let bestDiff = 999;
+    for (let i = 1; i < words.length; i++) {
+      const l1 = words.slice(0, i).join(' ');
+      const l2 = words.slice(i).join(' ');
+      const diff = Math.abs(l1.length - l2.length);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    return [words.slice(0, bestIdx).join(' '), words.slice(bestIdx).join(' ')];
+  }
+
+  // 띄어쓰기가 없는 긴 문구는 가운데에서 2줄 분리
+  const mid = Math.ceil(clean.length / 2);
+  return [clean.slice(0, mid), clean.slice(mid)];
+}
+
+function fitCakeFontPx(ctx, lines, desiredPx, fontWeight, maxWidthPx) {
+  const family = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+  let px = Math.min(desiredPx, lines.length > 1 ? 168 : 420);
+  ctx.font = `${fontWeight} ${px}px ${family}`;
+
+  let maxW = 0;
+  for (const ln of lines) {
+    maxW = Math.max(maxW, ctx.measureText(ln).width);
+  }
+  if (maxW > maxWidthPx && maxW > 0) {
+    px = Math.max(44, Math.floor(px * (maxWidthPx / maxW) * 0.96));
+    ctx.font = `${fontWeight} ${px}px ${family}`;
+  }
+  return { px, fontStr: `${fontWeight} ${px}px ${family}` };
+}
+
 // ── 스테이지 / 자유문구 초기화 ──
 function buildCustomStageObj(phraseText) {
-  const clean = (phraseText || '생일 축하해 ♥').trim() || '생일 축하해 ♥';
+  const clean = (phraseText || '생일 축하해 ♥').trim().replace(/\s+/g, ' ') || '생일 축하해 ♥';
   const len = clean.replace(/\s+/g, '').length;
-  const lines = len > 8 && clean.includes(' ')
-    ? (() => {
-        const words = clean.split(/\s+/);
-        const mid = Math.ceil(words.length / 2);
-        return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
-      })()
-    : [clean];
+  const lines = splitCakeLines(clean);
   return {
     no: 1,
     chip: '💌 자유 문구',
@@ -1217,8 +1255,8 @@ function buildCustomStageObj(phraseText) {
     phrase: clean,
     lines,
     cakeScale: 1.0,
-    guideAlpha: 0.15,
-    fontScale: clamp(0.42 - len * 0.022, 0.16, 0.34),
+    guideAlpha: 0.2,
+    fontScale: len <= 2 ? 0.36 : 0.24,
     charSlots: Math.max(2, len),
     dottedGuide: len <= 3,
     tip: '누르고 머물면 굵게, 빠르게 그으면 얇게! 완성 후 360°로 돌려 캡처할 수 있어요!',
@@ -1257,7 +1295,7 @@ function setupStage(idx) {
   document.body.classList.remove('in-showcase', 'clean-capture');
   cleanHint.classList.add('hidden');
 
-  // 케이크 윗면 은은한 가이드 렌더링
+  // 케이크 윗면 은은한 가이드 렌더링 (실측 너비 자동 맞춤으로 어떤 문구든 원 안쪽에 100% 쏙 담김!)
   guideCtx.clearRect(0, 0, 1024, 1024);
   guideCtx.save();
   guideCtx.strokeStyle = 'rgba(195, 168, 132, 0.28)';
@@ -1267,9 +1305,18 @@ function setupStage(idx) {
   guideCtx.arc(512, 512, 492, 0, TAU);
   guideCtx.stroke();
 
+  // 크림 장식 안쪽 안전 원으로 클리핑해 절대 바깥으로 삐져나가지 않게 보호
+  guideCtx.beginPath();
+  guideCtx.arc(512, 512, 470, 0, TAU);
+  guideCtx.clip();
+
+  const isTwoLines = stg.lines.length > 1;
+  const safeMaxWidth = isTwoLines ? 690 : 760;
+
   if (stg.dottedGuide) {
-    const fontPx = Math.round(1024 * stg.fontScale);
-    guideCtx.font = `900 ${fontPx}px "Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
+    const desiredPx = Math.round(1024 * stg.fontScale);
+    const { fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 900, safeMaxWidth);
+    guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
     guideCtx.strokeStyle = `rgba(138, 96, 62, ${stg.guideAlpha})`;
@@ -1277,30 +1324,47 @@ function setupStage(idx) {
     guideCtx.setLineDash([14, 12]);
     guideCtx.strokeText(stg.lines[0], 512, 512);
   } else {
-    guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.22)';
-    guideCtx.lineWidth = 3;
-    guideCtx.setLineDash([12, 16]);
-    if (stg.lines.length === 1) {
-      guideCtx.beginPath();
-      guideCtx.moveTo(96, 610);
-      guideCtx.lineTo(928, 610);
-      guideCtx.stroke();
-    } else {
-      guideCtx.beginPath();
-      guideCtx.moveTo(120, 445); guideCtx.lineTo(904, 445);
-      guideCtx.moveTo(96, 665); guideCtx.lineTo(928, 665);
-      guideCtx.stroke();
-    }
-    const fontPx = Math.round(1024 * stg.fontScale * 0.88);
-    guideCtx.font = `800 ${fontPx}px "Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
+    const desiredPx = Math.round(1024 * stg.fontScale * 0.88);
+    const { px, fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 800, safeMaxWidth);
+    guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-    guideCtx.fillStyle = `rgba(138, 96, 62, ${stg.guideAlpha * 0.6})`;
-    if (stg.lines.length === 1) {
+
+    if (!isTwoLines) {
+      const textW = Math.min(safeMaxWidth, guideCtx.measureText(stg.lines[0]).width + 44);
+      const lineY = 512 + Math.round(px * 0.62);
+      guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.24)';
+      guideCtx.lineWidth = 3;
+      guideCtx.setLineDash([12, 14]);
+      guideCtx.beginPath();
+      guideCtx.moveTo(512 - textW / 2, lineY);
+      guideCtx.lineTo(512 + textW / 2, lineY);
+      guideCtx.stroke();
+
+      guideCtx.setLineDash([]);
+      guideCtx.fillStyle = `rgba(138, 96, 62, ${clamp(stg.guideAlpha * 0.72, 0.09, 0.2)})`;
       guideCtx.fillText(stg.lines[0], 512, 512);
     } else {
-      guideCtx.fillText(stg.lines[0], 512, 375);
-      guideCtx.fillText(stg.lines[1], 512, 595);
+      const gap = Math.max(px * 1.38, 128);
+      const y0 = 512 - gap * 0.5;
+      const y1 = 512 + gap * 0.5;
+
+      guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.22)';
+      guideCtx.lineWidth = 3;
+      guideCtx.setLineDash([12, 14]);
+      [ [stg.lines[0], y0], [stg.lines[1], y1] ].forEach(([ln, cy]) => {
+        const tw = Math.min(safeMaxWidth, guideCtx.measureText(ln).width + 40);
+        const ly = cy + Math.round(px * 0.6);
+        guideCtx.beginPath();
+        guideCtx.moveTo(512 - tw / 2, ly);
+        guideCtx.lineTo(512 + tw / 2, ly);
+        guideCtx.stroke();
+      });
+
+      guideCtx.setLineDash([]);
+      guideCtx.fillStyle = `rgba(138, 96, 62, ${clamp(stg.guideAlpha * 0.72, 0.09, 0.2)})`;
+      guideCtx.fillText(stg.lines[0], 512, y0);
+      guideCtx.fillText(stg.lines[1], 512, y1);
     }
   }
   guideCtx.restore();
