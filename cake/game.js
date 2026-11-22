@@ -132,7 +132,7 @@ const STAGES = [
     no: 5,
     chip: '5. 도시락보스',
     kicker: 'STAGE 5 · 초소형 도시락 케이크',
-    phrase: '사랑해 / 오래오래 함께해',
+    phrase: '사랑해 ♥ / 오래오래 함께해',
     lines: ['사랑해 ♥', '오래오래 함께해'],
     cakeScale: 0.78,
     guideAlpha: 0.09,
@@ -539,26 +539,22 @@ guidePlane.position.y = 0.025;
 guidePlane.renderOrder = 1;
 cakeRoot.add(guidePlane);
 
-const warnBoxTex = makeCanvasTex(256, 256, (g, w, h) => {
-  g.clearRect(0, 0, w, h);
-  g.strokeStyle = '#ff8a1e';
-  g.lineWidth = 14;
-  g.setLineDash([26, 20]);
-  g.lineCap = 'round';
-  g.strokeRect(14, 14, w - 28, h - 28);
+// 실제로 펜 끝이 생크림 로제트 코앞에 다가갔을 때만 은은하게 알려주는 원형 테두리 링
+const edgeWarnRingMat = new THREE.MeshBasicMaterial({
+  color: '#fb923c',
+  transparent: true,
+  opacity: 0,
+  depthWrite: false,
 });
-const warnBoxes = [0, 1, 2].map(() => {
-  const m = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.2, 3.2),
-    new THREE.MeshBasicMaterial({ map: warnBoxTex, transparent: true, opacity: 0, depthWrite: false })
-  );
-  m.rotation.x = -Math.PI / 2;
-  m.position.y = 0.035;
-  m.renderOrder = 2;
-  m.visible = false;
-  cakeRoot.add(m);
-  return m;
-});
+const edgeWarnRing = new THREE.Mesh(
+  new THREE.RingGeometry(RIN - 0.14, RIN + 0.06, 80),
+  edgeWarnRingMat
+);
+edgeWarnRing.rotation.x = -Math.PI / 2;
+edgeWarnRing.position.y = 0.032;
+edgeWarnRing.renderOrder = 2;
+edgeWarnRing.visible = false;
+cakeRoot.add(edgeWarnRing);
 
 const strokesGroup = new THREE.Group();
 cakeRoot.add(strokesGroup);
@@ -1096,6 +1092,7 @@ let currentRadius = 0.14;
 let lastSqueezeSfxAt = 0;
 let lastBlobWarnAt = 0;
 let maxWrittenX = -RIN;
+let maxWrittenRadial = 0;
 let outOfBoundsLen = 0;
 let blobCount = 0;
 
@@ -1286,8 +1283,10 @@ function setupStage(idx) {
   currentGrip = 0.08;
   currentRadius = 0.14;
   maxWrittenX = -RIN;
+  maxWrittenRadial = 0;
   outOfBoundsLen = 0;
   blobCount = 0;
+  edgeWarnRing.visible = false;
   cakeRoot.rotation.set(0, 0, 0);
   cakeRoot.scale.setScalar(stg.cakeScale);
   applyPhotoTheme('mint');
@@ -1392,18 +1391,17 @@ function setupStage(idx) {
 
 function getRemainingCm() {
   const s = activeStageObj.cakeScale || 1;
-  return clamp((RIN - maxWrittenX) * s, 0, RIN * 2 * s);
+  return clamp((RIN - maxWrittenRadial) * s, 0, RIN * s);
 }
 
 function updateSpaceHUD() {
   const stg = activeStageObj;
-  const fullCm = RIN * 2 * stg.cakeScale;
-  const remCm = currentStrokes.length === 0 && !activeStroke ? fullCm : getRemainingCm();
-  spacePillEl.textContent = `남은 자리 ${remCm.toFixed(1)}cm`;
+  const fullMarginCm = RIN * stg.cakeScale;
+  const remCm = currentStrokes.length === 0 && !activeStroke ? fullMarginCm : getRemainingCm();
+  spacePillEl.textContent = `테두리 여유 ${remCm.toFixed(1)}cm`;
 
-  const warnThreshold = stg.charSlots >= 5 ? 7.2 * stg.cakeScale : 4.2 * stg.cakeScale;
-  const isTight = (currentStrokes.length > 0 || activeStroke) && remCm < warnThreshold && remCm > 0.6;
-  spacePillEl.style.color = remCm <= 1.2 ? '#fca5a5' : isTight ? '#fdba74' : '#ffffff';
+  const isTight = (currentStrokes.length > 0 || activeStroke) && remCm < 2.2 * stg.cakeScale;
+  spacePillEl.style.color = remCm <= 0.7 ? '#fca5a5' : isTight ? '#fdba74' : '#ffffff';
 }
 
 // ── 레이캐스트 & 획 3D 빌드 ──
@@ -1538,6 +1536,7 @@ function onPointerDown(e) {
   };
   currentStrokes.push(activeStroke);
   maxWrittenX = Math.max(maxWrittenX, pointerCakeXZ.x + currentRadius);
+  maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) + currentRadius);
 
   rebuildStrokeMesh(activeStroke, false);
   SFX.chocoSqueeze(0.4);
@@ -1684,9 +1683,9 @@ function enterShowcase() {
   state = 'showcase';
   BGM.setUrgent(false);
 
-  // 밑그림·경고상자·손을 모두 비켜 오직 내가 만든 3D 케이크 작품만 돋보이게!
+  // 밑그림·경고링·손을 모두 비켜 오직 내가 만든 3D 케이크 작품만 돋보이게!
   guidePlane.visible = false;
-  warnBoxes.forEach(b => { b.visible = false; });
+  edgeWarnRing.visible = false;
   setHandVisible(false);
   liveStreamMesh.visible = false;
   activeHeadMesh.visible = false;
@@ -2252,6 +2251,7 @@ function updatePlaying(dt, nowSec) {
         last.r = currentRadius;
         last.y = 0.02 + currentRadius * 0.16;
         maxWrittenX = Math.max(maxWrittenX, last.x + last.r);
+        maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(last.x, last.z) + last.r);
         rebuildStrokeMesh(activeStroke, false);
       }
       if (dwellCharge > 0.92 && nowSec - lastBlobWarnAt > 0.75) {
@@ -2270,6 +2270,7 @@ function updatePlaying(dt, nowSec) {
         const rHere = lerp(last.r, currentRadius, k);
         pts.push({ x: nx, y: 0.02 + rHere * 0.12, z: nz, r: rHere });
         maxWrittenX = Math.max(maxWrittenX, nx + rHere);
+        maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(nx, nz) + rHere);
 
         if (Math.hypot(nx, nz) + rHere * 0.7 > RIN + 0.35) {
           outOfBoundsLen += dist / steps;
@@ -2328,30 +2329,21 @@ function updatePlaying(dt, nowSec) {
 
   updateStretchyThreads(dt);
 
-  const remCm = getRemainingCm();
-  const needTightZoom = stg.charSlots >= 5 && (currentStrokes.length > 0 || activeStroke) && remCm < 7.2 * s && remCm > 0.8;
-  BGM.setUrgent(needTightZoom);
+  // 기계적인 3칸 상자·강제 줌인 없이, 실제로 펜 끝이 생크림 테두리 코앞에 다가갔을 때만 원형 테두리 링으로 자연스럽게 알림!
+  const pointerEdgeMargin = (RIN - (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) + currentRadius)) * s;
+  const nearCreamEdge = isPressing && pointerEdgeMargin < 1.6;
+  BGM.setUrgent(nearCreamEdge);
 
-  const targetZoom = needTightZoom ? 0.58 : 0;
-  camZoom = lerp(camZoom, targetZoom, clamp(dt * 3.2, 0, 1));
-
-  warnBoxes.forEach((box, idx) => {
-    if (needTightZoom && maxWrittenX < RIN - 1.2) {
-      const spanStart = clamp(maxWrittenX + 0.45, -2, RIN - 1.0);
-      const avail = Math.max(1.2, RIN - 0.3 - spanStart);
-      const wEach = avail / 3;
-      box.visible = true;
-      box.scale.set(wEach / 2.2, 1, 1);
-      box.position.set(spanStart + wEach * (idx + 0.5), 0.035, 0);
-      box.material.opacity = 0.42 + 0.2 * Math.sin(nowSec * 9 + idx);
-    } else {
-      box.visible = false;
-    }
-  });
+  if (nearCreamEdge) {
+    edgeWarnRing.visible = true;
+    edgeWarnRingMat.opacity = clamp((1.6 - pointerEdgeMargin) / 1.6, 0.15, 0.65) * (0.75 + 0.25 * Math.sin(nowSec * 14));
+  } else {
+    edgeWarnRing.visible = false;
+  }
 
   const afPlay = lerp(1, getAspectDistFactor(), 0.42);
-  _camTarget.copy(CAM_A.tg).lerp(CAM_B.tg, camZoom);
-  const camDist = lerp(CAM_A.d * afPlay, CAM_B.d * afPlay, camZoom);
+  _camTarget.copy(CAM_A.tg);
+  const camDist = CAM_A.d * afPlay;
   camera.position.set(
     _camTarget.x,
     _camTarget.y + camDist * Math.sin(CAM_EL),
