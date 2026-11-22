@@ -3,6 +3,20 @@ import { getSupabaseConfig, getBestRecord } from './challenge.js';
 
 export const DEFAULT_GAMES = [
   {
+    id: 'cake',
+    title: '케이크 글씨 쓰기',
+    kicker: '한 번 짜면 못 지워요!',
+    badge: '🎂 쫀득 초코펜 · 5단계',
+    description: '누르는 시간에 따라 두께가 통통해지고 뗄 때 실이 늘어나는 리얼 초코펜! 하트 1개부터 장문 레터링까지 도전하세요.',
+    metric_label: '5단계 누적 점수 랭킹',
+    thumb_url: './assets/thumb-cake.jpg',
+    href: './cake/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: true,
+    sort_order: 10,
+  },
+  {
     id: 'haircut',
     title: '어떻게 잘라드릴까요?',
     kicker: '왼쪽 · 가운데 · 오른쪽',
@@ -13,8 +27,8 @@ export const DEFAULT_GAMES = [
     href: './haircut/',
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    featured: true,
-    sort_order: 10,
+    featured: false,
+    sort_order: 20,
   },
   {
     id: 'toilet',
@@ -28,7 +42,7 @@ export const DEFAULT_GAMES = [
     status: 'public',
     lock_message: '조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!',
     featured: false,
-    sort_order: 20,
+    sort_order: 30,
   },
   {
     id: 'film',
@@ -42,7 +56,7 @@ export const DEFAULT_GAMES = [
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
     featured: false,
-    sort_order: 30,
+    sort_order: 40,
   },
 ];
 

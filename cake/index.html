@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>케이크 글씨 쓰기 — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="한 번 짜면 못 지우는 쫀득한 3D 초코 펜! 누르는 시간에 따라 달라지는 두께감으로 하트 1개부터 장문 레터링까지 도전하세요.">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl {
+      touch-action: none;
+      cursor: crosshair;
+      z-index: 1;
+    }
+    #ov {
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* 상단 스테이지 & 주문 쪽지 HUD */
+    .cake-hud {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94vw, 430px);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .cake-hud.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 108px);
+    }
+    body.result-peeking .cake-hud,
+    body.result-peeking .bottom-dock {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .stage-steps {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+    }
+    .stage-dot {
+      flex: 1;
+      max-width: 76px;
+      padding: 4px 6px;
+      border-radius: 999px;
+      background: rgba(24, 18, 34, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #b8b0cc;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+    }
+    .stage-dot.active {
+      background: #ffd84a;
+      color: #241606;
+      border-color: #fff3b0;
+      box-shadow: 0 4px 12px rgba(255, 216, 74, 0.35);
+    }
+    .stage-dot.done {
+      background: rgba(74, 222, 128, 0.24);
+      color: #bbf7d0;
+      border-color: rgba(74, 222, 128, 0.55);
+    }
+
+    .order-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 252, 240, 0.95);
+      color: #3d2314;
+      border: 2px solid #deb887;
+      border-radius: 18px;
+      padding: 9px 14px;
+      box-shadow: 0 10px 26px rgba(38, 22, 10, 0.2);
+    }
+    .order-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .order-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      color: #926239;
+    }
+    .order-phrase {
+      font-size: clamp(17px, 4.6vw, 22px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #361b0c;
+      word-break: keep-all;
+    }
+    .order-metrics {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .space-pill {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #2b1a10;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      transition: transform 0.12s ease, color 0.15s ease;
+    }
+    .thick-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #7c5130;
+    }
+    .thick-track {
+      width: 62px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(61, 35, 20, 0.16);
+      overflow: hidden;
+    }
+    .thick-fill {
+      height: 100%;
+      width: 24%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #78350f, #d97706, #ef4444);
+      transition: width 0.06s linear;
+    }
+
+    /* 하단 조작 안내 & 제출 버튼 */
+    .bottom-dock {
+      position: fixed;
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(94vw, 410px);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .bottom-dock > * {
+      pointer-events: auto;
+    }
+    .guide-chip {
+      pointer-events: none;
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(24, 18, 32, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fef3c7;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+    .guide-chip.warn {
+      background: rgba(180, 62, 18, 0.92);
+      border-color: #fdba74;
+      color: #ffffff;
+    }
+    .dock-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+    .btn-bakery {
+      background: linear-gradient(135deg, #ffd84a, #f59e0b);
+      color: #261405;
+      font-weight: 900;
+      border: 0;
+      box-shadow: 0 10px 24px rgba(245, 158, 11, 0.35);
+    }
+    .btn-bakery:disabled {
+      opacity: 0.45;
+      box-shadow: none;
+    }
+
+    /* 인트로 스킵 버튼 */
+    .skip-intro-btn {
+      position: fixed;
+      right: 16px;
+      bottom: max(20px, env(safe-area-inset-bottom) + 6px);
+      z-index: 45;
+      padding: 9px 15px;
+      border-radius: 999px;
+      background: rgba(22, 18, 34, 0.85);
+      border: 1.5px solid rgba(255, 216, 74, 0.6);
+      color: #ffd84a;
+      font-size: 12.5px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="best-pill" style="color:#ffd84a">🏆 최고 0점</span>
+    </div>
+  </div>
+
+  <!-- 지인 기록 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <!-- 본 게임 HUD -->
+  <div class="cake-hud hidden" id="cake-hud">
+    <div class="stage-steps" id="stage-steps"></div>
+    <div class="order-card">
+      <div class="order-left">
+        <span class="order-kicker" id="order-kicker">STAGE 1 · 몸풀기 주문</span>
+        <strong class="order-phrase" id="order-phrase">♥</strong>
+      </div>
+      <div class="order-metrics">
+        <span class="space-pill" id="space-pill">남은 자리 22.0cm</span>
+        <div class="thick-bar-wrap">
+          <span>초코 두께</span>
+          <div class="thick-track"><div class="thick-fill" id="thick-fill"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 조작 바 -->
+  <div class="bottom-dock hidden" id="bottom-dock">
+    <div class="guide-chip" id="guide-chip">누른 채 그으면 초코가 나와요! 머물수록 굵어지고 떼면 실이 톡 끊겨요</div>
+    <div class="dock-row">
+      <button type="button" class="btn btn-primary btn-bakery" id="btn-finish" disabled>🎂 다 썼어요! 손님께 드리기</button>
+    </div>
+  </div>
+
+  <!-- 오프닝 스킵 버튼 -->
+  <button type="button" class="skip-intro-btn hidden" id="btn-skip-intro">⏩ 인트로 건너뛰기</button>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="rank-chip">🎂 동네 수제 케이크집 · 원테이크 초코펜</div>
+      <div class="modal-title">케이크 글씨 쓰기</div>
+      <p class="modal-sub">
+        한 번 짠 초코는 <b>절대 지울 수 없어요!</b><br>
+        누르고 머무는 시간에 따라 <b>초코 두께가 통통해지고</b>,<br>
+        손을 떼면 <b>쫀득하게 늘어나는 초코 실</b>로<br>
+        쉬운 <b>하트 1개</b>부터 극악 장문 레터링까지 도전해 보세요!
+      </p>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">난이도 구성</div>
+          <div class="stat-val" style="color:var(--accent);font-size:15px">♥ → 5단계 진화</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">내 최고 총점</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary btn-bakery" id="btn-start" style="font-size:16px">🚪 케이크 가게 들어가기! (시작)</button>
+    </div>
+  </div>
+
+  <!-- 최종 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">🍫 동네 인기 파티시에</div>
+      <div class="modal-title" id="res-headline" style="color:#ffd84a">284점</div>
+      <p class="modal-sub" id="res-comment">쫀득한 초코 글씨가 케이크에 쏙 들어갔어요!</p>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">도달 단계</div>
+          <div class="stat-val" id="res-stage">STAGE 3</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">평균 완성도</div>
+          <div class="stat-val" id="res-acc">88%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">총 누적 점수</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-score">284</div>
+        </div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (랭킹에 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 케이크 랭킹 URL 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary btn-bakery" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 도전하기</button>
+      </div>
+      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

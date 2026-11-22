@@ -206,13 +206,21 @@ function buildLocalGlobalLadder(gameId, myEntry, refEntry) {
           { id: 'BOT4', nickname: '돌돌돌고수', score: 22.5, error_mm: null, actual_value: 22.5, target_value: 0, rank_title: '🌀 팔뚝 두꺼워짐' },
           { id: 'BOT5', nickname: '두칸만씀', score: 8.6, error_mm: null, actual_value: 8.6, target_value: 0, rank_title: '😅 알뜰 휴지러' },
         ]
-      : [
-          { id: 'BOT1', nickname: '인간지그', score: 98, error_mm: 0.14, actual_value: 0, target_value: 0, rank_title: '👑 강화필름의 전설' },
-          { id: 'BOT2', nickname: '대리점1타', score: 93, error_mm: 0.38, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
-          { id: 'BOT3', nickname: '먼지사냥꾼', score: 85, error_mm: 0.72, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
-          { id: 'BOT4', nickname: '한톨타협가', score: 72, error_mm: 1.15, actual_value: 1, target_value: 0, rank_title: '🫧 한 톨 타협가' },
-          { id: 'BOT5', nickname: '기포농장주', score: 51, error_mm: 1.85, actual_value: 2, target_value: 0, rank_title: '💥 굳어버린 기포 농장' },
-        ];
+      : gameId === 'cake'
+        ? [
+            { id: 'BOT1', nickname: '청담쇼콜라티에', score: 468, error_mm: null, actual_value: 5, target_value: 5, rank_title: '👑 전설의 쇼콜라티에' },
+            { id: 'BOT2', nickname: '도시락케이크신', score: 412, error_mm: null, actual_value: 5, target_value: 5, rank_title: '🎂 수제 케이크 마스터' },
+            { id: 'BOT3', nickname: '생일축하해장인', score: 318, error_mm: null, actual_value: 4, target_value: 5, rank_title: '🍫 청담동 수석 파티시에' },
+            { id: 'BOT4', nickname: '동네빵집사장', score: 226, error_mm: null, actual_value: 3, target_value: 5, rank_title: '✨ 동네 인기 케이크집 사장님' },
+            { id: 'BOT5', nickname: '초코혹제조기', score: 118, error_mm: null, actual_value: 2, target_value: 5, rank_title: '🧁 초코펜 수습 파티시에' },
+          ]
+        : [
+            { id: 'BOT1', nickname: '인간지그', score: 98, error_mm: 0.14, actual_value: 0, target_value: 0, rank_title: '👑 강화필름의 전설' },
+            { id: 'BOT2', nickname: '대리점1타', score: 93, error_mm: 0.38, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
+            { id: 'BOT3', nickname: '먼지사냥꾼', score: 85, error_mm: 0.72, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
+            { id: 'BOT4', nickname: '한톨타협가', score: 72, error_mm: 1.15, actual_value: 1, target_value: 0, rank_title: '🫧 한 톨 타협가' },
+            { id: 'BOT5', nickname: '기포농장주', score: 51, error_mm: 1.85, actual_value: 2, target_value: 0, rank_title: '💥 굳어버린 기포 농장' },
+          ];
 
   // 내 기록 누적 저장(최근 30개)
   const nextStored = [...stored.filter(x => x.id !== myEntry.id), myEntry].slice(-30);

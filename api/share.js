@@ -1,6 +1,11 @@
 // 카카오톡·인스타·디스코드 공유 시 지인의 전체 랭킹 기록이 미리보기(OG 태그)로 뜨게 하는 동적 공유 엔드포인트
 // 사용 예: /s/haircut?ref=7K9M2P  (구버전 ?c=, ?d= 도 모두 호환)
 const GAME_META = {
+  cake: {
+    name: '케이크 글씨 쓰기',
+    emoji: '🎂',
+    desc: '누르는 시간에 따라 두께가 달라지는 쫀득한 3D 초코펜! 하트 1개부터 5단계 장문 레터링까지 도전하세요!',
+  },
   haircut: {
     name: '어떻게 잘라드릴까요?',
     emoji: '✂️',
@@ -99,6 +104,9 @@ export default async function handler(req, res) {
     } else if (game === 'film') {
       ogTitle = `📱 ${who}님의 [강화필름 한번에] 기록: ${Math.round(run.score || 0)}점`;
       ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 기록을 깨 보세요! (${run.rank_title || '필름 장인'})`;
+    } else if (game === 'cake') {
+      ogTitle = `🎂 ${who}님의 [케이크 글씨 쓰기] 기록: ${Math.round(run.score || 0)}점`;
+      ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 초코펜 레터링 기록을 깨 보세요! (${run.rank_title || '파티시에'})`;
     }
   }
 

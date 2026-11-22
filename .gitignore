@@ -5,3 +5,4 @@ node_modules
 .admin-pw-initial
 _뺀것
 .DS_Store
+.env*

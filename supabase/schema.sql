@@ -64,10 +64,24 @@ insert into public.g404_config (k, v)
 values ('admin_hash', '663e0dda09e8018b5cb6e4e65c3c1f7def1317e7654b4ef74283b187a25b5a84')
 on conflict (k) do nothing;
 
--- 6) 초기 게임 3종 시드 (이미 있으면 관리자 편집값 유지)
+-- 6) 초기 게임 4종 시드 (이미 있으면 관리자 편집값 유지)
 insert into public.g404_games
   (id, title, kicker, badge, description, metric_label, thumb_url, href, status, lock_message, featured, sort_order)
 values
+  (
+    'cake',
+    '케이크 글씨 쓰기',
+    '한 번 짜면 못 지워요!',
+    '🎂 쫀득 초코펜 · 5단계',
+    '누르는 시간에 따라 두께가 통통해지고 뗄 때 실이 늘어나는 리얼 초코펜! 하트 1개부터 장문 레터링까지 도전하세요.',
+    '5단계 누적 점수 랭킹',
+    './assets/thumb-cake.jpg',
+    './cake/',
+    'public',
+    '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    true,
+    10
+  ),
   (
     'haircut',
     '어떻게 잘라드릴까요?',
@@ -79,8 +93,8 @@ values
     './haircut/',
     'public',
     '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    true,
-    10
+    false,
+    20
   ),
   (
     'toilet',
@@ -94,7 +108,7 @@ values
     'public',
     '조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!',
     false,
-    20
+    30
   ),
   (
     'film',
@@ -108,7 +122,7 @@ values
     'public',
     '곧 공개 예정입니다! 조금만 기다려 주세요.',
     false,
-    30
+    40
   )
 on conflict (id) do nothing;
 
