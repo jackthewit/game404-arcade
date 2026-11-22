@@ -6,9 +6,9 @@ export const DEFAULT_GAMES = [
     id: 'cake',
     title: '케이크 글씨 쓰기',
     kicker: '한 번 짜면 못 지워요!',
-    badge: '🎂 쫀득 초코펜 · 5단계',
-    description: '누르는 시간에 따라 두께가 통통해지고 뗄 때 실이 늘어나는 리얼 초코펜! 하트 1개부터 장문 레터링까지 도전하세요.',
-    metric_label: '5단계 누적 점수 랭킹',
+    badge: '🎂 쫀득 초코펜 · 360° 캡처',
+    description: '누르는 시간에 따라 두께가 달라지는 리얼 초코펜! 완성한 케이크에 촛불을 켜고 이리저리 돌려 사진으로 공유해 보세요.',
+    metric_label: '수제 케이크 짤 생성',
     thumb_url: './assets/thumb-cake.jpg',
     href: './cake/',
     status: 'public',
@@ -99,6 +99,7 @@ export async function fetchPublicCatalog() {
 }
 
 export function formatBestText(gameId) {
+  if (gameId === 'cake') return '📸 360° 돌려보고 공유';
   const b = getBestRecord(gameId);
   if (!b) return '기록 없음';
   if (gameId === 'haircut' && b.errorMm != null) {

@@ -1,25 +1,15 @@
-// 케이크 글씨 쓰기 — 이게뭔겜? 404 아케이드
-// 1. 4컷 하드컷(Cut-by-Cut) 베이커리 오프닝: 문종 딸랑 입장 → 케이크 고르기 → 빵모자 아저씨 환영(얼굴 눈·코·입 없음!) → 멘트 고민
-// 2. 원본 쇼츠(cakeletter)의 3D 생크림 케이크 + 투명 비닐 짤주머니(압력 변형) + 5손가락·손톱·팔뚝·흰 소매
-// 3. 리얼 초콜릿 물리: 누르고 머무는 시간에 따라 두께가 통통하게 고이고(혹 형성), 빠르게 그으면 가늘어지며, 뗄 때 쫀득한 초코 실이 늘어나다 '톡!' 끊김
-// 4. 5단계 난이도 진화: STAGE 1(하트 1개 ♥) → STAGE 2(축하 ♥) → STAGE 3(생일 축하해) → STAGE 4(우리 행복하자 ♥) → STAGE 5(사랑해 / 오래오래 함께해)
+// 케이크 글씨 쓰기 — 이게뭔겜? 404 아케이드 (360° 캡처 쇼케이스 & 바이럴 이미지 공유 에디션)
+// 1. 순위·점수 경쟁 없음! 내가 직접 짠 3D 레터링 케이크 비주얼을 360° 이리저리 돌려보고 사진으로 공유하는 데 100% 집중!
+// 2. 투트랙 플레이: [5단계 주문 도전(♥ → 축하♥ → 생일 축하해 → 우리 행복하자♥ → 도시락 케이크)] + [내 맘대로 문구 쓰기(친구 선물용)]
+// 3. 4컷 하드컷 베이커리 인트로: 문종 딸랑 입장 → 케이크 고르기 → 빵모자 사장님 환영(눈·코·입 없음!) → 멘트 고민
+// 4. 리얼 초콜릿 물리: 누르고 머무는 시간에 따라 두께가 통통하게 고이고(혹 생성), 빠르게 그으면 날렵해지며, 뗄 때 쫀득한 초코 실이 늘어나다 '톡!' 끊김
+// 5. 바이럴 360° 쇼케이스: 드래그로 상하좌우 자유 회전 + 3D 흔들리는 생일 촛불 + 4종 포토존 테마 + 빵모자 사장님의 팩폭 감정평 + 고화질 폴라로이드 이미지 즉시 공유/저장!
 
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { SFX, BGM, unlockAudio } from '../shared/audio.js';
 import { enforceGameAccess } from '../shared/catalog.js';
-import {
-  loadIncomingChallenge,
-  saveResultAndBuildShare,
-  renderGlobalLadderHTML,
-  shareChallengeLink,
-  downloadResultCard,
-  getSavedNickname,
-  saveNickname,
-  getBestRecord,
-  updateBestRecord,
-  showToast,
-} from '../shared/challenge.js';
+import { showToast } from '../shared/challenge.js';
 
 enforceGameAccess('cake');
 
@@ -29,9 +19,7 @@ const ov = document.getElementById('ov');
 const ovCtx = ov.getContext('2d');
 
 const btnBgm = document.getElementById('btn-bgm');
-const bestPill = document.getElementById('best-pill');
-const rivalBanner = document.getElementById('rival-banner');
-const rivalBannerText = document.getElementById('rival-banner-text');
+const cleanHint = document.getElementById('clean-hint');
 
 const cakeHud = document.getElementById('cake-hud');
 const stageStepsEl = document.getElementById('stage-steps');
@@ -45,27 +33,41 @@ const guideChipEl = document.getElementById('guide-chip');
 const btnFinish = document.getElementById('btn-finish');
 const btnSkipIntro = document.getElementById('btn-skip-intro');
 
+// 쇼케이스 & 이미지 공유 UI
+const showcaseTop = document.getElementById('showcase-top');
+const verdictTagEl = document.getElementById('verdict-tag');
+const verdictTextEl = document.getElementById('verdict-text');
+const showcaseDock = document.getElementById('showcase-dock');
+const chipCandle = document.getElementById('chip-candle');
+const chipSpin = document.getElementById('chip-spin');
+const chipAngleHero = document.getElementById('chip-angle-hero');
+const chipAngleTop = document.getElementById('chip-angle-top');
+const cardMemoInput = document.getElementById('card-memo');
+const btnCleanView = document.getElementById('btn-clean-view');
+const btnShareImg = document.getElementById('btn-share-img');
+const btnSaveCard = document.getElementById('btn-save-card');
+const btnNextStage = document.getElementById('btn-next-stage');
+const btnRewrite = document.getElementById('btn-rewrite');
+
+// 시작 모달 & 자유 문구 UI
 const startModal = document.getElementById('start-modal');
-const startBestEl = document.getElementById('start-best');
-const startRivalBox = document.getElementById('start-rival-box');
+const tabModeStage = document.getElementById('tab-mode-stage');
+const tabModeCustom = document.getElementById('tab-mode-custom');
+const stageModeDesc = document.getElementById('stage-mode-desc');
+const customModeBox = document.getElementById('custom-mode-box');
+const customPhraseInput = document.getElementById('custom-phrase-input');
 const btnStart = document.getElementById('btn-start');
 
-const resultModal = document.getElementById('result-modal');
-const resRankEl = document.getElementById('res-rank');
-const resHeadlineEl = document.getElementById('res-headline');
-const resCommentEl = document.getElementById('res-comment');
-const resStageEl = document.getElementById('res-stage');
-const resAccEl = document.getElementById('res-acc');
-const resScoreEl = document.getElementById('res-score');
-const resVsWrap = document.getElementById('res-vs-wrap');
-const resLbWrap = document.getElementById('res-lb-wrap');
-const resNickInput = document.getElementById('res-nick');
-const btnShare = document.getElementById('btn-share');
-const btnSaveImg = document.getElementById('btn-save-img');
-const btnRetry = document.getElementById('btn-retry');
+// 폴라로이드 미리보기 모달
+const previewModal = document.getElementById('preview-modal');
+const previewImg = document.getElementById('preview-img');
+const btnPreviewClose = document.getElementById('btn-preview-close');
+const btnPreviewNative = document.getElementById('btn-preview-native');
+const btnPreviewDownload = document.getElementById('btn-preview-download');
 
 // ── 수학 도우미 ──
 const TAU = Math.PI * 2;
+const DEG = Math.PI / 180;
 const lerp = (a, b, k) => a + (b - a) * k;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const ease = k => { const c = clamp(k, 0, 1); return c * c * (3 - 2 * c); };
@@ -77,64 +79,113 @@ const STAGES = [
   {
     no: 1,
     chip: '1. ♥',
-    kicker: 'STAGE 1 · 첫 손님 서비스 (매우 쉬움)',
+    kicker: 'STAGE 1 · 첫 손님 서비스 (쉬움)',
     phrase: '♥',
     lines: ['♥'],
     cakeScale: 1.0,
-    guideAlpha: 0.24,
-    fontScale: 0.56,
+    guideAlpha: 0.32,
+    fontScale: 0.48,
     charSlots: 1,
+    dottedGuide: true,
     tip: '가운데 예쁜 하트 1개! 누르고 머물면 초코가 통통해지고, 떼면 실이 늘어나요!',
   },
   {
     no: 2,
     chip: '2. 축하♥',
-    kicker: 'STAGE 2 · 단골 손님 주문 (쉬움)',
+    kicker: 'STAGE 2 · 단골 손님 주문',
     phrase: '축하 ♥',
     lines: ['축하 ♥'],
     cakeScale: 1.0,
-    guideAlpha: 0.19,
-    fontScale: 0.34,
+    guideAlpha: 0.25,
+    fontScale: 0.27,
     charSlots: 3,
+    dottedGuide: true,
     tip: '두 글자와 하트! 획 끝에서 살짝 떼어 깔끔하게 마무리해 보세요.',
   },
   {
     no: 3,
     chip: '3. 생일축하해',
-    kicker: 'STAGE 3 · 쇼츠 레전드 구간 (보통)',
+    kicker: 'STAGE 3 · 쇼츠 레전드 구간!',
     phrase: '생일 축하해',
     lines: ['생일 축하해'],
     cakeScale: 1.0,
-    guideAlpha: 0.14,
-    fontScale: 0.245,
+    guideAlpha: 0.12,
+    fontScale: 0.22,
     charSlots: 5,
-    tip: '앞의 「생일」을 너무 크게 쓰면 오른쪽 자리가 모자라요! 남은 자리를 꼭 보세요!',
+    dottedGuide: false,
+    tip: '앞의 「생일」을 너무 크게 쓰면 오른쪽 자리가 모자라요! 여백 배분 주의!',
   },
   {
     no: 4,
     chip: '4. 행복하자',
-    kicker: 'STAGE 4 · 미니 홀케이크 (어려움)',
+    kicker: 'STAGE 4 · 미니 홀케이크',
     phrase: '우리 행복하자 ♥',
     lines: ['우리 행복하자 ♥'],
     cakeScale: 0.88,
-    guideAlpha: 0.11,
-    fontScale: 0.195,
+    guideAlpha: 0.1,
+    fontScale: 0.185,
     charSlots: 7,
+    dottedGuide: false,
     tip: '케이크가 작아졌어요! 빠르게 스윽 그어야 초코 줄이 얇고 날렵하게 나와요!',
   },
   {
     no: 5,
     chip: '5. 도시락보스',
-    kicker: 'STAGE 5 · 초소형 도시락 케이크 (최종 보스)',
+    kicker: 'STAGE 5 · 초소형 도시락 케이크',
     phrase: '사랑해 / 오래오래 함께해',
     lines: ['사랑해 ♥', '오래오래 함께해'],
     cakeScale: 0.78,
     guideAlpha: 0.09,
-    fontScale: 0.18,
+    fontScale: 0.175,
     charSlots: 8,
-    tip: '전설의 파티시에 시험! 작은 도시락 케이크에 두 줄로 삐져나가지 않게 써 보세요!',
+    dottedGuide: false,
+    tip: '작은 도시락 케이크에 두 줄로 삐져나가지 않게 정성껏 써 보세요!',
   },
 ];
+
+// 포토존 테마 4종
+const PHOTO_THEMES = {
+  mint: {
+    name: '민트 케이크 공방',
+    bg: '#b9d9d4',
+    desk: '#b9d9d4',
+    keyInt: 2.35,
+    hemiInt: 0.65,
+    cardBgTop: '#f4fbf9',
+    cardBgBot: '#e3f2ee',
+    cardInk: '#2a1c14',
+  },
+  night: {
+    name: '로맨틱 홈파티 무드',
+    bg: '#1c1526',
+    desk: '#251c33',
+    keyInt: 0.82,
+    hemiInt: 0.32,
+    cardBgTop: '#241b35',
+    cardBgBot: '#171124',
+    cardInk: '#fdf8ff',
+  },
+  pink: {
+    name: '키치 딸기 카페',
+    bg: '#f8d7e3',
+    desk: '#f5cddc',
+    keyInt: 2.25,
+    hemiInt: 0.7,
+    cardBgTop: '#fff5f8',
+    cardBgBot: '#fde4ee',
+    cardInk: '#381a26',
+  },
+  wood: {
+    name: '따뜻한 우드 테이블',
+    bg: '#e5ccb0',
+    desk: '#dcbf9e',
+    keyInt: 2.3,
+    hemiInt: 0.65,
+    cardBgTop: '#fffaf2',
+    cardBgBot: '#f5e9d6',
+    cardInk: '#362112',
+  },
+};
 
 // ── Three.js 렌더러 & 씬 초기화 ──
 const renderer = new THREE.WebGLRenderer({ canvas: gl, antialias: true, preserveDrawingBuffer: true });
@@ -146,9 +197,8 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const DESK_COLOR = '#b9d9d4';
 const INTRO_BG_COLOR = '#f7efe4';
-scene.background = new THREE.Color(DESK_COLOR);
+scene.background = new THREE.Color(PHOTO_THEMES.mint.bg);
 
 {
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -157,7 +207,7 @@ scene.background = new THREE.Color(DESK_COLOR);
   pmrem.dispose();
 }
 
-const camera = new THREE.PerspectiveCamera(28, 1, 2, 400);
+const camera = new THREE.PerspectiveCamera(30, 1, 2, 400);
 
 // 조명
 const keyLight = new THREE.DirectionalLight('#fff9f0', 2.35);
@@ -172,12 +222,14 @@ keyLight.shadow.normalBias = 0.03;
   c.updateProjectionMatrix();
 }
 scene.add(keyLight, keyLight.target);
-scene.add(new THREE.HemisphereLight('#ffffff', '#d8e5e2', 0.65));
+
+const hemiLight = new THREE.HemisphereLight('#ffffff', '#d8e5e2', 0.65);
+scene.add(hemiLight);
 const fillLight = new THREE.DirectionalLight('#eef6ff', 0.52);
 fillLight.position.set(22, 20, 28);
 scene.add(fillLight);
 
-// ── 캔버스 텍스처 유틸 ──
+// ── 캔버스 텍스처 & 3D 튜브 도우미 ──
 function makeCanvasTex(w, h, drawFn, srgb = true) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
@@ -188,7 +240,6 @@ function makeCanvasTex(w, h, drawFn, srgb = true) {
   return t;
 }
 
-// ── 3D 튜브 생성기 (원본 cakeletter의 도톰하고 매끈한 관 지오메트리) ──
 const UP_Y = V(0, 1, 0);
 function buildTubeGeo(P, rad, M = 12, ref = UP_Y, sq = 0.86, lift = 0.45) {
   const n = P.length;
@@ -223,10 +274,8 @@ function buildTubeGeo(P, rad, M = 12, ref = UP_Y, sq = 0.86, lift = 0.45) {
   const idx = [];
   for (let i = 0; i < n - 1; i++) {
     for (let j = 0; j < M; j++) {
-      const a = i * M + j;
-      const b = i * M + ((j + 1) % M);
-      const c = a + M;
-      const d = b + M;
+      const a = i * M + j, b = i * M + ((j + 1) % M);
+      const c = a + M, d = b + M;
       idx.push(a, c, b, b, c, d);
     }
   }
@@ -247,19 +296,17 @@ function linkCyl(mesh, a, b, r) {
   mesh.quaternion.setFromUnitVectors(UP_Y, d.normalize());
 }
 
-// ── 본 게임 작업대 & 3D 생크림 케이크 (원본 cakeletter 모델링 계승) ──
-const RC = 12.8;   // 케이크 전체 반지름 (cm)
-const RIN = 11.0;  // 로제트 안쪽 유효 반지름 (cm, 지름 22.0cm)
-const HC = 8.4;    // 케이크 높이
+// ── 본 게임 작업대 & 3D 생크림 케이크 ──
+const RC = 12.8;
+const RIN = 11.0;
+const HC = 8.4;
 const DESK_Y = -13.6;
 
 const mainWorld = new THREE.Group();
 scene.add(mainWorld);
 
-const deskMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(360, 360),
-  new THREE.MeshStandardMaterial({ color: DESK_COLOR, roughness: 0.92, metalness: 0 })
-);
+const deskMat = new THREE.MeshStandardMaterial({ color: PHOTO_THEMES.mint.desk, roughness: 0.9, metalness: 0 });
+const deskMesh = new THREE.Mesh(new THREE.PlaneGeometry(360, 360), deskMat);
 deskMesh.rotation.x = -Math.PI / 2;
 deskMesh.position.y = DESK_Y;
 deskMesh.receiveShadow = true;
@@ -312,7 +359,7 @@ const chocoMat = new THREE.MeshPhysicalMaterial({
   envMapIntensity: 1.35,
 });
 
-// 케이크 몸통 (Lathe 곡면)
+// 케이크 몸통
 {
   const pts = [];
   const rr = 0.88;
@@ -387,6 +434,7 @@ function makeRosetteGeo() {
     im.setMatrixAt(i, dummy.matrix);
   }
   im.castShadow = true;
+  im.receiveShadow = true;
   cakeRoot.add(im);
 }
 
@@ -411,7 +459,70 @@ function makeRosetteGeo() {
   cakeRoot.add(stand);
 }
 
-// 케이크 윗면 은은한 크림 밑그림 가이드 메쉬 + 오른쪽 공간 부족 점선 경고 칸
+// ── 쇼케이스용 3D 생일 양초 + 흔들리는 불꽃 + 따뜻한 촛불 조명! ──
+const candleGroup = new THREE.Group();
+candleGroup.position.set(0, 0, -RIN + 1.8);
+candleGroup.visible = false;
+cakeRoot.add(candleGroup);
+
+let flameOuterMesh, flameInnerMesh, candleLight;
+{
+  // 파스텔 스트라이프 양초 기둥
+  const candleTex = makeCanvasTex(128, 256, (g, w, h) => {
+    g.fillStyle = '#fffdf7';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = '#fb7185';
+    for (let y = -h; y < h * 2; y += 36) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(w, y + 48);
+      g.lineTo(w, y + 66);
+      g.lineTo(0, y + 18);
+      g.closePath();
+      g.fill();
+    }
+  });
+  const wax = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.42, 0.46, 4.4, 24),
+    new THREE.MeshPhysicalMaterial({ map: candleTex, roughness: 0.35, clearcoat: 0.4 })
+  );
+  wax.position.y = 2.15;
+  wax.castShadow = true;
+  candleGroup.add(wax);
+
+  // 초 받침 크림 방울 & 심지
+  const holder = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.22, 10, 20), creamPipingMat);
+  holder.rotation.x = Math.PI / 2;
+  holder.position.y = 0.14;
+  const wick = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.45, 8),
+    new THREE.MeshBasicMaterial({ color: '#292524' })
+  );
+  wick.position.y = 4.5;
+  candleGroup.add(holder, wick);
+
+  // 바깥 주황 불꽃 + 안쪽 밝은 노란 코어
+  flameOuterMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.48, 16, 14),
+    new THREE.MeshBasicMaterial({ color: '#ff922b', transparent: true, opacity: 0.9 })
+  );
+  flameOuterMesh.position.y = 5.15;
+  flameOuterMesh.scale.set(0.75, 1.65, 0.75);
+
+  flameInnerMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.28, 12, 10),
+    new THREE.MeshBasicMaterial({ color: '#fff9db' })
+  );
+  flameInnerMesh.position.y = 5.02;
+  flameInnerMesh.scale.set(0.7, 1.4, 0.7);
+  candleGroup.add(flameOuterMesh, flameInnerMesh);
+
+  candleLight = new THREE.PointLight('#ff9f43', 28, 36, 1.6);
+  candleLight.position.set(0, 5.6, 0);
+  candleGroup.add(candleLight);
+}
+
+// 케이크 윗면 은은한 크림 점선 밑그림 메쉬 + 오른쪽 공간 부족 점선 경고 칸
 const guideCanvas = document.createElement('canvas');
 guideCanvas.width = 1024;
 guideCanvas.height = 1024;
@@ -428,7 +539,6 @@ guidePlane.position.y = 0.025;
 guidePlane.renderOrder = 1;
 cakeRoot.add(guidePlane);
 
-// 오른쪽 여백 부족 시 뜨는 주황 점선 경고 상자 (원본 쇼츠 오마주!)
 const warnBoxTex = makeCanvasTex(256, 256, (g, w, h) => {
   g.clearRect(0, 0, w, h);
   g.strokeStyle = '#ff8a1e';
@@ -450,11 +560,9 @@ const warnBoxes = [0, 1, 2].map(() => {
   return m;
 });
 
-// 3D 초콜릿 획들이 담기는 그룹 (케이크와 함께 돎)
 const strokesGroup = new THREE.Group();
 cakeRoot.add(strokesGroup);
 
-// 짜는 중인 초코 머리 방울 + 노즐→케이크 연결 쫀득 액체 기둥 + 뗄 때 늘어나는 초코 실들
 const activeHeadMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), chocoMat);
 activeHeadMesh.visible = false;
 activeHeadMesh.castShadow = true;
@@ -469,7 +577,7 @@ const stretchyThreadsGroup = new THREE.Group();
 mainWorld.add(stretchyThreadsGroup);
 const stretchyThreads = [];
 
-// ── 원본 쇼츠의 3D 초코 짤주머니 펜 + 5손가락·손톱·팔뚝·흰 소매 (실시간 압력 변형!) ──
+// ── 3D 초코 짤주머니 펜 + 5손가락·손톱·팔뚝·흰 소매 ──
 const penGroup = new THREE.Group();
 mainWorld.add(penGroup);
 
@@ -488,7 +596,6 @@ function bagRadiusAt(y, g) {
       break;
     }
   }
-  // 쥐는 힘(g)이 세질수록 손아귀 부분(GY)은 오목하게 눌리고 위아래로 초코가 밀려 볼록해짐!
   return r * (
     1
     - 0.36 * g * Math.exp(-Math.pow((y - GY) / 2.2, 2))
@@ -524,7 +631,6 @@ const bagTailMesh = new THREE.Mesh(new THREE.BufferGeometry(), bagTailMat);
 bagTailMesh.castShadow = true;
 penGroup.add(bagTailMesh);
 
-// 비닐 매듭 고무줄 포인트
 const tieRing = new THREE.Mesh(
   new THREE.TorusGeometry(0.46, 0.1, 10, 24),
   new THREE.MeshStandardMaterial({ color: '#f43f5e', roughness: 0.45 })
@@ -542,7 +648,6 @@ const skinMat = new THREE.MeshPhysicalMaterial({
 });
 const nailMat = new THREE.MeshPhysicalMaterial({ color: '#fae0d3', roughness: 0.25, clearcoat: 0.6 });
 
-const DEG = Math.PI / 180;
 const FINGERS = [
   { y: 11.3, rf: 0.76, a0: -18, a1: -212, dy: -0.6 },
   { y: 9.85, rf: 0.79, a0: -20, a1: -220, dy: -0.5 },
@@ -584,7 +689,6 @@ const cuffMesh = new THREE.Mesh(
 });
 
 {
-  // 비닐 꼬리 초기화
   const P = [], rad = [];
   for (let i = 0; i <= 14; i++) {
     const k = i / 14, y = 13.15 + 2.5 * k;
@@ -610,6 +714,13 @@ function buildLathe(fn, y0, y1, segs) {
   return new THREE.LatheGeometry(pts, 26);
 }
 
+function setHandVisible(vis) {
+  penGroup.visible = vis;
+  foreArmMesh.visible = vis;
+  sleeveMesh.visible = vis;
+  cuffMesh.visible = vis;
+}
+
 function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
   _basisY.copy(axisDir).normalize();
   _basisX.set(0.72, 0.7, 0).addScaledVector(_basisY, -0.72 * _basisY.x - 0.7 * _basisY.y).normalize();
@@ -618,7 +729,6 @@ function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
   penGroup.quaternion.setFromRotationMatrix(_mat4);
   penGroup.position.copy(tipWorld);
 
-  // 압력이 의미 있게 변했을 때만 지오메트리 재계산 (60fps 쾌적 유지)
   if (Math.abs(grip - lastBuiltGrip) > 0.018) {
     lastBuiltGrip = grip;
     bagMesh.geometry.dispose();
@@ -673,7 +783,6 @@ function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
   nozzleDropMesh.scale.setScalar(dropRadius);
   nozzleDropMesh.position.set(0, 0.03, 0);
 
-  // 손목 → 팔뚝 → 흰 소매 연결
   const pr = bagRadiusAt(GY, grip) + 1.4;
   penGroup.updateMatrixWorld(true);
   _wristW.copy(polVec(pr + 2.4, 26 * DEG, GY + 0.3));
@@ -691,14 +800,13 @@ function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
   cuffMesh.scale.z = 2.58;
 }
 
-// ── 4컷 하드컷(Cut-by-Cut) 베이커리 오프닝 세트 (눈·코·입 없는 빵모자 아저씨 + 유리문 + 쇼케이스) ──
+// ── 4컷 하드컷 베이커리 오프닝 세트 ──
 const introWorld = new THREE.Group();
 introWorld.visible = false;
 scene.add(introWorld);
 
 const introRefs = {};
 {
-  // 따뜻한 베이커리 바닥 & 크림색 벽
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(120, 120),
     new THREE.MeshStandardMaterial({ color: '#e6cfb3', roughness: 0.8 })
@@ -708,7 +816,6 @@ const introRefs = {};
   floor.receiveShadow = true;
   introWorld.add(floor);
 
-  // CUT 1: 가게 문 + 문종 그룹
   const doorScene = new THREE.Group();
   introWorld.add(doorScene);
   introRefs.doorScene = doorScene;
@@ -720,7 +827,6 @@ const introRefs = {};
   shopWall.position.set(0, 4, -6);
   doorScene.add(shopWall);
 
-  // 민트·크림 줄무늬 어닝(차양) + 나무 간판 + 양옆 화분
   for (let i = -5; i <= 5; i++) {
     const stripe = new THREE.Mesh(
       new THREE.BoxGeometry(2.2, 0.55, 4.4),
@@ -750,7 +856,6 @@ const introRefs = {};
     doorScene.add(pot, bush);
   }
 
-  // 회전하는 원목 유리문 피벗
   const doorPivot = new THREE.Group();
   doorPivot.position.set(-4.2, -8, -5.2);
   doorScene.add(doorPivot);
@@ -777,7 +882,6 @@ const introRefs = {};
   handle.position.set(7.3, 8.2, 0.5);
   doorPivot.add(handle);
 
-  // 금빛 문종 ("딸랑~!")
   const bellPivot = new THREE.Group();
   bellPivot.position.set(6.4, 15.2, 0.65);
   doorPivot.add(bellPivot);
@@ -789,7 +893,6 @@ const introRefs = {};
   bellCone.position.y = -0.6;
   bellPivot.add(bellCone);
 
-  // CUT 2 & CUT 3 공용: 베이커리 카운터 & 진열장 & 빵모자 아저씨
   const shopInterior = new THREE.Group();
   introWorld.add(shopInterior);
   introRefs.shopInterior = shopInterior;
@@ -801,7 +904,6 @@ const introRefs = {};
   backWall.position.set(0, 10, -14);
   shopInterior.add(backWall);
 
-  // 원목 쇼케이스 카운터
   const counter = new THREE.Mesh(
     new THREE.BoxGeometry(28, 7.2, 7.5),
     new THREE.MeshStandardMaterial({ color: '#c69260', roughness: 0.68 })
@@ -817,7 +919,6 @@ const introRefs = {};
   glassCase.position.set(0, 2.0, -2.5);
   shopInterior.add(glassCase);
 
-  // 진열장 속 케이크 3종 (왼쪽 초코, 가운데 순백 생크림, 오른쪽 핑크 베리 — 한 화면에 나란히!)
   const cakeColors = ['#5c2c16', '#fffcf5', '#f9a8d4'];
   introRefs.displayCakes = cakeColors.map((col, idx) => {
     const cg = new THREE.Group();
@@ -846,7 +947,6 @@ const introRefs = {};
     return cg;
   });
 
-  // 케이크를 가리키는 플레이어 오른손 (CUT 2 — 손가락과 소매가 한눈에 보이게)
   const pointHand = new THREE.Group();
   shopInterior.add(pointHand);
   introRefs.pointHand = pointHand;
@@ -869,13 +969,12 @@ const introRefs = {};
   pSleeve.position.set(0.8, -0.85, 2.7);
   pointHand.add(pPalm, pIndex, pSleeve);
 
-  // 빵모자 쓴 케이크집 아저씨 (CUT 3 — 눈·코·입 절대 없음! 머리에 착 붙은 빵모자 + 스카프 + 앞치마 + 양팔 환영)
+  // 빵모자 쓴 케이크집 사장님 (눈·코·입 없음!)
   const baker = new THREE.Group();
   baker.position.set(0, -1.5, -6.8);
   shopInterior.add(baker);
   introRefs.baker = baker;
 
-  // 흰 파티시에 조리복 몸통
   const torso = new THREE.Mesh(
     new THREE.CapsuleGeometry(2.45, 3.4, 14, 24),
     new THREE.MeshStandardMaterial({ color: '#fffdf9', roughness: 0.78 })
@@ -884,7 +983,6 @@ const introRefs = {};
   torso.castShadow = true;
   baker.add(torso);
 
-  // 귀여운 버건디 스카프 타이
   const scarf = new THREE.Mesh(
     new THREE.TorusGeometry(1.38, 0.28, 10, 24),
     new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.6 })
@@ -893,7 +991,6 @@ const introRefs = {};
   scarf.position.set(0, 5.85, 0.15);
   baker.add(scarf);
 
-  // 따뜻한 브라운 앞치마 + 가슴받이
   const apron = new THREE.Mesh(
     new THREE.CylinderGeometry(2.5, 2.65, 4.6, 24, 1, false, -Math.PI * 0.44, Math.PI * 0.88),
     new THREE.MeshStandardMaterial({ color: '#8c5832', roughness: 0.75 })
@@ -901,7 +998,6 @@ const introRefs = {};
   apron.position.y = 3.05;
   baker.add(apron);
 
-  // 목 & 둥근 머리 + 양쪽 귀 (눈·코·입 없음!)
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 1.0, 16), skinMat);
   neck.position.y = 6.15;
   const head = new THREE.Mesh(new THREE.SphereGeometry(1.75, 26, 20), skinMat);
@@ -916,7 +1012,6 @@ const introRefs = {};
   }
   baker.add(neck, head);
 
-  // 폭신한 갈색 빵모자(파티시에 베레모) — 이마에 빈틈없이 착 감기도록 밀착!
   const beretGroup = new THREE.Group();
   beretGroup.position.set(0, 8.22, 0.05);
   beretGroup.rotation.set(0.16, 0, -0.1);
@@ -946,12 +1041,10 @@ const introRefs = {};
   visor.rotation.x = 0.32;
   beretGroup.add(beretBand, beretPuff, beretStem, visor);
 
-  // 아저씨 오른팔(환영 손짓) & 왼팔(초코 짤주머니 들기)
   const rightArmPivot = new THREE.Group();
   rightArmPivot.position.set(2.7, 5.4, 0.2);
   baker.add(rightArmPivot);
   introRefs.bakerRightArm = rightArmPivot;
-
   const rArm = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.62, 2.6, 10, 16),
     new THREE.MeshStandardMaterial({ color: '#fffdf9', roughness: 0.8 })
@@ -966,7 +1059,6 @@ const introRefs = {};
   leftArmPivot.position.set(-2.7, 5.2, 0.4);
   baker.add(leftArmPivot);
   introRefs.bakerLeftArm = leftArmPivot;
-
   const lArm = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.62, 2.4, 10, 16),
     new THREE.MeshStandardMaterial({ color: '#fffdf9', roughness: 0.8 })
@@ -981,33 +1073,22 @@ const introRefs = {};
   leftArmPivot.add(lArm, lHand, miniBag);
 }
 
-// ── 오프스크린 채점용 256×256 캔버스 ──
-const EVAL_N = 256;
-const targetEvalCanvas = document.createElement('canvas');
-targetEvalCanvas.width = EVAL_N;
-targetEvalCanvas.height = EVAL_N;
-const targetEvalCtx = targetEvalCanvas.getContext('2d', { willReadFrequently: true });
-
-const userEvalCanvas = document.createElement('canvas');
-userEvalCanvas.width = EVAL_N;
-userEvalCanvas.height = EVAL_N;
-const userEvalCtx = userEvalCanvas.getContext('2d', { willReadFrequently: true });
-
-// ── 게임 상태 ──
-let state = 'title'; // 'title' | 'intro' | 'playing' | 'stage_clear' | 'gameover'
+// ── 게임 & 쇼케이스 상태 ──
+let state = 'title'; // 'title' | 'intro' | 'playing' | 'showcase'
+let playMode = 'stage'; // 'stage' | 'custom'
+let customPhrase = '생일 축하해 ♥';
 let introTime = 0;
 let introCutPlayed = -1;
 const INTRO_TOTAL = 3.85;
 
 let stageIdx = 0;
-let stageScores = [];
-let totalScore = 0;
-let currentStrokes = []; // [{ pts: [{x, z, r, y}], mesh }]
+let activeStageObj = STAGES[0];
+let currentStrokes = [];
 let activeStroke = null;
 
-// 포인터 & 초코 압력/굵기 상태
+// 초코 물리 상태
 let isPressing = false;
-let pointerCakeXZ = V(2.5, 0, 2.5); // 케이크 로컬 좌표
+let pointerCakeXZ = V(2.5, 0, 2.5);
 let pressHoldSec = 0;
 let dwellCharge = 0;
 let currentGrip = 0.08;
@@ -1018,19 +1099,32 @@ let maxWrittenX = -RIN;
 let outOfBoundsLen = 0;
 let blobCount = 0;
 
-let stageClearTimer = 0;
-let lastStageEval = null;
-let incomingRef = null;
-let lastShareInfo = null;
+// 360° 쇼케이스 오빗 카메라 & 커스텀 상태
+let orbitAzimuth = 0;            // 좌우 회전각 (라디안)
+let orbitElevation = 42 * DEG;   // 상하 각도 (22° ~ 84°)
+let orbitDist = 66;              // 거리 (줌)
+let targetAzimuth = 0;
+let targetElevation = 42 * DEG;
+let targetDist = 66;
+let autoSpin = false;
+let candleOn = true;
+let photoThemeKey = 'mint';
+let isOrbitDragging = false;
+let orbitStartX = 0;
+let orbitStartY = 0;
+let orbitPrevX = 0;
+let orbitPrevY = 0;
+let cleanHintTimer = null;
+let currentVerdict = { tag: '', text: '' };
+let latestCardDataUrl = '';
+let latestCardFile = null;
 
-// 카메라 구도 (A: 케이크 전체, B: 오른쪽 여백 부족 시 살짝 다가감, SHOW: 회전 감상)
 const CAM_EL = 60 * DEG;
 const CAM_A = { tg: V(0.8, 0, 2.2), d: 72 };
 const CAM_B = { tg: V(5.4, 0, 1.2), d: 46 };
 let camZoom = 0;
-let cakeSpinAngle = 0;
 
-// ── BGM 버튼 동기화 ──
+// ── BGM 버튼 ──
 function syncBgmBtn() {
   if (!btnBgm) return;
   const muted = BGM.isMuted();
@@ -1038,77 +1132,106 @@ function syncBgmBtn() {
   btnBgm.classList.toggle('bgm-off', muted);
 }
 syncBgmBtn();
-if (btnBgm) {
-  btnBgm.addEventListener('click', () => {
-    unlockAudio();
-    const muted = BGM.toggleMute();
-    syncBgmBtn();
-    showToast(muted ? '🔇 BGM이 꺼졌어요' : '🔊 BGM이 켜졌어요');
+btnBgm.addEventListener('click', () => {
+  unlockAudio();
+  const muted = BGM.toggleMute();
+  syncBgmBtn();
+  showToast(muted ? '🔇 BGM이 꺼졌어요' : '🔊 BGM이 켜졌어요');
+});
+
+// ── 시작 모달: 모드 전환 & 추천 문구 칩 ──
+tabModeStage.addEventListener('click', () => {
+  playMode = 'stage';
+  tabModeStage.classList.add('active');
+  tabModeCustom.classList.remove('active');
+  stageModeDesc.classList.remove('hidden');
+  customModeBox.classList.add('hidden');
+});
+
+tabModeCustom.addEventListener('click', () => {
+  playMode = 'custom';
+  tabModeCustom.classList.add('active');
+  tabModeStage.classList.remove('active');
+  stageModeDesc.classList.add('hidden');
+  customModeBox.classList.remove('hidden');
+});
+
+document.querySelectorAll('.preset-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    customPhraseInput.value = chip.dataset.phrase || '';
+  });
+});
+
+// URL 쿼리(?msg=...)로 문구가 전달된 경우 자동으로 자유 문구 세팅 (바이럴 링크 유입!)
+{
+  const qs = new URLSearchParams(location.search);
+  const sharedMsg = (qs.get('msg') || '').trim().slice(0, 18);
+  if (sharedMsg) {
+    playMode = 'custom';
+    customPhraseInput.value = sharedMsg;
+    tabModeCustom.click();
+  }
+}
+
+// ── 포토존 테마 적용 ──
+function applyPhotoTheme(key) {
+  photoThemeKey = PHOTO_THEMES[key] ? key : 'mint';
+  const th = PHOTO_THEMES[photoThemeKey];
+  scene.background.set(th.bg);
+  deskMat.color.set(th.desk);
+  keyLight.intensity = th.keyInt;
+  hemiLight.intensity = th.hemiInt;
+
+  document.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === photoThemeKey);
   });
 }
 
-// 최고 기록 초기 표시
-function refreshBestUI() {
-  const best = getBestRecord('cake');
-  if (best && best.score != null) {
-    const sc = Math.round(Number(best.score));
-    bestPill.textContent = `🏆 최고 ${sc}점`;
-    startBestEl.textContent = `${sc}점`;
-  }
-}
-refreshBestUI();
-
-loadIncomingChallenge('cake').then(ref => {
-  if (!ref) return;
-  incomingRef = ref;
-  cakeHud.classList.add('with-rival');
-  const sc = Math.round(ref.score || 0);
-  rivalBanner.style.display = 'flex';
-  rivalBannerText.innerHTML = `🔥 내가 아는 <strong>${ref.nickname}</strong>님의 기록: <strong>${sc}점</strong>`;
-  startRivalBox.style.display = 'block';
-  startRivalBox.innerHTML = `<strong>${ref.nickname}</strong>님이 케이크 레터링 <strong>${sc}점</strong>(${ref.rankTitle || '파티시에'})을 기록했어요!`;
+document.querySelectorAll('[data-theme]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyPhotoTheme(btn.dataset.theme);
+    if (btn.dataset.theme === 'night' && !candleOn) {
+      candleOn = true;
+      candleGroup.visible = true;
+      chipCandle.classList.add('active');
+      chipCandle.textContent = '🕯️ 촛불 켜짐';
+    }
+  });
 });
 
-// ── 스테이지 밑그림 & 채점 마스크 생성 ──
-function drawPhraseToCanvas(ctx, size, stg, color, strokeWidthPx = 0) {
-  ctx.clearRect(0, 0, size, size);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = color;
-  ctx.strokeStyle = color;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-
-  const fontPx = Math.round(size * stg.fontScale);
-  ctx.font = `900 ${fontPx}px "Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
-
-  if (stg.lines.length === 1) {
-    if (strokeWidthPx > 0) {
-      ctx.lineWidth = strokeWidthPx;
-      ctx.strokeText(stg.lines[0], size / 2, size / 2);
-    }
-    ctx.fillText(stg.lines[0], size / 2, size / 2);
-  } else {
-    const gap = fontPx * 1.28;
-    const startY = size / 2 - ((stg.lines.length - 1) * gap) / 2;
-    stg.lines.forEach((ln, idx) => {
-      const y = startY + idx * gap;
-      if (strokeWidthPx > 0) {
-        ctx.lineWidth = strokeWidthPx;
-        ctx.strokeText(ln, size / 2, y);
-      }
-      ctx.fillText(ln, size / 2, y);
-    });
-  }
-  ctx.restore();
+// ── 스테이지 / 자유문구 초기화 ──
+function buildCustomStageObj(phraseText) {
+  const clean = (phraseText || '생일 축하해 ♥').trim() || '생일 축하해 ♥';
+  const len = clean.replace(/\s+/g, '').length;
+  const lines = len > 8 && clean.includes(' ')
+    ? (() => {
+        const words = clean.split(/\s+/);
+        const mid = Math.ceil(words.length / 2);
+        return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+      })()
+    : [clean];
+  return {
+    no: 1,
+    chip: '💌 자유 문구',
+    kicker: '💌 세상에 하나뿐인 수제 케이크',
+    phrase: clean,
+    lines,
+    cakeScale: 1.0,
+    guideAlpha: 0.15,
+    fontScale: clamp(0.42 - len * 0.022, 0.16, 0.34),
+    charSlots: Math.max(2, len),
+    dottedGuide: len <= 3,
+    tip: '누르고 머물면 굵게, 빠르게 그으면 얇게! 완성 후 360°로 돌려 캡처할 수 있어요!',
+  };
 }
 
 function setupStage(idx) {
   stageIdx = idx;
-  const stg = STAGES[stageIdx];
+  activeStageObj = playMode === 'custom'
+    ? buildCustomStageObj(customPhrase)
+    : STAGES[stageIdx];
+  const stg = activeStageObj;
 
-  // 기존 초코 획 및 실 정리
   for (const s of currentStrokes) {
     strokesGroup.remove(s.mesh);
     s.mesh.geometry.dispose();
@@ -1117,6 +1240,7 @@ function setupStage(idx) {
   activeStroke = null;
   activeHeadMesh.visible = false;
   liveStreamMesh.visible = false;
+  candleGroup.visible = false;
 
   isPressing = false;
   pressHoldSec = 0;
@@ -1126,11 +1250,14 @@ function setupStage(idx) {
   maxWrittenX = -RIN;
   outOfBoundsLen = 0;
   blobCount = 0;
-  cakeSpinAngle = 0;
-  cakeRoot.rotation.y = 0;
+  cakeRoot.rotation.set(0, 0, 0);
   cakeRoot.scale.setScalar(stg.cakeScale);
+  applyPhotoTheme('mint');
+  setHandVisible(true);
+  document.body.classList.remove('in-showcase', 'clean-capture');
+  cleanHint.classList.add('hidden');
 
-  // 케이크 윗면 은은한 크림 점선 가이드 갱신 (시커먼 면 채움 대신 크림 위에 살살 그어 둔 듯한 은은한 점선 윤곽!)
+  // 케이크 윗면 은은한 가이드 렌더링
   guideCtx.clearRect(0, 0, 1024, 1024);
   guideCtx.save();
   guideCtx.strokeStyle = 'rgba(195, 168, 132, 0.28)';
@@ -1140,18 +1267,16 @@ function setupStage(idx) {
   guideCtx.arc(512, 512, 492, 0, TAU);
   guideCtx.stroke();
 
-  if (stg.no <= 2) {
-    // STAGE 1~2: 입문자용 친절하고 세련된 크림 점선 밑그림
-    const fontPx = Math.round(1024 * (stg.no === 1 ? 0.5 : 0.27));
+  if (stg.dottedGuide) {
+    const fontPx = Math.round(1024 * stg.fontScale);
     guideCtx.font = `900 ${fontPx}px "Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-    guideCtx.strokeStyle = `rgba(138, 96, 62, ${stg.no === 1 ? 0.34 : 0.26})`;
+    guideCtx.strokeStyle = `rgba(138, 96, 62, ${stg.guideAlpha})`;
     guideCtx.lineWidth = 6;
     guideCtx.setLineDash([14, 12]);
     guideCtx.strokeText(stg.lines[0], 512, 512);
   } else {
-    // STAGE 3~5: 진짜 파티시에처럼 은은한 가로 기준선 + 아주 옅은 위치 힌트만 제공!
     guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.22)';
     guideCtx.lineWidth = 3;
     guideCtx.setLineDash([12, 16]);
@@ -1166,11 +1291,11 @@ function setupStage(idx) {
       guideCtx.moveTo(96, 665); guideCtx.lineTo(928, 665);
       guideCtx.stroke();
     }
-    const fontPx = Math.round(1024 * stg.fontScale * 0.86);
+    const fontPx = Math.round(1024 * stg.fontScale * 0.88);
     guideCtx.font = `800 ${fontPx}px "Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif`;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-    guideCtx.fillStyle = `rgba(138, 96, 62, ${stg.guideAlpha * 0.55})`;
+    guideCtx.fillStyle = `rgba(138, 96, 62, ${stg.guideAlpha * 0.6})`;
     if (stg.lines.length === 1) {
       guideCtx.fillText(stg.lines[0], 512, 512);
     } else {
@@ -1180,15 +1305,16 @@ function setupStage(idx) {
   }
   guideCtx.restore();
   guideTex.needsUpdate = true;
+  guidePlane.visible = true;
 
-  // 채점용 타겟 마스크 준비 (살짝 여유 반경을 주어 자연스러운 손글씨도 인정!)
-  drawPhraseToCanvas(targetEvalCtx, EVAL_N, stg, '#ffffff', Math.max(6, Math.round(EVAL_N * 0.032)));
-
-  // HUD 동기화
-  stageStepsEl.innerHTML = STAGES.map((s, i) => {
-    const cls = i < stageIdx ? 'stage-dot done' : i === stageIdx ? 'stage-dot active' : 'stage-dot';
-    return `<div class="${cls}">${s.chip}</div>`;
-  }).join('');
+  if (playMode === 'custom') {
+    stageStepsEl.innerHTML = `<div class="stage-dot active" style="max-width:180px">💌 내 맘대로 레터링 모드</div>`;
+  } else {
+    stageStepsEl.innerHTML = STAGES.map((s, i) => {
+      const cls = i < stageIdx ? 'stage-dot done' : i === stageIdx ? 'stage-dot active' : 'stage-dot';
+      return `<div class="${cls}">${s.chip}</div>`;
+    }).join('');
+  }
 
   orderKickerEl.textContent = stg.kicker;
   orderPhraseEl.textContent = stg.phrase;
@@ -1201,30 +1327,22 @@ function setupStage(idx) {
 }
 
 function getRemainingCm() {
-  const stg = STAGES[stageIdx];
-  const rawLeft = clamp((RIN - maxWrittenX) * stg.cakeScale, 0, RIN * 2 * stg.cakeScale);
-  return rawLeft;
+  const s = activeStageObj.cakeScale || 1;
+  return clamp((RIN - maxWrittenX) * s, 0, RIN * 2 * s);
 }
 
 function updateSpaceHUD() {
-  const stg = STAGES[stageIdx];
+  const stg = activeStageObj;
   const fullCm = RIN * 2 * stg.cakeScale;
   const remCm = currentStrokes.length === 0 && !activeStroke ? fullCm : getRemainingCm();
   spacePillEl.textContent = `남은 자리 ${remCm.toFixed(1)}cm`;
 
   const warnThreshold = stg.charSlots >= 5 ? 7.2 * stg.cakeScale : 4.2 * stg.cakeScale;
   const isTight = (currentStrokes.length > 0 || activeStroke) && remCm < warnThreshold && remCm > 0.6;
-
-  if (remCm <= 1.2) {
-    spacePillEl.style.color = '#fca5a5';
-  } else if (isTight) {
-    spacePillEl.style.color = '#fdba74';
-  } else {
-    spacePillEl.style.color = '#ffffff';
-  }
+  spacePillEl.style.color = remCm <= 1.2 ? '#fca5a5' : isTight ? '#fdba74' : '#ffffff';
 }
 
-// ── 포인터 → 케이크 윗면(y=0) 레이캐스트 ──
+// ── 레이캐스트 & 획 3D 빌드 ──
 const raycaster = new THREE.Raycaster();
 const ndcVec = new THREE.Vector2();
 const cakeTopPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -1247,7 +1365,6 @@ function screenToCakeLocal(clientX, clientY, outVec) {
   return false;
 }
 
-// ── 초코 획 3D 메쉬 재빌드 (둥근 머리 캡 + 누른 두께 그대로 반영 + 끝 꼬리) ──
 function rebuildStrokeMesh(stroke, closedTail = false) {
   const pts = stroke.pts;
   if (pts.length === 0) return;
@@ -1265,18 +1382,16 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
     return;
   }
 
-  const P = [];
-  const R = [];
+  const P = [], R = [];
   const pFirst = pts[0];
   const dir0 = V(pts[1].x - pFirst.x, 0, pts[1].z - pFirst.z);
   if (dir0.lengthSq() < 1e-6) dir0.set(1, 0, 0);
   else dir0.normalize();
 
-  // 시작 부분 도톰한 둥근 캡
   for (let c = 0; c < 2; c++) {
     const a = (74 - c * 34) * DEG;
     P.push(V(pFirst.x - dir0.x * pFirst.r * Math.sin(a), pFirst.y, pFirst.z - dir0.z * pFirst.r * Math.sin(a)));
-    R.push(pFirst.r * Math.cos(a));
+    R.push(pFirst.r * 0.98 * Math.cos(a));
   }
 
   for (let i = 0; i < pts.length; i++) {
@@ -1284,7 +1399,6 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
     R.push(pts[i].r);
   }
 
-  // 마우스를 뗐을 때 위로 살짝 들렸다가 가늘게 끊기는 뾰족 꼬리!
   const pLast = pts[pts.length - 1];
   const pPrev = pts[pts.length - 2];
   const dirEnd = V(pLast.x - pPrev.x, 0, pLast.z - pPrev.z);
@@ -1305,7 +1419,6 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
   stroke.mesh.geometry = buildTubeGeo(P, R, 12, UP_Y, 0.86, 0.46);
 }
 
-// ── 떼는 순간 쫀득하게 늘어나다 '톡!' 끊기는 초콜릿 실 생성 ──
 function spawnStretchyChocoThread(localEndPt, baseRadius) {
   const s = cakeRoot.scale.x || 1;
   const anchorWorld = V(localEndPt.x * s, (localEndPt.y + baseRadius * 0.55) * s, localEndPt.z * s);
@@ -1322,25 +1435,32 @@ function spawnStretchyChocoThread(localEndPt, baseRadius) {
   });
 }
 
-// ── 포인터 입력 핸들러 ──
+// ── 포인터 입력 (글씨 쓰기 + 쇼케이스 360° 드래그 회전 + 깔끔 캡처 복귀) ──
 function onPointerDown(e) {
   if (state === 'intro') {
     finishIntroToPlay();
     return;
   }
+
+  if (state === 'showcase') {
+    isOrbitDragging = true;
+    autoSpin = false;
+    chipSpin.classList.remove('active');
+    orbitStartX = orbitPrevX = e.clientX;
+    orbitStartY = orbitPrevY = e.clientY;
+    return;
+  }
+
   if (state !== 'playing') return;
   if (e.button != null && e.button !== 0) return;
 
   unlockAudio();
   if (!screenToCakeLocal(e.clientX, e.clientY, pointerCakeXZ)) return;
-
-  // 케이크 판 바깥을 클릭한 경우 무시
-  const dist = Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z);
-  if (dist > RC * 1.05) return;
+  if (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) > RC * 1.05) return;
 
   isPressing = true;
   pressHoldSec = 0;
-  dwellCharge = 0.16; // 첫 터치 시 초코 방울이 맺히며 시작
+  dwellCharge = 0.16;
   currentRadius = 0.18;
 
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), chocoMat);
@@ -1362,11 +1482,37 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  if (state === 'showcase') {
+    if (!isOrbitDragging) return;
+    const dx = e.clientX - orbitPrevX;
+    const dy = e.clientY - orbitPrevY;
+    orbitPrevX = e.clientX;
+    orbitPrevY = e.clientY;
+
+    // 좌우 드래그: 360° 자유 회전, 상하 드래그: 측면 얼짱각도(22°) ~ 완전 탑뷰(84°) 자유 조절!
+    targetAzimuth -= dx * 0.0085;
+    targetElevation = clamp(targetElevation + dy * 0.0065, 22 * DEG, 84 * DEG);
+    chipAngleHero.classList.remove('active');
+    chipAngleTop.classList.remove('active');
+    return;
+  }
+
   if (state !== 'playing') return;
   screenToCakeLocal(e.clientX, e.clientY, pointerCakeXZ);
 }
 
-function finishActiveStroke() {
+function finishActiveStroke(e) {
+  if (state === 'showcase') {
+    if (isOrbitDragging && document.body.classList.contains('clean-capture') && e && e.clientX != null) {
+      const moved = Math.hypot(e.clientX - orbitStartX, e.clientY - orbitStartY);
+      if (moved < 8) {
+        document.body.classList.remove('clean-capture');
+        cleanHint.classList.add('hidden');
+      }
+    }
+    isOrbitDragging = false;
+    return;
+  }
   if (!isPressing || !activeStroke) return;
   isPressing = false;
   const lastPt = activeStroke.pts[activeStroke.pts.length - 1];
@@ -1386,222 +1532,443 @@ window.addEventListener('pointermove', onPointerMove);
 window.addEventListener('pointerup', finishActiveStroke);
 window.addEventListener('pointercancel', finishActiveStroke);
 
-// ── 스테이지 채점 엔진 ──
-function evaluateCurrentStage() {
-  const stg = STAGES[stageIdx];
-  userEvalCtx.clearRect(0, 0, EVAL_N, EVAL_N);
-  userEvalCtx.save();
-  userEvalCtx.strokeStyle = '#ffffff';
-  userEvalCtx.fillStyle = '#ffffff';
-  userEvalCtx.lineCap = 'round';
-  userEvalCtx.lineJoin = 'round';
+// 마우스 휠 줌 지원 (쇼케이스에서 확대/축소)
+gl.addEventListener('wheel', e => {
+  if (state !== 'showcase') return;
+  e.preventDefault();
+  targetDist = clamp(targetDist + e.deltaY * 0.04, 42, 92);
+}, { passive: false });
 
-  const toPx = v => ((v + RIN) / (RIN * 2)) * EVAL_N;
+// ── 바이럴 포인트: 초코 획 물리 분석 → 빵모자 사장님의 팩폭 감정평 생성! ──
+function analyzeViralVerdict() {
+  let leftSpanSum = 0, leftCnt = 0;
+  let rightSpanSum = 0, rightCnt = 0;
+  let maxR = 0, minR = 99;
+  let minX = 99, maxX = -99;
+  let totalLen = 0;
 
-  let totalPts = 0;
   for (const st of currentStrokes) {
-    totalPts += st.pts.length;
+    let sMinZ = 99, sMaxZ = -99, sAvgX = 0;
     for (let i = 0; i < st.pts.length; i++) {
       const p = st.pts[i];
-      const px = toPx(p.x);
-      const py = toPx(p.z);
-      const pr = Math.max(2.5, (p.r / (RIN * 2)) * EVAL_N * 1.45);
-      userEvalCtx.beginPath();
-      userEvalCtx.arc(px, py, pr, 0, TAU);
-      userEvalCtx.fill();
-
+      minX = Math.min(minX, p.x);
+      maxX = Math.max(maxX, p.x);
+      sMinZ = Math.min(sMinZ, p.z);
+      sMaxZ = Math.max(sMaxZ, p.z);
+      sAvgX += p.x;
+      maxR = Math.max(maxR, p.r);
+      minR = Math.min(minR, p.r);
       if (i > 0) {
-        const q = st.pts[i - 1];
-        userEvalCtx.lineWidth = pr * 2;
-        userEvalCtx.beginPath();
-        userEvalCtx.moveTo(toPx(q.x), toPx(q.z));
-        userEvalCtx.lineTo(px, py);
-        userEvalCtx.stroke();
+        totalLen += Math.hypot(p.x - st.pts[i - 1].x, p.z - st.pts[i - 1].z);
       }
     }
-  }
-  userEvalCtx.restore();
-
-  const tData = targetEvalCtx.getImageData(0, 0, EVAL_N, EVAL_N).data;
-  const uData = userEvalCtx.getImageData(0, 0, EVAL_N, EVAL_N).data;
-
-  let targetCount = 0;
-  let hitCount = 0;
-  let userCount = 0;
-  let spillCount = 0;
-
-  for (let i = 3; i < tData.length; i += 4) {
-    const tOn = tData[i] > 40;
-    const uOn = uData[i] > 40;
-    if (tOn) {
-      targetCount++;
-      if (uOn) hitCount++;
-    }
-    if (uOn) {
-      userCount++;
-      if (!tOn) spillCount++;
-    }
+    sAvgX /= Math.max(1, st.pts.length);
+    const h = sMaxZ - sMinZ;
+    if (sAvgX < 0) { leftSpanSum += h; leftCnt++; }
+    else { rightSpanSum += h; rightCnt++; }
   }
 
-  // 밑그림에서 조금 비켜 써도 글자 구성과 길이가 충분하면 점수를 보정해 주는 하이브리드 판정
-  const coverage = targetCount > 0 ? hitCount / targetCount : 0;
-  const precision = userCount > 0 ? hitCount / userCount : 0;
+  const leftH = leftCnt > 0 ? leftSpanSum / leftCnt : 0;
+  const rightH = rightCnt > 0 ? rightSpanSum / rightCnt : 0;
+  const remCm = getRemainingCm();
 
-  // 가로 공간 활용도 (글자 수에 걸맞게 고르게 썼는가)
-  let minX = 99, maxX = -99;
-  let strokeLenSum = 0;
-  for (const st of currentStrokes) {
-    for (let i = 0; i < st.pts.length; i++) {
-      minX = Math.min(minX, st.pts[i].x);
-      maxX = Math.max(maxX, st.pts[i].x);
-      if (i > 0) {
-        strokeLenSum += Math.hypot(st.pts[i].x - st.pts[i - 1].x, st.pts[i].z - st.pts[i - 1].z);
-      }
-    }
+  if (outOfBoundsLen > 1.8) {
+    return {
+      tag: '👨‍🍳 감정 결과: 자유로운 영혼파',
+      text: '“생크림 꽃밭까지 초코로 점령하셨네요! 식탁보까지 쓰실 기세ㅋㅋ”',
+    };
   }
-  const expectedLen = stg.no === 1 ? 14 : stg.charSlots * 9.5;
-  const lenRatio = clamp(strokeLenSum / expectedLen, 0, 1.35);
-  const lengthAdequacy = lenRatio < 0.35
-    ? lenRatio / 0.35 * 0.45
-    : lenRatio <= 1.25
-      ? 1.0
-      : Math.max(0.55, 1.25 / lenRatio);
-
-  // 1) 형태·완성도 점수 (60점 만점)
-  const shapeRatio = clamp(coverage * 1.32 * 0.65 + precision * 0.35, 0, 1);
-  const formScore = Math.round(clamp(shapeRatio * 0.68 + lengthAdequacy * 0.32, 0, 1) * 60);
-
-  // 2) 생크림 테두리 보호 & 중앙 균형 (25점 만점)
-  const centerOffset = currentStrokes.length > 0 ? Math.abs((minX + maxX) * 0.5) : 10;
-  const edgePenalty = clamp(outOfBoundsLen * 4.5, 0, 20);
-  const balancePenalty = clamp((centerOffset - 2.6) * 1.8, 0, 8);
-  const spaceScore = Math.round(clamp(25 - edgePenalty - balancePenalty, 0, 25));
-
-  // 3) 초코 두께 깔끔함 (15점 만점 — 과도한 혹 떡짐 감점)
-  const blobPenalty = clamp(blobCount * 2.5, 0, 11);
-  const cleanScore = totalPts < 4 ? 0 : Math.round(clamp(15 - blobPenalty, 4, 15));
-
-  const stageTotal = clamp(formScore + spaceScore + cleanScore, 0, 100);
-  const passed = stageTotal >= 56 && strokeLenSum >= (stg.no === 1 ? 5.0 : stg.charSlots * 3.2);
-
+  if (leftCnt >= 1 && rightCnt >= 1 && leftH > rightH * 1.65 && maxX > RIN * 0.65) {
+    return {
+      tag: '👨‍🍳 감정 결과: 전형적인 앞글자 과투자형',
+      text: '“앞은 대문짝만하고 뒤로 갈수록 개미 목소리! 쇼츠 명장면 그 자체ㅋㅋ”',
+    };
+  }
+  if (blobCount >= 2 || maxR > 0.48) {
+    return {
+      tag: '👨‍🍳 감정 결과: 당황한 초코 혹 제조기',
+      text: '“중간에 멈칫해서 생긴 통통한 초코 혹이 진심이 담긴 증거예요!”',
+    };
+  }
+  if (totalLen < 9) {
+    return {
+      tag: '👨‍🍳 감정 결과: 극단적 미니멀리스트',
+      text: '“초코 아껴 주셔서 감사합니다(?!) 여백의 미가 예술이네요!”',
+    };
+  }
+  if (remCm < 1.3 && outOfBoundsLen <= 0.4) {
+    return {
+      tag: '👨‍🍳 감정 결과: 숨 참는 0.3cm의 기적',
+      text: '“크림 바로 코앞에서 딱 멈췄어요!! 심장 쫄깃한 명품 배치 인정!”',
+    };
+  }
+  if (maxR - minR > 0.22) {
+    return {
+      tag: '👨‍🍳 감정 결과: 붓글씨 서예가형 파티시에',
+      text: '“굵고 가는 필력 강약 조절이 예사롭지 않아요! 당장 진열장 직행!”',
+    };
+  }
   return {
-    stageNo: stg.no,
-    phrase: stg.phrase,
-    score: stageTotal,
-    formScore,
-    spaceScore,
-    cleanScore,
-    passed,
-    outOfBounds: outOfBoundsLen > 1.2,
+    tag: '👨‍🍳 감정 결과: 금손 수제 쇼콜라티에',
+    text: '“비율도 깔끔함도 완벽해요! 이대로 박스에 담아 선물해도 되겠어요!”',
   };
 }
 
-// ── 다 썼어요! 버튼 클릭 ──
+// ── 완성! → 360° 케이크 쇼케이스 진입 ──
+function enterShowcase() {
+  finishActiveStroke();
+  state = 'showcase';
+  BGM.setUrgent(false);
+
+  // 밑그림·경고상자·손을 모두 비켜 오직 내가 만든 3D 케이크 작품만 돋보이게!
+  guidePlane.visible = false;
+  warnBoxes.forEach(b => { b.visible = false; });
+  setHandVisible(false);
+  liveStreamMesh.visible = false;
+  activeHeadMesh.visible = false;
+
+  candleOn = true;
+  candleGroup.visible = true;
+  chipCandle.classList.add('active');
+  chipCandle.textContent = '🕯️ 촛불 켜짐';
+
+  // 입체감이 가장 예쁘게 살아나는 얼짱 각도로 스무스하게 세팅!
+  orbitAzimuth = 0;
+  targetAzimuth = 0.22;
+  orbitElevation = 60 * DEG;
+  targetElevation = 44 * DEG;
+  orbitDist = 70;
+  targetDist = 64;
+  autoSpin = true;
+  chipSpin.classList.add('active');
+  chipAngleHero.classList.add('active');
+  chipAngleTop.classList.remove('active');
+
+  currentVerdict = analyzeViralVerdict();
+  verdictTagEl.textContent = currentVerdict.tag;
+  verdictTextEl.textContent = currentVerdict.text;
+
+  // 기본 메모 자동 추천 (비어 있을 때만)
+  if (!cardMemoInput.value.trim()) {
+    cardMemoInput.placeholder = `메모 추가 (예: "${activeStageObj.phrase}" 직접 짰어ㅋㅋ)`;
+  }
+
+  if (playMode === 'stage' && stageIdx < STAGES.length - 1) {
+    btnNextStage.classList.remove('hidden');
+    btnNextStage.textContent = `➡️ 다음 (${stageIdx + 2}단계)`;
+  } else if (playMode === 'stage') {
+    btnNextStage.classList.remove('hidden');
+    btnNextStage.textContent = '💌 문구 직접 쓰기';
+  } else {
+    btnNextStage.classList.remove('hidden');
+    btnNextStage.textContent = '✏️ 문구 바꾸기';
+  }
+
+  cakeHud.classList.add('hidden');
+  bottomDock.classList.add('hidden');
+  showcaseTop.classList.remove('hidden');
+  showcaseDock.classList.remove('hidden');
+  document.body.classList.add('in-showcase');
+
+  SFX.win();
+}
+
 btnFinish.addEventListener('click', () => {
   if (state !== 'playing') return;
-  finishActiveStroke();
+  enterShowcase();
+});
 
-  const ev = evaluateCurrentStage();
-  lastStageEval = ev;
+// ── 쇼케이스 조작 버튼들 ──
+chipCandle.addEventListener('click', () => {
+  candleOn = !candleOn;
+  candleGroup.visible = candleOn;
+  chipCandle.classList.toggle('active', candleOn);
+  chipCandle.textContent = candleOn ? '🕯️ 촛불 켜짐' : '🕯️ 촛불 꺼짐';
+  SFX.pop();
+});
 
-  if (ev.passed) {
-    stageScores.push(ev.score);
-    totalScore = stageScores.reduce((a, b) => a + b, 0);
+chipSpin.addEventListener('click', () => {
+  autoSpin = !autoSpin;
+  chipSpin.classList.toggle('active', autoSpin);
+});
 
-    if (stageIdx < STAGES.length - 1) {
-      state = 'stage_clear';
-      stageClearTimer = 0;
-      cakeHud.classList.add('hidden');
-      bottomDock.classList.add('hidden');
-      SFX.win();
-    } else {
-      // 5단계 올클리어!
-      SFX.win();
-      enterGameOver(true);
-    }
+chipAngleHero.addEventListener('click', () => {
+  targetElevation = 42 * DEG;
+  targetDist = 63;
+  chipAngleHero.classList.add('active');
+  chipAngleTop.classList.remove('active');
+});
+
+chipAngleTop.addEventListener('click', () => {
+  targetAzimuth = 0;
+  targetElevation = 82 * DEG;
+  targetDist = 66;
+  autoSpin = false;
+  chipSpin.classList.remove('active');
+  chipAngleTop.classList.add('active');
+  chipAngleHero.classList.remove('active');
+});
+
+btnCleanView.addEventListener('click', () => {
+  document.body.classList.add('clean-capture');
+  cleanHint.style.opacity = '1';
+  cleanHint.classList.remove('hidden');
+  if (cleanHintTimer) clearTimeout(cleanHintTimer);
+  cleanHintTimer = setTimeout(() => {
+    cleanHint.style.opacity = '0';
+  }, 1700);
+});
+
+btnRewrite.addEventListener('click', () => {
+  showcaseTop.classList.add('hidden');
+  showcaseDock.classList.add('hidden');
+  setupStage(stageIdx);
+  cakeHud.classList.remove('hidden');
+  bottomDock.classList.remove('hidden');
+  state = 'playing';
+});
+
+btnNextStage.addEventListener('click', () => {
+  showcaseTop.classList.add('hidden');
+  showcaseDock.classList.add('hidden');
+
+  if (playMode === 'stage' && stageIdx < STAGES.length - 1) {
+    setupStage(stageIdx + 1);
+    cakeHud.classList.remove('hidden');
+    bottomDock.classList.remove('hidden');
+    state = 'playing';
   } else {
-    // 이번 스테이지 부분 점수 절반 반영 후 종료
-    stageScores.push(Math.round(ev.score * 0.6));
-    totalScore = stageScores.reduce((a, b) => a + b, 0);
-    SFX.fail();
-    enterGameOver(false);
+    // 5단계 다 깼거나 자유 문구 모드에서 다른 문구 쓰기를 누른 경우 -> 시작 모달 자유 문구 탭 오픈!
+    state = 'title';
+    playMode = 'custom';
+    tabModeCustom.click();
+    startModal.classList.remove('hidden');
   }
 });
 
-function getRankInfo(score, clearedAll, reachedStage) {
-  if (clearedAll && score >= 430) return { title: '👑 전설의 쇼콜라티에', comment: '도시락 케이크 장문까지 완벽하게 짰어요! 손끝이 기계 그 자체!' };
-  if (clearedAll) return { title: '🎂 수제 케이크 마스터', comment: '5단계 모든 손님 주문을 막힘없이 완성했어요!' };
-  if (reachedStage >= 4) return { title: '🍫 청담동 수석 파티시에', comment: '좁은 케이크 위에서도 초코 굵기 조절이 예술이에요!' };
-  if (reachedStage >= 3) return { title: '✨ 동네 인기 케이크집 사장님', comment: '「생일 축하해」 여백 배분 고비까지 멋지게 도전했어요!' };
-  if (reachedStage >= 2) return { title: '🧁 초코펜 수습 파티시에', comment: '초코가 늘어나는 감각을 잡기 시작했어요! 조금만 더 빠르게 그어 보세요!' };
-  return { title: '😅 초코 짤주머니 적응 중', comment: '한 자리에 너무 오래 머물면 초코가 통통하게 불어나요!' };
+// ── 바이럴 핵심: 현재 돌려 놓은 각도 그대로 고화질 『404 수제 케이크 폴라로이드 카드』 (1080×1350) 합성! ──
+function renderPolaroidCanvas() {
+  // 현재 3D 장면을 한 프레임 즉시 렌더해서 최신 각도 보장
+  renderer.render(scene, camera);
+
+  const W = 1080;
+  const H = 1350;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+
+  const th = PHOTO_THEMES[photoThemeKey] || PHOTO_THEMES.mint;
+  const isDark = photoThemeKey === 'night';
+
+  // 폴라로이드 바탕 그라데이션
+  const bgGrad = g.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, th.cardBgTop);
+  bgGrad.addColorStop(1, th.cardBgBot);
+  g.fillStyle = bgGrad;
+  g.fillRect(0, 0, W, H);
+
+  // 상단 공방 스탬프 헤더
+  g.fillStyle = isDark ? 'rgba(255,216,74,0.16)' : 'rgba(61,35,20,0.07)';
+  g.beginPath();
+  g.roundRect(54, 42, 340, 48, 24);
+  g.fill();
+
+  g.fillStyle = isDark ? '#ffd84a' : '#6b4226';
+  g.font = '900 22px "Pretendard","Apple SD Gothic Neo",sans-serif';
+  g.textAlign = 'left';
+  g.textBaseline = 'middle';
+  g.fillText('🎂 404 수제 케이크 공방', 78, 66);
+
+  g.textAlign = 'right';
+  g.fillStyle = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(61,35,20,0.5)';
+  g.font = '700 20px "Pretendard",sans-serif';
+  const today = new Date();
+  g.fillText(`${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`, W - 58, 66);
+
+  // 중앙 정사각형 고화질 3D 케이크 스냅샷 액자 (972 × 900)
+  const fx = 54, fy = 108, fw = W - 108, fh = 880;
+  g.save();
+  g.shadowColor = 'rgba(0, 0, 0, 0.22)';
+  g.shadowBlur = 28;
+  g.shadowOffsetY = 12;
+  g.fillStyle = th.bg;
+  g.beginPath();
+  g.roundRect(fx, fy, fw, fh, 34);
+  g.fill();
+  g.restore();
+
+  g.save();
+  g.beginPath();
+  g.roundRect(fx, fy, fw, fh, 34);
+  g.clip();
+
+  // WebGL 캔버스 중앙 크롭 복사 (찌그러짐 0%!)
+  const srcW = gl.width;
+  const srcH = gl.height;
+  const targetAspect = fw / fh;
+  const srcAspect = srcW / srcH;
+  let sx = 0, sy = 0, sw = srcW, sh = srcH;
+  if (srcAspect > targetAspect) {
+    sw = Math.round(srcH * targetAspect);
+    sx = Math.round((srcW - sw) / 2);
+  } else {
+    sh = Math.round(srcW / targetAspect);
+    sy = Math.round((srcH - sh) / 2);
+  }
+  g.drawImage(gl, sx, sy, sw, sh, fx, fy, fw, fh);
+  g.restore();
+
+  // 액자 테두리
+  g.strokeStyle = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(61,35,20,0.12)';
+  g.lineWidth = 3;
+  g.beginPath();
+  g.roundRect(fx, fy, fw, fh, 34);
+  g.stroke();
+
+  // 하단 주문 문구 & 메모 & 빵모자 사장님 감정 한줄평
+  const memo = cardMemoInput.value.trim();
+  const mainTitle = memo || `“${activeStageObj.phrase}”`;
+
+  g.textAlign = 'center';
+  g.fillStyle = th.cardInk;
+  g.font = '900 44px "Pretendard","Apple SD Gothic Neo",sans-serif';
+  g.fillText(mainTitle, W / 2, 1054);
+
+  // 감정 한줄평 박스
+  g.fillStyle = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(61,35,20,0.06)';
+  g.beginPath();
+  g.roundRect(72, 1112, W - 144, 126, 24);
+  g.fill();
+
+  g.fillStyle = isDark ? '#ffd84a' : '#9c5a25';
+  g.font = '900 22px "Pretendard",sans-serif';
+  g.fillText(currentVerdict.tag || '👨‍🍳 빵모자 사장님의 감정평', W / 2, 1148);
+
+  g.fillStyle = isDark ? '#f3eeff' : '#4a2e1b';
+  g.font = '800 24px "Pretendard",sans-serif';
+  const vText = (currentVerdict.text || '').slice(0, 38);
+  g.fillText(vText, W / 2, 1196);
+
+  // 맨 아래 은은한 바이럴 출처 안내
+  g.fillStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(61,35,20,0.48)';
+  g.font = '700 21px "Pretendard",sans-serif';
+  g.fillText('나도 직접 초코펜으로 케이크 쓰러 가기 👉 game404-arcade.vercel.app/cake', W / 2, 1292);
+
+  return c;
 }
 
-async function enterGameOver(clearedAll) {
-  state = 'gameover';
-  BGM.setUrgent(false);
-  cakeHud.classList.add('hidden');
-  bottomDock.classList.add('hidden');
-
-  const reachedStage = clearedAll ? STAGES.length : stageIdx + 1;
-  const avgAcc = stageScores.length > 0
-    ? Math.round(stageScores.reduce((a, b) => a + b, 0) / stageScores.length)
-    : 0;
-  const rk = getRankInfo(totalScore, clearedAll, reachedStage);
-
-  resRankEl.textContent = rk.title;
-  resHeadlineEl.textContent = `${totalScore}점`;
-  resCommentEl.textContent = !clearedAll && lastStageEval && lastStageEval.outOfBounds
-    ? '아차! 초콜릿이 생크림 테두리 밖으로 삐져나갔어요!'
-    : rk.comment;
-  resStageEl.textContent = clearedAll ? 'ALL CLEAR' : `STAGE ${reachedStage}`;
-  resAccEl.textContent = `${avgAcc}%`;
-  resScoreEl.textContent = String(totalScore);
-  resNickInput.value = getSavedNickname() || '';
-
-  updateBestRecord('cake', {
-    score: totalScore,
-    actualValue: reachedStage,
-    targetValue: STAGES.length,
-    rankTitle: rk.title,
-  }, false);
-  refreshBestUI();
-
-  resultModal.classList.remove('hidden');
-
-  // 서버 저장 & 글로벌 랭킹 표시
-  resLbWrap.style.display = 'block';
-  resLbWrap.innerHTML = '<div style="text-align:center;font-size:12px;color:#b8b0cc;padding:8px">글로벌 랭킹 불러오는 중...</div>';
-
-  lastShareInfo = await saveResultAndBuildShare({
-    gameId: 'cake',
-    nickname: resNickInput.value || getSavedNickname() || '익명 파티시에',
-    targetValue: STAGES.length,
-    actualValue: reachedStage,
-    score: totalScore,
-    errorMm: null,
-    rankTitle: rk.title,
-    seed: 1,
-    meta: { clearedAll, reachedStage, avgAcc },
-  }, incomingRef);
-
-  resLbWrap.innerHTML = renderGlobalLadderHTML(lastShareInfo, row => `${Math.round(row.score)}점`);
+function canvasToBlob(canvas) {
+  return new Promise(resolve => canvas.toBlob(b => resolve(b), 'image/png'));
 }
 
-// ── 시작 / 스킵 / 재도전 / 공유 / 이미지 저장 ──
+function triggerDownload(dataUrl) {
+  const a = document.createElement('a');
+  const safePhrase = (activeStageObj.phrase || 'cake').replace(/[^\w가-힣]/g, '').slice(0, 10) || 'cake';
+  a.download = `수제케이크_${safePhrase}.png`;
+  a.href = dataUrl;
+  a.click();
+}
+
+// 1) 케이크 이미지 공유하기 (완성된 폴라로이드 미리보기 + 모바일 네이티브 공유 & 클립보드 이미지 복사!)
+btnShareImg.addEventListener('click', async () => {
+  const cardCanvas = renderPolaroidCanvas();
+  latestCardDataUrl = cardCanvas.toDataURL('image/png');
+  const blob = await canvasToBlob(cardCanvas);
+  latestCardFile = blob ? new File([blob], 'cake404.png', { type: 'image/png' }) : null;
+
+  const canNativeFileShare = Boolean(
+    latestCardFile && navigator.canShare && navigator.canShare({ files: [latestCardFile] })
+  );
+  btnPreviewNative.style.display = canNativeFileShare ? 'inline-flex' : 'none';
+
+  const isTouchMobile = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const shareUrl = `${location.origin}/cake?msg=${encodeURIComponent(activeStageObj.phrase)}`;
+
+  // 실제 모바일 터치 기기에서는 네이티브 이미지 공유 시트 즉시 호출!
+  if (isTouchMobile && canNativeFileShare) {
+    try {
+      await navigator.share({
+        files: [latestCardFile],
+        title: '내가 직접 짠 수제 레터링 케이크 🎂',
+        text: `한 번 짜면 못 지우는 초코펜으로 직접 썼어ㅋㅋ 너도 해봐!\n${shareUrl}`,
+      });
+      showToast('📤 케이크 이미지를 공유했어요!');
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+
+  // PC 및 인앱 폴백: 클립보드에 이미지 복사 + 고화질 미리보기 카드 즉시 오픈!
+  let copiedImage = false;
+  if (blob && navigator.clipboard && window.ClipboardItem) {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      copiedImage = true;
+    } catch {
+      copiedImage = false;
+    }
+  }
+
+  previewImg.src = latestCardDataUrl;
+  previewModal.classList.remove('hidden');
+  if (copiedImage) {
+    showToast('📋 케이크 사진이 복사되었어요! 카톡·메신저에 바로 붙여넣기(⌘V) 하세요!');
+  } else {
+    showToast('📸 케이크 폴라로이드 완성! 저장하거나 공유해 보세요!');
+  }
+});
+
+btnPreviewNative.addEventListener('click', async () => {
+  if (!latestCardFile || !navigator.share) return;
+  const shareUrl = `${location.origin}/cake?msg=${encodeURIComponent(activeStageObj.phrase)}`;
+  try {
+    await navigator.share({
+      files: [latestCardFile],
+      title: '내가 직접 짠 수제 레터링 케이크 🎂',
+      text: `한 번 짜면 못 지우는 초코펜으로 직접 썼어ㅋㅋ 너도 해봐!\n${shareUrl}`,
+    });
+  } catch {
+    // 사용자 취소 무시
+  }
+});
+
+// 2) 폴라로이드 카드 바로 저장
+btnSaveCard.addEventListener('click', () => {
+  const cardCanvas = renderPolaroidCanvas();
+  latestCardDataUrl = cardCanvas.toDataURL('image/png');
+  triggerDownload(latestCardDataUrl);
+  showToast('💾 고화질 폴라로이드 이미지가 저장되었어요!');
+});
+
+btnPreviewClose.addEventListener('click', () => previewModal.classList.add('hidden'));
+previewModal.addEventListener('click', e => {
+  if (e.target === previewModal) previewModal.classList.add('hidden');
+});
+btnPreviewDownload.addEventListener('click', () => {
+  if (latestCardDataUrl) triggerDownload(latestCardDataUrl);
+  showToast('💾 파일로 저장되었어요!');
+});
+
+// ── 인트로 시작 & 스킵 ──
 function startIntro() {
   unlockAudio();
   BGM.start('cake');
   syncBgmBtn();
 
+  if (playMode === 'custom') {
+    customPhrase = (customPhraseInput.value || '').trim() || '생일 축하해 ♥';
+  }
+
   startModal.classList.add('hidden');
-  resultModal.classList.add('hidden');
+  previewModal.classList.add('hidden');
+  showcaseTop.classList.add('hidden');
+  showcaseDock.classList.add('hidden');
   cakeHud.classList.add('hidden');
   bottomDock.classList.add('hidden');
   btnSkipIntro.classList.remove('hidden');
 
-  stageScores = [];
-  totalScore = 0;
   introTime = 0;
   introCutPlayed = -1;
   state = 'intro';
@@ -1615,7 +1982,6 @@ function finishIntroToPlay() {
   btnSkipIntro.classList.add('hidden');
   introWorld.visible = false;
   mainWorld.visible = true;
-  scene.background.set(DESK_COLOR);
 
   setupStage(0);
   cakeHud.classList.remove('hidden');
@@ -1625,49 +1991,6 @@ function finishIntroToPlay() {
 
 btnStart.addEventListener('click', startIntro);
 btnSkipIntro.addEventListener('click', finishIntroToPlay);
-
-btnRetry.addEventListener('click', () => {
-  resultModal.classList.add('hidden');
-  stageScores = [];
-  totalScore = 0;
-  // 재도전은 바로 STAGE 1부터 쾌속 시작!
-  finishIntroToPlay();
-});
-
-btnShare.addEventListener('click', async () => {
-  const nick = saveNickname(resNickInput.value);
-  if (!lastShareInfo || nick !== lastShareInfo.nickname) {
-    lastShareInfo = await saveResultAndBuildShare({
-      gameId: 'cake',
-      nickname: nick,
-      targetValue: STAGES.length,
-      actualValue: stageIdx + 1,
-      score: totalScore,
-      errorMm: null,
-      rankTitle: resRankEl.textContent,
-      seed: 1,
-    }, incomingRef);
-    resLbWrap.innerHTML = renderGlobalLadderHTML(lastShareInfo, row => `${Math.round(row.score)}점`);
-  }
-  await shareChallengeLink({
-    title: `🎂 ${nick}님의 [케이크 글씨 쓰기] 기록: ${totalScore}점!`,
-    text: `한 번 짜면 못 지우는 3D 초코펜 레터링! ${nick}님의 ${totalScore}점 기록에 도전해 보세요!`,
-    url: lastShareInfo.shareUrl,
-  });
-});
-
-btnSaveImg.addEventListener('click', () => {
-  const nick = saveNickname(resNickInput.value);
-  downloadResultCard({
-    gameTitle: '케이크 글씨 쓰기',
-    rankTitle: resRankEl.textContent,
-    headline: `${totalScore}점`,
-    subline: `${resStageEl.textContent} · 평균 완성도 ${resAccEl.textContent}`,
-    nickname: nick,
-    glCanvas: gl,
-    shareUrl: lastShareInfo ? lastShareInfo.shareUrl : location.origin + '/cake/',
-  });
-});
 
 // ── 화면 리사이즈 ──
 function onResize() {
@@ -1683,26 +2006,25 @@ function onResize() {
   ov.height = Math.round(h * dpr);
   ovCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-
-// 세로 모바일 화면에서도 가로 피사체가 절대 잘리지 않도록 거리 배율 자동 계산
-function getAspectDistFactor() {
-  return camera.aspect < 0.85 ? clamp(0.82 / Math.max(0.42, camera.aspect), 1.0, 1.85) : 1.0;
-}
 window.addEventListener('resize', onResize);
 onResize();
 
-// ── 2D 오버레이 렌더링 (4컷 하드컷 자막·말풍선 & 스테이지 클리어 연출) ──
+function getAspectDistFactor() {
+  return camera.aspect < 0.85 ? clamp(0.82 / Math.max(0.42, camera.aspect), 1.0, 1.85) : 1.0;
+}
+
+// ── 4컷 하드컷 인트로 오버레이 ──
 function drawIntroOverlay(cutIdx, localK) {
   const w = window.innerWidth;
   const h = window.innerHeight;
   ovCtx.clearRect(0, 0, w, h);
 
-  // 시네마틱 상·하단 소프트 레터박스 & 컷 번호 태그
+  const phrasePreview = playMode === 'custom' ? customPhrase : '하트(♥)';
   const captions = [
     { badge: 'CUT 1 · 동네 케이크 공방', main: '딸랑~! 문을 열고 들어갔다!', sub: '달콤한 생크림 냄새가 솔솔~' },
     { badge: 'CUT 2 · 케이크 고르기', main: '“이 새하얀 생크림 케이크로 주세요!”', sub: '글씨 쓰기 딱 좋은 순백의 홀케이크 픽!' },
     { badge: 'CUT 3 · 빵모자 사장님 환영', main: '“어서 오세요~! 문구는 직접 써 보실래요?”', sub: '갓 녹인 쫀득한 초코 짤주머니 증정!' },
-    { badge: 'CUT 4 · 멘트 고민 중…', main: '“음… 한 번 짜면 못 지우는데… 하트부터?!”', sub: '누르는 시간에 따라 굵기가 달라진다!!' },
+    { badge: 'CUT 4 · 멘트 고민 중…', main: `“음… 못 지우는데… ${phrasePreview} 도전?!”`, sub: '누르는 시간에 따라 초코 두께가 달라진다!!' },
   ];
   const c = captions[cutIdx] || captions[0];
   const pop = 1 + 0.06 * Math.exp(-localK * 9);
@@ -1711,8 +2033,7 @@ function drawIntroOverlay(cutIdx, localK) {
   ovCtx.translate(w / 2, h * 0.78);
   ovCtx.scale(pop, pop);
 
-  // 말풍선 카드 배경
-  const bw = Math.min(w * 0.88, 380);
+  const bw = Math.min(w * 0.88, 386);
   const bh = 86;
   ovCtx.fillStyle = 'rgba(28, 18, 12, 0.88)';
   ovCtx.strokeStyle = '#ffd84a';
@@ -1722,57 +2043,22 @@ function drawIntroOverlay(cutIdx, localK) {
   ovCtx.fill();
   ovCtx.stroke();
 
-  // 컷 배지
   ovCtx.fillStyle = '#ffd84a';
   ovCtx.font = '900 11.5px "Pretendard",sans-serif';
   ovCtx.textAlign = 'center';
   ovCtx.fillText(c.badge, 0, -20);
 
-  // 메인 대사
   ovCtx.fillStyle = '#ffffff';
-  ovCtx.font = '900 16px "Pretendard",sans-serif';
+  ovCtx.font = '900 15.5px "Pretendard",sans-serif';
   ovCtx.fillText(c.main, 0, 4);
 
-  // 보조 설명
   ovCtx.fillStyle = '#fde68a';
   ovCtx.font = '700 12px "Pretendard",sans-serif';
   ovCtx.fillText(c.sub, 0, 25);
   ovCtx.restore();
 }
 
-function drawStageClearOverlay(t) {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  ovCtx.clearRect(0, 0, w, h);
-  if (!lastStageEval) return;
-
-  const pop = 1 + 0.1 * Math.exp(-t * 8);
-  ovCtx.save();
-  ovCtx.translate(w / 2, h * 0.22);
-  ovCtx.scale(pop, pop);
-
-  const bw = Math.min(w * 0.84, 320);
-  const bh = 78;
-  ovCtx.fillStyle = 'rgba(22, 16, 32, 0.9)';
-  ovCtx.strokeStyle = '#4ade80';
-  ovCtx.lineWidth = 2.5;
-  ovCtx.beginPath();
-  ovCtx.roundRect(-bw / 2, -bh / 2, bw, bh, 20);
-  ovCtx.fill();
-  ovCtx.stroke();
-
-  ovCtx.textAlign = 'center';
-  ovCtx.fillStyle = '#4ade80';
-  ovCtx.font = '900 13px "Pretendard",sans-serif';
-  ovCtx.fillText(`🎉 STAGE ${lastStageEval.stageNo} 통과! (+${lastStageEval.score}점)`, 0, -10);
-
-  ovCtx.fillStyle = '#ffffff';
-  ovCtx.font = '800 14px "Pretendard",sans-serif';
-  ovCtx.fillText(`다음 손님 케이크 준비 중...`, 0, 16);
-  ovCtx.restore();
-}
-
-// ── 메인 루프 (60fps 실시간 초코 물리 & 카메라 & 3D 손 애니메이션) ──
+// ── 메인 루프 ──
 let prevNow = performance.now();
 const _penTipW = V();
 const _penAxis = V();
@@ -1785,21 +2071,11 @@ function updateIntro(dt) {
     return;
   }
 
-  let cut = 0;
-  let localK = 0;
-  if (introTime < 0.92) {
-    cut = 0;
-    localK = introTime / 0.92;
-  } else if (introTime < 1.88) {
-    cut = 1;
-    localK = (introTime - 0.92) / 0.96;
-  } else if (introTime < 2.88) {
-    cut = 2;
-    localK = (introTime - 1.88) / 1.0;
-  } else {
-    cut = 3;
-    localK = (introTime - 2.88) / 0.97;
-  }
+  let cut = 0, localK = 0;
+  if (introTime < 0.92) { cut = 0; localK = introTime / 0.92; }
+  else if (introTime < 1.88) { cut = 1; localK = (introTime - 0.92) / 0.96; }
+  else if (introTime < 2.88) { cut = 2; localK = (introTime - 1.88) / 1.0; }
+  else { cut = 3; localK = (introTime - 2.88) / 0.97; }
 
   if (cut !== introCutPlayed) {
     introCutPlayed = cut;
@@ -1812,7 +2088,6 @@ function updateIntro(dt) {
   const af = getAspectDistFactor();
 
   if (cut === 0) {
-    // CUT 1: 가게 어닝·간판·화분·유리문 전체가 보이면서 활짝 열리고 금빛 문종 딸랑딸랑!
     introWorld.visible = true;
     mainWorld.visible = false;
     introRefs.doorScene.visible = true;
@@ -1822,12 +2097,9 @@ function updateIntro(dt) {
     introRefs.doorPivot.rotation.y = -openAng;
     introRefs.bellPivot.rotation.z = Math.sin(introTime * 34) * 0.42 * (1 - localK * 0.4);
 
-    const zStart = 31 * af;
-    const zEnd = 21 * af;
-    camera.position.set(0.3, 4.2, lerp(zStart, zEnd, ease(localK)));
+    camera.position.set(0.3, 4.2, lerp(31 * af, 21 * af, ease(localK)));
     camera.lookAt(0, 3.2, -5.2);
   } else if (cut === 1) {
-    // CUT 2: 진열장 속 3종 케이크 전체가 한눈에 보이고 가운데 순백 생크림 케이크를 손가락으로 콕!
     introWorld.visible = true;
     mainWorld.visible = false;
     introRefs.doorScene.visible = false;
@@ -1839,14 +2111,12 @@ function updateIntro(dt) {
     introRefs.pointHand.position.set(0.35, 1.35 - poke * 0.2, 2.2 - poke * 1.35);
     introRefs.displayCakes.forEach((cg, idx) => {
       cg.position.y = idx === 1 ? -0.3 + Math.max(0, Math.sin((localK - 0.3) * 9)) * 0.45 : -0.3;
-      const sc = idx === 1 ? 1.04 + 0.1 * poke : 0.92;
-      cg.scale.setScalar(sc);
+      cg.scale.setScalar(idx === 1 ? 1.04 + 0.1 * poke : 0.92);
     });
 
     camera.position.set(0.4, 5.2, 16.5 * af);
     camera.lookAt(0, 0.5, -2.5);
   } else if (cut === 2) {
-    // CUT 3: 빵모자 쓴 아저씨 상반신 + 카운터 풀샷으로 양팔 흔들며 반갑게 환영!
     introWorld.visible = true;
     mainWorld.visible = false;
     introRefs.doorScene.visible = false;
@@ -1861,10 +2131,10 @@ function updateIntro(dt) {
     camera.position.set(0, 5.8, 17.5 * af);
     camera.lookAt(0, 3.6, -6.5);
   } else {
-    // CUT 4: 민트 작업대 위 새하얀 케이크 전체와 초코펜 멘트 고민!
     introWorld.visible = false;
     mainWorld.visible = true;
-    scene.background.set(DESK_COLOR);
+    setHandVisible(true);
+    scene.background.set(PHOTO_THEMES.mint.bg);
     cakeRoot.scale.setScalar(1.0);
 
     const hoverX = Math.sin(localK * TAU * 1.5) * 2.4;
@@ -1884,7 +2154,7 @@ function updateIntro(dt) {
 function updatePlaying(dt, nowSec) {
   ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  const stg = STAGES[stageIdx];
+  const stg = activeStageObj;
   const s = cakeRoot.scale.x || 1;
 
   if (isPressing && activeStroke) {
@@ -1895,19 +2165,15 @@ function updatePlaying(dt, nowSec) {
     const dx = pointerCakeXZ.x - last.x;
     const dz = pointerCakeXZ.z - last.z;
     const dist = Math.hypot(dx, dz);
-    const speed = dist / Math.max(0.004, dt); // cm/s
+    const speed = dist / Math.max(0.004, dt);
 
-    // 핵심 물리 1: 누르고 머무는 시간에 따라 초코 두께가 통통하게 차오르고, 빠르게 그으면 얇아진다!
     const speedThinFactor = clamp(1.0 - speed / 26.0, 0.0, 1.0);
     if (speed < 4.5) {
-      // 한 자리에 머물거나 아주 천천히 움직이면 초코가 계속 고임(혹 형성)!
       dwellCharge = clamp(dwellCharge + dt * 1.35, 0, 1.35);
     } else {
-      // 빠르게 움직이면 고임이 풀리며 날렵한 선으로 뽑힘
       dwellCharge = Math.max(0, dwellCharge - dt * (1.8 + speed * 0.08));
     }
 
-    // 길게 누르고 있는 시간 자체도 짤주머니 압력을 높임
     const holdBoost = clamp(pressHoldSec / 2.2, 0, 0.35);
     const targetRadius = clamp(
       0.105 + 0.12 * speedThinFactor + 0.32 * dwellCharge + 0.12 * holdBoost,
@@ -1917,7 +2183,6 @@ function updatePlaying(dt, nowSec) {
     currentRadius = lerp(currentRadius, targetRadius, clamp(dt * 16, 0, 1));
     currentGrip = lerp(currentGrip, clamp(0.32 + dwellCharge * 0.45 + holdBoost * 0.5, 0.28, 0.98), clamp(dt * 14, 0, 1));
 
-    // 제자리에 멈춰 있을 때는 마지막 점의 반지름 자체가 실시간으로 부풀어 오름!
     if (dist < 0.11) {
       if (currentRadius > last.r) {
         last.r = currentRadius;
@@ -1933,7 +2198,6 @@ function updatePlaying(dt, nowSec) {
         guideChipEl.classList.add('warn');
       }
     } else {
-      // 일정 간격(0.14cm)으로 보간 샘플링해 도톰하고 매끄러운 연속 관 생성
       const steps = Math.max(1, Math.ceil(dist / 0.16));
       for (let i = 1; i <= steps; i++) {
         const k = i / steps;
@@ -1943,7 +2207,6 @@ function updatePlaying(dt, nowSec) {
         pts.push({ x: nx, y: 0.02 + rHere * 0.12, z: nz, r: rHere });
         maxWrittenX = Math.max(maxWrittenX, nx + rHere);
 
-        // 크림 로제트 안쪽 반지름(RIN) 침범 체크
         if (Math.hypot(nx, nz) + rHere * 0.7 > RIN + 0.35) {
           outOfBoundsLen += dist / steps;
         }
@@ -1961,7 +2224,6 @@ function updatePlaying(dt, nowSec) {
       SFX.chocoSqueeze(clamp((currentRadius - 0.1) / 0.5, 0, 1));
     }
 
-    // 짜는 중 초코 머리 방울 + 노즐→케이크 표면 쫀득 액체 기둥 업데이트
     const curEnd = pts[pts.length - 1];
     activeHeadMesh.visible = true;
     activeHeadMesh.position.set(curEnd.x, curEnd.y + curEnd.r * 0.48, curEnd.z);
@@ -1970,7 +2232,6 @@ function updatePlaying(dt, nowSec) {
     const tipHoverH = (0.48 + currentRadius * 1.25) * s;
     _penTipW.set(pointerCakeXZ.x * s, tipHoverH, pointerCakeXZ.z * s);
 
-    // 노즐에서 케이크 위 초코 머리까지 휘어지며 내려오는 액체 줄기
     const headWorld = V(curEnd.x * s, (curEnd.y + curEnd.r * 0.52) * s, curEnd.z * s);
     const midWorld = _penTipW.clone().lerp(headWorld, 0.52);
     midWorld.y -= 0.06;
@@ -1994,69 +2255,15 @@ function updatePlaying(dt, nowSec) {
     activeHeadMesh.visible = false;
   }
 
-  // HUD 초코 두께 게이지 업데이트
   const thickPct = clamp(((currentRadius - 0.09) / 0.55) * 100, 12, 100);
   thickFillEl.style.width = `${thickPct.toFixed(0)}%`;
 
-  // 펜 기울기 (오른쪽 끝으로 갈수록 가리지 않게 자연스럽게 각도 조절)
   const rightBias = clamp((pointerCakeXZ.x - 2.0) / 8.0, 0, 1);
   _penAxis.set(lerp(0.32, 0.06, rightBias), 0.34, lerp(0.88, 0.94, rightBias)).normalize();
   updatePenAndHand(_penTipW, _penAxis, currentGrip, currentRadius * s * 0.85);
 
-  // 핵심 물리 2: 손을 떼었을 때 쫀득하게 늘어나다 '톡!' 끊기는 초콜릿 실 애니메이션
-  for (let i = stretchyThreads.length - 1; i >= 0; i--) {
-    const th = stretchyThreads[i];
-    th.age += dt;
-    const k = th.age / th.dur;
-    if (k >= 1) {
-      stretchyThreadsGroup.remove(th.mesh);
-      if (th.mesh.geometry) th.mesh.geometry.dispose();
-      stretchyThreads.splice(i, 1);
-      continue;
-    }
+  updateStretchyThreads(dt);
 
-    if (k < 0.62) {
-      // 늘어나는 구간: 케이크 끝점 ↔ 들려 올라가는 노즐 끝 사이에 가운데가 잘록한 곡선 초코 실!
-      const u = k / 0.62;
-      const topPt = _penTipW.clone();
-      const p1 = th.anchor.clone().lerp(topPt, 0.33);
-      const p2 = th.anchor.clone().lerp(topPt, 0.67);
-      const sag = 0.22 * Math.sin(u * Math.PI);
-      p1.y -= sag;
-      p2.y -= sag * 0.7;
-
-      const neck = Math.max(0.012, th.r0 * (1 - u * 0.88));
-      if (th.mesh.geometry) th.mesh.geometry.dispose();
-      th.mesh.geometry = buildTubeGeo(
-        [th.anchor, p1, p2, topPt],
-        [th.r0 * 0.9, neck, neck * 0.85, th.r0 * 0.65],
-        8,
-        V(0, 0, 1),
-        1,
-        0
-      );
-    } else {
-      // '톡!' 끊긴 직후 탄성 있게 케이크 쪽으로 스르륵 내려앉는 꼬리 잔상
-      if (!th.snapped) {
-        th.snapped = true;
-        SFX.chocoSnap();
-      }
-      const u = (k - 0.62) / 0.38;
-      const recoilTop = th.anchor.clone().add(V(0, (1 - u) * 0.75, 0));
-      const mid = th.anchor.clone().lerp(recoilTop, 0.5);
-      if (th.mesh.geometry) th.mesh.geometry.dispose();
-      th.mesh.geometry = buildTubeGeo(
-        [th.anchor, mid, recoilTop],
-        [th.r0 * 0.8, th.r0 * 0.35 * (1 - u), 0.008],
-        8,
-        V(0, 0, 1),
-        1,
-        0
-      );
-    }
-  }
-
-  // 오른쪽 남은 자리 경고 점선 상자 & 카메라 살짝 줌인 (원본 쇼츠 9.4초 깨달음 구간 연출!)
   const remCm = getRemainingCm();
   const needTightZoom = stg.charSlots >= 5 && (currentStrokes.length > 0 || activeStroke) && remCm < 7.2 * s && remCm > 0.8;
   BGM.setUrgent(needTightZoom);
@@ -2089,6 +2296,91 @@ function updatePlaying(dt, nowSec) {
   camera.lookAt(_camTarget);
 }
 
+function updateStretchyThreads(dt) {
+  for (let i = stretchyThreads.length - 1; i >= 0; i--) {
+    const th = stretchyThreads[i];
+    th.age += dt;
+    const k = th.age / th.dur;
+    if (k >= 1) {
+      stretchyThreadsGroup.remove(th.mesh);
+      if (th.mesh.geometry) th.mesh.geometry.dispose();
+      stretchyThreads.splice(i, 1);
+      continue;
+    }
+
+    if (k < 0.62) {
+      const u = k / 0.62;
+      const topPt = _penTipW.clone();
+      const p1 = th.anchor.clone().lerp(topPt, 0.33);
+      const p2 = th.anchor.clone().lerp(topPt, 0.67);
+      const sag = 0.22 * Math.sin(u * Math.PI);
+      p1.y -= sag;
+      p2.y -= sag * 0.7;
+
+      const neck = Math.max(0.012, th.r0 * (1 - u * 0.88));
+      if (th.mesh.geometry) th.mesh.geometry.dispose();
+      th.mesh.geometry = buildTubeGeo(
+        [th.anchor, p1, p2, topPt],
+        [th.r0 * 0.9, neck, neck * 0.85, th.r0 * 0.65],
+        8,
+        V(0, 0, 1),
+        1,
+        0
+      );
+    } else {
+      if (!th.snapped) {
+        th.snapped = true;
+        SFX.chocoSnap();
+      }
+      const u = (k - 0.62) / 0.38;
+      const recoilTop = th.anchor.clone().add(V(0, (1 - u) * 0.75, 0));
+      const mid = th.anchor.clone().lerp(recoilTop, 0.5);
+      if (th.mesh.geometry) th.mesh.geometry.dispose();
+      th.mesh.geometry = buildTubeGeo(
+        [th.anchor, mid, recoilTop],
+        [th.r0 * 0.8, th.r0 * 0.35 * (1 - u), 0.008],
+        8,
+        V(0, 0, 1),
+        1,
+        0
+      );
+    }
+  }
+}
+
+function updateShowcase(dt, nowSec) {
+  ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  updateStretchyThreads(dt);
+
+  if (autoSpin && !isOrbitDragging) {
+    targetAzimuth += dt * 0.42;
+  }
+
+  orbitAzimuth = lerp(orbitAzimuth, targetAzimuth, clamp(dt * 9, 0, 1));
+  orbitElevation = lerp(orbitElevation, targetElevation, clamp(dt * 9, 0, 1));
+  orbitDist = lerp(orbitDist, targetDist, clamp(dt * 9, 0, 1));
+
+  // 촛불 흔들림 애니메이션
+  if (candleOn && candleGroup.visible) {
+    const flick = Math.sin(nowSec * 19) * 0.06 + Math.cos(nowSec * 31) * 0.04;
+    flameOuterMesh.scale.set(0.75 + flick * 0.5, 1.65 + flick * 1.4, 0.75 - flick * 0.4);
+    flameOuterMesh.position.x = Math.sin(nowSec * 13) * 0.05;
+    flameInnerMesh.position.x = flameOuterMesh.position.x * 0.6;
+    candleLight.intensity = (photoThemeKey === 'night' ? 42 : 24) + flick * 40;
+  }
+
+  const afShow = lerp(1, getAspectDistFactor(), 0.38);
+  const d = orbitDist * afShow;
+  const lookY = document.body.classList.contains('clean-capture') ? -1.4 : -2.2;
+
+  camera.position.set(
+    Math.sin(orbitAzimuth) * Math.cos(orbitElevation) * d,
+    lookY + Math.sin(orbitElevation) * d,
+    Math.cos(orbitAzimuth) * Math.cos(orbitElevation) * d
+  );
+  camera.lookAt(0, lookY, 0);
+}
+
 function animate(nowMs) {
   requestAnimationFrame(animate);
   const dt = Math.min(0.05, Math.max(0.001, (nowMs - prevNow) / 1000));
@@ -2096,10 +2388,10 @@ function animate(nowMs) {
   const nowSec = nowMs / 1000;
 
   if (state === 'title') {
-    // 타이틀 배경에서 케이크가 은은하게 회전
     ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     introWorld.visible = false;
     mainWorld.visible = true;
+    setHandVisible(true);
     cakeRoot.rotation.y += dt * 0.28;
     _penTipW.set(6.8, 3.2 + Math.sin(nowSec * 2.2) * 0.35, 4.2);
     _penAxis.set(0.35, 0.42, 0.84).normalize();
@@ -2110,46 +2402,12 @@ function animate(nowMs) {
     updateIntro(dt);
   } else if (state === 'playing') {
     updatePlaying(dt, nowSec);
-  } else if (state === 'stage_clear') {
-    stageClearTimer += dt;
-    // 손을 오른쪽 바깥으로 스르륵 물리고 케이크를 살짝 돌려 완성작 감상!
-    _penTipW.lerp(V(22, 9, 14), clamp(dt * 5, 0, 1));
-    updatePenAndHand(_penTipW, V(0.4, 0.5, 0.76).normalize(), 0.05, 0.12);
-    cakeRoot.rotation.y = Math.sin(clamp(stageClearTimer / 1.55, 0, 1) * Math.PI) * 0.28;
-    warnBoxes.forEach(b => { b.visible = false; });
-
-    camera.position.lerp(V(0, 56, 38), clamp(dt * 4, 0, 1));
-    camera.lookAt(0, -0.5, 0.5);
-    drawStageClearOverlay(stageClearTimer);
-
-    if (stageClearTimer >= 1.55) {
-      ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      setupStage(stageIdx + 1);
-      cakeHud.classList.remove('hidden');
-      bottomDock.classList.remove('hidden');
-      state = 'playing';
-    }
-  } else if (state === 'gameover') {
-    // 결과 화면 및 바깥 클릭 캡처 모드에서 내가 직접 쓴 3D 케이크가 부드럽게 턴테이블 회전!
-    ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    _penTipW.lerp(V(26, 11, 18), clamp(dt * 4, 0, 1));
-    updatePenAndHand(_penTipW, V(0.4, 0.5, 0.76).normalize(), 0.05, 0.11);
-    warnBoxes.forEach(b => { b.visible = false; });
-    guidePlane.visible = false; // 캡처할 때 밑그림 없이 순수 내 초코 작품만 깔끔하게 보이게!
-    cakeSpinAngle += dt * 0.42;
-    cakeRoot.rotation.y = Math.sin(cakeSpinAngle) * 0.38;
-
-    camera.position.lerp(V(0, 54, 40), clamp(dt * 3.5, 0, 1));
-    camera.lookAt(0, -0.8, 0);
-  }
-
-  if (state === 'playing') {
-    guidePlane.visible = true;
+  } else if (state === 'showcase') {
+    updateShowcase(dt, nowSec);
   }
 
   renderer.render(scene, camera);
 }
 
-// 초기 상태 세팅
 setupStage(0);
 requestAnimationFrame(animate);

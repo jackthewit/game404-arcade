@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <link rel="icon" href="data:,">
   <title>케이크 글씨 쓰기 — 이게뭔겜? 404 아케이드</title>
-  <meta name="description" content="한 번 짜면 못 지우는 쫀득한 3D 초코 펜! 누르는 시간에 따라 달라지는 두께감으로 하트 1개부터 장문 레터링까지 도전하세요.">
+  <meta name="description" content="한 번 짜면 못 지우는 쫀득한 3D 초코펜! 직접 쓴 레터링 케이크에 촛불을 켜고 이리저리 돌려보며 친구에게 사진으로 공유해 보세요.">
   <link rel="stylesheet" href="../shared/styles.css">
   <style>
     #gl, #ov {
@@ -20,34 +20,53 @@
       cursor: crosshair;
       z-index: 1;
     }
+    body.in-showcase #gl {
+      cursor: grab;
+    }
+    body.in-showcase #gl:active {
+      cursor: grabbing;
+    }
     #ov {
       pointer-events: none;
       z-index: 10;
     }
 
-    /* 상단 스테이지 & 주문 쪽지 HUD */
+    /* 깔끔 캡처 모드: 모든 UI 숨김 */
+    body.clean-capture .topbar,
+    body.clean-capture .showcase-top,
+    body.clean-capture .showcase-dock {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .clean-capture-hint {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top) + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.55);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 11.5px;
+      font-weight: 800;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    /* 상단 스테이지 & 주문 쪽지 HUD (글씨 쓰는 중) */
     .cake-hud {
       position: fixed;
-      top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+      top: calc(max(10px, env(safe-area-inset-top)) + 46px);
       left: 50%;
       transform: translateX(-50%);
       width: min(94vw, 430px);
       z-index: 25;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-    .cake-hud.with-rival {
-      top: calc(max(10px, env(safe-area-inset-top)) + 108px);
-    }
-    body.result-peeking .cake-hud,
-    body.result-peeking .bottom-dock {
-      opacity: 0;
+      gap: 7px;
       pointer-events: none;
     }
-
     .stage-steps {
       display: flex;
       gap: 5px;
@@ -55,7 +74,7 @@
     }
     .stage-dot {
       flex: 1;
-      max-width: 76px;
+      max-width: 78px;
       padding: 4px 6px;
       border-radius: 999px;
       background: rgba(24, 18, 34, 0.72);
@@ -103,7 +122,7 @@
       color: #926239;
     }
     .order-phrase {
-      font-size: clamp(17px, 4.6vw, 22px);
+      font-size: clamp(16px, 4.4vw, 21px);
       font-weight: 900;
       letter-spacing: -0.02em;
       color: #361b0c;
@@ -124,7 +143,6 @@
       font-size: 12px;
       font-weight: 900;
       white-space: nowrap;
-      transition: transform 0.12s ease, color 0.15s ease;
     }
     .thick-bar-wrap {
       display: flex;
@@ -149,7 +167,7 @@
       transition: width 0.06s linear;
     }
 
-    /* 하단 조작 안내 & 제출 버튼 */
+    /* 하단 조작 바 (글씨 쓰는 중) */
     .bottom-dock {
       position: fixed;
       left: 50%;
@@ -184,11 +202,6 @@
       border-color: #fdba74;
       color: #ffffff;
     }
-    .dock-row {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-    }
     .btn-bakery {
       background: linear-gradient(135deg, #ffd84a, #f59e0b);
       color: #261405;
@@ -199,6 +212,215 @@
     .btn-bakery:disabled {
       opacity: 0.45;
       box-shadow: none;
+    }
+
+    /* ── 360° 케이크 쇼케이스 & 캡처 스튜디오 UI ── */
+    .showcase-top {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 46px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94vw, 430px);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .verdict-bubble {
+      background: rgba(26, 18, 14, 0.88);
+      border: 1.5px solid rgba(255, 216, 74, 0.65);
+      border-radius: 18px;
+      padding: 9px 15px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+      width: 100%;
+    }
+    .verdict-tag {
+      font-size: 11px;
+      font-weight: 900;
+      color: #ffd84a;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .verdict-text {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.4;
+      word-break: keep-all;
+    }
+    .orbit-hint {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.92);
+      background: rgba(20, 15, 30, 0.62);
+      padding: 4px 12px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+    }
+
+    .showcase-dock {
+      position: fixed;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(95vw, 440px);
+      z-index: 35;
+      background: rgba(22, 17, 34, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 22px;
+      padding: 11px 12px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: opacity 0.2s ease;
+    }
+    .chip-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 1px;
+    }
+    .chip-scroll::-webkit-scrollbar { display: none; }
+    .mini-chip {
+      flex-shrink: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.07);
+      color: #f3eeff;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .mini-chip.active {
+      background: #ffd84a;
+      color: #211504;
+      border-color: #ffd84a;
+    }
+    .memo-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+    }
+    .memo-input {
+      width: 100%;
+      padding: 8px 11px;
+      border-radius: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(12, 9, 20, 0.75);
+      color: #ffffff;
+      font-size: 12.5px;
+      font-family: inherit;
+    }
+    .memo-input:focus {
+      outline: none;
+      border-color: #ffd84a;
+    }
+    .share-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 7px;
+    }
+    .sub-grid {
+      display: flex;
+      gap: 6px;
+    }
+    .sub-grid > * {
+      flex: 1;
+    }
+    .btn-compact {
+      padding: 10px 8px;
+      font-size: 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+    .btn-compact.highlight {
+      background: rgba(74, 222, 128, 0.2);
+      border-color: rgba(74, 222, 128, 0.55);
+      color: #bbf7d0;
+    }
+
+    /* 시작 모달 내 자유 문구 선택 탭 */
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.28);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .mode-tab {
+      padding: 9px 8px;
+      border-radius: 10px;
+      border: 0;
+      background: transparent;
+      color: #b8b0cc;
+      font-size: 12.5px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .mode-tab.active {
+      background: #ffd84a;
+      color: #231604;
+    }
+    .custom-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: left;
+    }
+    .preset-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .preset-chip {
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 216, 74, 0.35);
+      background: rgba(255, 216, 74, 0.1);
+      color: #fde68a;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .preset-chip:hover {
+      background: rgba(255, 216, 74, 0.24);
+    }
+
+    /* 생성된 폴라로이드 이미지 미리보기 모달 */
+    .card-preview-img {
+      width: 100%;
+      max-height: 56vh;
+      object-fit: contain;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: #120e1c;
     }
 
     /* 인트로 스킵 버튼 */
@@ -223,27 +445,23 @@
   <canvas id="gl"></canvas>
   <canvas id="ov"></canvas>
 
-  <!-- 상단 바 -->
+  <!-- 상단 바 (순위 없이 깔끔하게 아케이드 복귀 + BGM 토글만 유지) -->
   <div class="topbar">
     <a href="../" class="pill-btn">← 404 아케이드</a>
     <div style="display:flex;gap:6px">
       <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
-      <span class="pill-btn" id="best-pill" style="color:#ffd84a">🏆 최고 0점</span>
     </div>
   </div>
 
-  <!-- 지인 기록 배너 -->
-  <div class="rival-banner" id="rival-banner" style="display:none">
-    <div id="rival-banner-text"></div>
-    <span class="rival-badge">지인 기록</span>
-  </div>
+  <!-- 깔끔 캡처 모드 안내 (잠깐 떴다가 자동으로 사라져 순수 케이크만 캡처 가능) -->
+  <div class="clean-capture-hint hidden" id="clean-hint">📷 드래그해 각도를 맞추고 캡처하세요! (화면을 한 번 톡 누르면 버튼 복귀)</div>
 
-  <!-- 본 게임 HUD -->
+  <!-- 본 게임 HUD (글씨 쓰는 중) -->
   <div class="cake-hud hidden" id="cake-hud">
     <div class="stage-steps" id="stage-steps"></div>
     <div class="order-card">
       <div class="order-left">
-        <span class="order-kicker" id="order-kicker">STAGE 1 · 몸풀기 주문</span>
+        <span class="order-kicker" id="order-kicker">STAGE 1 · 첫 손님 서비스</span>
         <strong class="order-phrase" id="order-phrase">♥</strong>
       </div>
       <div class="order-metrics">
@@ -256,78 +474,111 @@
     </div>
   </div>
 
-  <!-- 하단 조작 바 -->
+  <!-- 하단 조작 바 (글씨 쓰는 중) -->
   <div class="bottom-dock hidden" id="bottom-dock">
-    <div class="guide-chip" id="guide-chip">누른 채 그으면 초코가 나와요! 머물수록 굵어지고 떼면 실이 톡 끊겨요</div>
-    <div class="dock-row">
-      <button type="button" class="btn btn-primary btn-bakery" id="btn-finish" disabled>🎂 다 썼어요! 손님께 드리기</button>
-    </div>
+    <div class="guide-chip" id="guide-chip">누른 채 머물면 초코가 통통해지고, 빠르게 그으면 얇아져요!</div>
+    <button type="button" class="btn btn-primary btn-bakery" id="btn-finish" disabled style="width:100%">🎂 다 썼어요! 케이크 완성하기</button>
   </div>
 
   <!-- 오프닝 스킵 버튼 -->
   <button type="button" class="skip-intro-btn hidden" id="btn-skip-intro">⏩ 인트로 건너뛰기</button>
 
-  <!-- 시작 모달 -->
+  <!-- ── 완성 후 360° 케이크 쇼케이스 & 이미지 공유 스튜디오 ── -->
+  <div class="showcase-top hidden" id="showcase-top">
+    <div class="verdict-bubble">
+      <span class="verdict-tag" id="verdict-tag">👨‍🍳 빵모자 사장님의 감정평</span>
+      <div class="verdict-text" id="verdict-text">“전형적인 앞글자 과투자형! 뒤로 갈수록 개미 목소리네요ㅋㅋ”</div>
+    </div>
+    <div class="orbit-hint">👆 화면을 드래그해 케이크를 이리저리 돌려보세요!</div>
+  </div>
+
+  <div class="showcase-dock hidden" id="showcase-dock">
+    <!-- 토핑·촛불·조명·각도 프리셋 바 -->
+    <div class="chip-scroll">
+      <button type="button" class="mini-chip active" id="chip-candle">🕯️ 촛불 켜짐</button>
+      <button type="button" class="mini-chip" id="chip-spin">🔄 자동회전</button>
+      <button type="button" class="mini-chip" id="chip-angle-hero">🎂 얼짱각도</button>
+      <button type="button" class="mini-chip" id="chip-angle-top">📐 항공샷</button>
+      <button type="button" class="mini-chip active" data-theme="mint">🌿 민트공방</button>
+      <button type="button" class="mini-chip" data-theme="night">🌙 홈파티</button>
+      <button type="button" class="mini-chip" data-theme="pink">🎀 핑크카페</button>
+      <button type="button" class="mini-chip" data-theme="wood">☀️ 크림우드</button>
+    </div>
+
+    <!-- 폴라로이드 카드에 적힐 한 줄 메시지 + 깔끔 캡처 버튼 -->
+    <div class="memo-row">
+      <input id="card-memo" class="memo-input" maxlength="26" placeholder="카드 메모 (예: To. 내 친구 생일 축하해!!)">
+      <button type="button" class="mini-chip" id="btn-clean-view" title="모든 버튼을 숨기고 화면 캡처">📷 UI 숨김</button>
+    </div>
+
+    <!-- 핵심 이미지 공유 & 저장 버튼 -->
+    <div class="share-grid">
+      <button type="button" class="btn btn-share" id="btn-share-img" style="padding:11px 10px;font-size:13.5px;margin:0">
+        📤 케이크 이미지 공유
+      </button>
+      <button type="button" class="btn btn-primary btn-bakery" id="btn-save-card" style="padding:11px 10px;font-size:13px;margin:0">
+        💾 폴라로이드 저장
+      </button>
+    </div>
+
+    <!-- 다음 단계 도전 / 다시 쓰기 / 메인 -->
+    <div class="sub-grid">
+      <button type="button" class="btn-compact highlight" id="btn-next-stage">➡️ 다음 주문 도전</button>
+      <button type="button" class="btn-compact" id="btn-rewrite">🔄 다시 쓰기</button>
+      <a href="../" class="btn-compact">🏠 메인</a>
+    </div>
+  </div>
+
+  <!-- 시작 모달 (단계별 주문 도전 vs 내 맘대로 문구 써서 친구 보내기!) -->
   <div class="modal-backdrop" id="start-modal">
     <div class="modal-card">
-      <div class="rank-chip">🎂 동네 수제 케이크집 · 원테이크 초코펜</div>
+      <div class="rank-chip">🎂 한 번 짜면 못 지우는 수제 레터링</div>
       <div class="modal-title">케이크 글씨 쓰기</div>
       <p class="modal-sub">
-        한 번 짠 초코는 <b>절대 지울 수 없어요!</b><br>
-        누르고 머무는 시간에 따라 <b>초코 두께가 통통해지고</b>,<br>
-        손을 떼면 <b>쫀득하게 늘어나는 초코 실</b>로<br>
-        쉬운 <b>하트 1개</b>부터 극악 장문 레터링까지 도전해 보세요!
+        누르고 머물수록 <b>초코가 도톰하게 고이고</b>,<br>
+        손을 떼면 <b>쫀득한 초코 실</b>이 늘어나는 리얼 초코펜!<br>
+        완성한 케이크를 <b>360° 돌려보며 사진으로 공유</b>해 보세요!
       </p>
-      <div id="start-rival-box" style="display:none" class="vs-card"></div>
-      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
-        <div class="stat-box">
-          <div class="stat-label">난이도 구성</div>
-          <div class="stat-val" style="color:var(--accent);font-size:15px">♥ → 5단계 진화</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">내 최고 총점</div>
-          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+
+      <div class="mode-switch">
+        <button type="button" class="mode-tab active" id="tab-mode-stage">🎯 5단계 주문 도전</button>
+        <button type="button" class="mode-tab" id="tab-mode-custom">💌 내 맘대로 문구 쓰기</button>
+      </div>
+
+      <div id="stage-mode-desc" style="font-size:12.5px;color:#d6ceeb;line-height:1.5;padding:4px 2px;">
+        쉬운 <b>하트 1개(♥)</b>부터 <b>생일 축하해</b>, <b>도시락 케이크 장문</b>까지 점점 어려워져요!
+      </div>
+
+      <div id="custom-mode-box" class="custom-box hidden">
+        <label for="custom-phrase-input" style="font-size:11.5px;font-weight:800;color:#fde68a;">친구에게 보낼 케이크 문구 (직접 입력하거나 아래 클릭)</label>
+        <input id="custom-phrase-input" class="memo-input" maxlength="18" value="생일 축하해 ♥" placeholder="예: 퇴사 축하해!!">
+        <div class="preset-wrap">
+          <button type="button" class="preset-chip" data-phrase="생일 축하해 ♥">생일 축하해 ♥</button>
+          <button type="button" class="preset-chip" data-phrase="퇴사 축하해!!">퇴사 축하해!!</button>
+          <button type="button" class="preset-chip" data-phrase="계란 한 판 축하">계란 한 판 축하</button>
+          <button type="button" class="preset-chip" data-phrase="결혼 진심 축하해">결혼 진심 축하해</button>
+          <button type="button" class="preset-chip" data-phrase="로또 1등 기원!">로또 1등 기원!</button>
+          <button type="button" class="preset-chip" data-phrase="미안하다 사랑한다">미안하다 사랑한다</button>
         </div>
       </div>
+
       <button type="button" class="btn btn-primary btn-bakery" id="btn-start" style="font-size:16px">🚪 케이크 가게 들어가기! (시작)</button>
     </div>
   </div>
 
-  <!-- 최종 결과 모달 -->
-  <div class="modal-backdrop hidden" id="result-modal">
-    <div class="modal-card">
-      <div class="rank-chip" id="res-rank">🍫 동네 인기 파티시에</div>
-      <div class="modal-title" id="res-headline" style="color:#ffd84a">284점</div>
-      <p class="modal-sub" id="res-comment">쫀득한 초코 글씨가 케이크에 쏙 들어갔어요!</p>
-
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="stat-label">도달 단계</div>
-          <div class="stat-val" id="res-stage">STAGE 3</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">평균 완성도</div>
-          <div class="stat-val" id="res-acc">88%</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">총 누적 점수</div>
-          <div class="stat-val" style="color:var(--accent)" id="res-score">284</div>
-        </div>
+  <!-- 폴라로이드 이미지 미리보기 모달 (PC·인앱 브라우저에서 길게 눌러 저장/복사도 지원!) -->
+  <div class="modal-backdrop hidden" id="preview-modal">
+    <div class="modal-card" style="gap:10px;">
+      <div class="rank-chip">📸 내 수제 레터링 케이크 카드 완성!</div>
+      <img id="preview-img" class="card-preview-img" alt="완성된 케이크 폴라로이드 카드">
+      <div style="font-size:12px;color:#cfc6e8;line-height:1.45;">
+        이미지를 길게 눌러 저장하거나, 아래 버튼으로 카톡·인스타에 바로 공유해 보세요!
       </div>
-
-      <div id="res-vs-wrap" style="display:none"></div>
-      <div id="res-lb-wrap" style="display:none"></div>
-
-      <div class="nick-row">
-        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (랭킹에 표시)">
+      <div class="btn-row" style="grid-template-columns:repeat(auto-fit,minmax(92px,1fr))">
+        <button type="button" class="btn btn-ghost" id="btn-preview-close" style="padding:11px 8px;font-size:12.5px">닫기</button>
+        <button type="button" class="btn btn-share" id="btn-preview-native" style="padding:11px 8px;font-size:12.5px;display:none;margin:0">📲 공유하기</button>
+        <button type="button" class="btn btn-primary btn-bakery" id="btn-preview-download" style="padding:11px 8px;font-size:12.5px">💾 이미지 저장</button>
       </div>
-      <button type="button" class="btn btn-share" id="btn-share">🔗 내 케이크 랭킹 URL 공유하기</button>
-
-      <div class="btn-row">
-        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
-        <button type="button" class="btn btn-primary btn-bakery" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 도전하기</button>
-      </div>
-      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
     </div>
   </div>
 
