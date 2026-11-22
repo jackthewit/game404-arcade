@@ -6,7 +6,7 @@
   <link rel="icon" href="data:,">
   <title>무한 두루마리 — 이게뭔겜? 404 아케이드</title>
   <meta name="description" content="휴… 휴지가 있다! 중간 심을 피해 한 방향으로 돌돌돌돌! 안 끊기고 100km까지 말아 미라로 진화해 보세요!">
-  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="/shared/styles.css">
   <style>
     #gl, #ov {
       position: fixed;
@@ -138,7 +138,7 @@
 
   <!-- 상단 바 -->
   <div class="topbar">
-    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <a href="/" class="pill-btn">← 404 아케이드</a>
     <div style="display:flex;gap:6px">
       <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
       <span class="pill-btn" id="best-pill" style="color:#ffd84a">🏆 최고 0.0m</span>
@@ -227,13 +227,13 @@
         <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
         <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 돌돌돌돌!</button>
       </div>
-      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+      <a href="/" class="btn btn-home">🏠 404 아케이드 메인으로</a>
     </div>
   </div>
 
   <script type="importmap">
-    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
   </script>
-  <script type="module" src="./game.js"></script>
+  <script type="module" src="/toilet/game.js"></script>
 </body>
 </html>

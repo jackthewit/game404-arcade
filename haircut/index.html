@@ -6,7 +6,7 @@
   <link rel="icon" href="data:,">
   <title>어떻게 잘라드릴까요? — 이게뭔겜? 404 아케이드</title>
   <meta name="description" content="왼쪽 · 가운데 · 오른쪽 3번에 나눠 실제 길이(cm)로 다듬는 미용실 눈대중 챌린지! 친구와 오차 mm 대결해 보세요.">
-  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="/shared/styles.css">
   <style>
     #stage {
       position: fixed;
@@ -269,7 +269,7 @@
 
   <!-- 상단 바 -->
   <div class="topbar">
-    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <a href="/" class="pill-btn">← 404 아케이드</a>
     <div style="display:flex;gap:6px">
       <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
       <span class="pill-btn" id="streak-pill" style="display:none;color:#4ade80">✨ 0연속</span>
@@ -389,13 +389,13 @@
         <button type="button" class="btn btn-primary" id="btn-retry-same" style="padding:12px;font-size:13px">🔄 같은 길이 재도전</button>
       </div>
       <button type="button" class="btn btn-ghost" id="btn-retry-rand" style="padding:11px;font-size:13px">🎲 다음 손님 받기 (랜덤 길이)</button>
-      <a href="../" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+      <a href="/" class="btn btn-home">🏠 404 아케이드 메인으로</a>
     </div>
   </div>
 
   <script type="importmap">
-    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
   </script>
-  <script type="module" src="./game.js"></script>
+  <script type="module" src="/haircut/game.js"></script>
 </body>
 </html>

@@ -170,7 +170,7 @@ export async function enforceGameAccess(gameId) {
           ${escHtml(msg)}
         </p>
         <div style="display:flex;flex-direction:column;gap:8px;width:100%;margin-top:4px;">
-          <a href="../" style="display:block;width:100%;padding:13px 16px;border-radius:14px;background:#ffd84a;color:#171122;font-size:15px;font-weight:900;text-decoration:none;">
+          <a href="/" style="display:block;width:100%;padding:13px 16px;border-radius:14px;background:#ffd84a;color:#171122;font-size:15px;font-weight:900;text-decoration:none;">
             🏠 404 아케이드 메인으로
           </a>
           <div style="display:flex;gap:8px;width:100%;">

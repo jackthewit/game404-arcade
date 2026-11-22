@@ -6,7 +6,7 @@
   <link rel="icon" href="data:,">
   <title>케이크 글씨 쓰기 — 이게뭔겜? 404 아케이드</title>
   <meta name="description" content="한 번 짜면 못 지우는 쫀득한 3D 초코펜! 직접 쓴 레터링 케이크에 촛불을 켜고 이리저리 돌려보며 친구에게 사진으로 공유해 보세요.">
-  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="/shared/styles.css">
   <style>
     #gl, #ov {
       position: fixed;
@@ -447,7 +447,7 @@
 
   <!-- 상단 바 (순위 없이 깔끔하게 아케이드 복귀 + BGM 토글만 유지) -->
   <div class="topbar">
-    <a href="../" class="pill-btn">← 404 아케이드</a>
+    <a href="/" class="pill-btn">← 404 아케이드</a>
     <div style="display:flex;gap:6px">
       <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
     </div>
@@ -525,7 +525,7 @@
     <div class="sub-grid">
       <button type="button" class="btn-compact highlight" id="btn-next-stage">➡️ 다음 주문 도전</button>
       <button type="button" class="btn-compact" id="btn-rewrite">🔄 다시 쓰기</button>
-      <a href="../" class="btn-compact">🏠 메인</a>
+      <a href="/" class="btn-compact">🏠 메인</a>
     </div>
   </div>
 
@@ -583,8 +583,8 @@
   </div>
 
   <script type="importmap">
-    {"imports":{"three":"../vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"../vendor/three/RoomEnvironment.js"}}
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
   </script>
-  <script type="module" src="./game.js"></script>
+  <script type="module" src="/cake/game.js"></script>
 </body>
 </html>

@@ -666,7 +666,7 @@ function initResultModalUX() {
   bar.className = 'reopen-result-bar hidden';
   bar.innerHTML = `
     <button type="button" class="reopen-result-btn" id="btn-reopen-result">📊 결과 카드 보기</button>
-    <a href="../" class="reopen-home-link">🏠 404 메인</a>
+    <a href="/" class="reopen-home-link">🏠 404 메인</a>
   `;
   document.body.appendChild(bar);
 
