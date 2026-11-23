@@ -214,7 +214,15 @@ function buildLocalGlobalLadder(gameId, myEntry, refEntry) {
             { id: 'BOT4', nickname: '동네빵집사장', score: 226, error_mm: null, actual_value: 3, target_value: 5, rank_title: '✨ 동네 인기 케이크집 사장님' },
             { id: 'BOT5', nickname: '초코혹제조기', score: 118, error_mm: null, actual_value: 2, target_value: 5, rank_title: '🧁 초코펜 수습 파티시에' },
           ]
-        : [
+        : gameId === 'nail'
+          ? [
+              { id: 'BOT1', nickname: '청담네일원장', score: 99.4, error_mm: 0.0, actual_value: 5, target_value: 5, rank_title: '👑 청담동 전설의 네일 원장님' },
+              { id: 'BOT2', nickname: '무호흡장인', score: 96.2, error_mm: 0.0, actual_value: 5, target_value: 5, rank_title: '💅 무결점 풀컬러 마스터' },
+              { id: 'BOT3', nickname: '체리레드고수', score: 89.5, error_mm: 0.18, actual_value: 4, target_value: 5, rank_title: '✨ 꼼꼼한 살롱 수석 실장님' },
+              { id: 'BOT4', nickname: '소지에서삐끗', score: 78.4, error_mm: 0.52, actual_value: 3, target_value: 5, rank_title: '🎨 아슬아슬 수습 네일리스트' },
+              { id: 'BOT5', nickname: '큐티클화가', score: 56.0, error_mm: 1.45, actual_value: 1, target_value: 5, rank_title: '🩸 큐티클 추상화 예술가' },
+            ]
+          : [
             { id: 'BOT1', nickname: '인간지그', score: 98, error_mm: 0.14, actual_value: 0, target_value: 0, rank_title: '👑 강화필름의 전설' },
             { id: 'BOT2', nickname: '대리점1타', score: 93, error_mm: 0.38, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
             { id: 'BOT3', nickname: '먼지사냥꾼', score: 85, error_mm: 0.72, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },

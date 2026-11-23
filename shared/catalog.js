@@ -3,6 +3,20 @@ import { getSupabaseConfig, getBestRecord } from './challenge.js';
 
 export const DEFAULT_GAMES = [
   {
+    id: 'nail',
+    title: '손톱 색칠하기',
+    kicker: '삐져나가면 끝! 숨 참기 네일',
+    badge: '💅 원테이크 · 5손톱 풀컬러',
+    description: '한 번 옆 살에 묻으면 절대 못 지워요! 숨을 참아 수전증을 멈추고 다섯 손톱을 흰 점선 안쪽까지 영롱하게 채워 보세요.',
+    metric_label: '정밀도 100점 랭킹',
+    thumb_url: './assets/thumb-nail.jpg',
+    href: './nail/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: true,
+    sort_order: 5,
+  },
+  {
     id: 'cake',
     title: '케이크 글씨 쓰기',
     kicker: '한 번 짜면 못 지워요!',
@@ -13,7 +27,7 @@ export const DEFAULT_GAMES = [
     href: './cake/',
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    featured: true,
+    featured: false,
     sort_order: 10,
   },
   {
@@ -108,6 +122,9 @@ export function formatBestText(gameId) {
   if (gameId === 'toilet' && b.score != null) {
     const m = Number(b.score);
     return m >= 1000 ? `최고 ${(m / 1000).toFixed(2)}km` : `최고 ${m.toFixed(1)}m`;
+  }
+  if (gameId === 'nail' && b.score != null) {
+    return `최고 ${Number(b.score).toFixed(1)}점`;
   }
   if (b.score != null) {
     return `최고 ${Math.round(Number(b.score))}점`;

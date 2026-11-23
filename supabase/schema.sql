@@ -64,10 +64,24 @@ insert into public.g404_config (k, v)
 values ('admin_hash', '663e0dda09e8018b5cb6e4e65c3c1f7def1317e7654b4ef74283b187a25b5a84')
 on conflict (k) do nothing;
 
--- 6) 초기 게임 4종 시드 (이미 있으면 관리자 편집값 유지)
+-- 6) 초기 게임 5종 시드 (이미 있으면 관리자 편집값 유지)
 insert into public.g404_games
   (id, title, kicker, badge, description, metric_label, thumb_url, href, status, lock_message, featured, sort_order)
 values
+  (
+    'nail',
+    '손톱 색칠하기',
+    '삐져나가면 끝! 숨 참기 네일',
+    '💅 원테이크 · 5손톱 풀컬러',
+    '한 번 옆 살에 묻으면 절대 못 지워요! 숨을 참아 수전증을 멈추고 다섯 손톱을 흰 점선 안쪽까지 영롱하게 채워 보세요.',
+    '정밀도 100점 랭킹',
+    './assets/thumb-nail.jpg',
+    './nail/',
+    'public',
+    '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    true,
+    5
+  ),
   (
     'cake',
     '케이크 글씨 쓰기',
