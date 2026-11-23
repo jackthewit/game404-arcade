@@ -1271,23 +1271,6 @@ const STATE = {
   strokeSfxCooldown: 0,
   smearFlash: 0,
   perfectShown: [false, false, false, false, false],
-  // 확대(Zoom) 및 시점 이동(Pan) 상태
-  zoom: 1.0,
-  panX: 0,
-  panS: 0,
-  panMode: false,
-  panDragging: false,
-  panPointerId: null,
-  panStartClientX: 0,
-  panStartClientY: 0,
-  panStartX: 0,
-  panStartS: 0,
-  activePointers: new Map(),
-  isPinching: false,
-  pinchStartDist: 0,
-  pinchStartZoom: 1.0,
-  pinchPrevMidX: 0,
-  pinchPrevMidY: 0,
   // 쇼케이스 감상 회전 상태
   showcaseTiltX: 0,
   showcaseTiltZ: 0,
@@ -1308,66 +1291,20 @@ const camCurLook = V(0, 8, 5);
 const camGoalPos = V(0, 165, 86);
 const camGoalLook = V(0, 8, 5);
 
-function syncZoomUI() {
-  const z = STATE.zoom;
-  document.querySelectorAll('.zoom-chip').forEach(btn => {
-    const targetZ = Number(btn.dataset.zoom || 1);
-    const matched = (targetZ === 1 && z < 1.35)
-      || (targetZ === 1.8 && z >= 1.35 && z < 2.3)
-      || (targetZ === 2.8 && z >= 2.3);
-    btn.classList.toggle('active', matched);
-  });
-  const panBtn = $('btn-pan-mode');
-  if (panBtn) {
-    const canPan = z > 1.06;
-    if (!canPan && STATE.panMode) {
-      STATE.panMode = false;
-      document.body.classList.remove('pan-mode');
-    }
-    panBtn.disabled = !canPan;
-    panBtn.classList.toggle('active', STATE.panMode);
-    panBtn.textContent = STATE.panMode ? '🖌️ 색칠 모드로' : '✋ 화면 이동';
-  }
-}
-
-function setZoomLevel(nextZoom, focusLocalX = null, focusLocalS = null) {
-  const prevZoom = STATE.zoom;
-  STATE.zoom = clamp(nextZoom, 1.0, 3.2);
-  if (STATE.zoom <= 1.04) {
-    STATE.panX = 0;
-    STATE.panS = 0;
-    STATE.panMode = false;
-    document.body.classList.remove('pan-mode');
-  } else {
-    if (focusLocalX != null && focusLocalS != null && STATE.zoom > prevZoom) {
-      const k = clamp((STATE.zoom - prevZoom) / Math.max(0.3, STATE.zoom), 0.15, 0.55);
-      STATE.panX = lerp(STATE.panX, focusLocalX, k);
-      STATE.panS = lerp(STATE.panS, focusLocalS - 6.6, k);
-    }
-    const maxPanX = 6.2 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
-    const maxPanS = 6.8 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
-    STATE.panX = clamp(STATE.panX, -maxPanX, maxPanX);
-    STATE.panS = clamp(STATE.panS, -maxPanS, maxPanS);
-  }
-  syncZoomUI();
-  if (STATE.phase === 'play') updateCameraGoalForFinger(STATE.fingerIdx, false);
-}
-
 function updateCameraGoalForFinger(idx, instant = false) {
   const f = FINGERS[idx];
-  const worldCenter = V(STATE.panX, 8.5, 6.6 + STATE.panS);
+  const worldCenter = V(0, 8.5, 6.6);
   HAND_RIG.updateMatrixWorld(true);
   f.group.localToWorld(worldCenter);
 
-  // 모바일 세로 화면에서도 손톱이 큼직하게 들어오고, 확대 배율(STATE.zoom)에 비례해 초근접 줌인!
+  // 모바일 세로 화면에서도 손톱이 가로 절반 이상 큼직하게 들어오도록 거리 조정
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  const baseDist = aspect < 0.72 ? 154 : 140;
-  const dist = baseDist / clamp(STATE.zoom, 1.0, 3.2);
+  const dist = aspect < 0.72 ? 154 : 140;
   const el = 66 * DEG;
 
   camGoalLook.set(worldCenter.x, worldCenter.y + 0.5, worldCenter.z + 0.8);
   camGoalPos.set(
-    worldCenter.x - (f.spec.ry * 16) / STATE.zoom,
+    worldCenter.x - f.spec.ry * 16,
     worldCenter.y + dist * Math.sin(el),
     worldCenter.z + dist * Math.cos(el)
   );
@@ -1556,15 +1493,6 @@ function resetAllNails() {
   STATE.rawS = 6.5;
   STATE.curX = 0;
   STATE.curS = 6.5;
-  STATE.zoom = 1.0;
-  STATE.panX = 0;
-  STATE.panS = 0;
-  STATE.panMode = false;
-  STATE.panDragging = false;
-  STATE.activePointers.clear();
-  STATE.isPinching = false;
-  document.body.classList.remove('pan-mode');
-  syncZoomUI();
   STATE.perfectShown = [false, false, false, false, false];
   STATE.showcaseTiltX = 0;
   STATE.showcaseTiltZ = 0;
@@ -1608,7 +1536,6 @@ function beginPlayPhase() {
   MAIN_BOTTLE.position.set(-56, DESK_Y, 18);
   HAND_RIG.rotation.set(0, 0, 0);
   HAND_RIG.position.set(0, 0, 0);
-  setZoomLevel(1.0);
   updateCameraGoalForFinger(0, false);
   updatePlayHUD();
 }
@@ -1630,11 +1557,6 @@ function advanceToNextNail() {
     STATE.rawS = 6.5;
     STATE.curX = 0;
     STATE.curS = 6.5;
-    STATE.panX = 0;
-    STATE.panS = 0;
-    STATE.panMode = false;
-    document.body.classList.remove('pan-mode');
-    syncZoomUI();
     SFX.pop();
     updateCameraGoalForFinger(STATE.fingerIdx, false);
     addPopText(`${FINGERS[STATE.fingerIdx].spec.label} 시술 시작!`, '#fda4af');
@@ -1819,11 +1741,9 @@ function applyBrushStrokeAt(rawX, rawS, dt) {
   STATE.curX = bx;
   STATE.curS = bs;
 
-  // 확대 배율이 높을수록 구석 모서리를 세밀하게 메울 수 있도록 정밀 붓 크기 연동!
-  const zoomFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
-  const baseA = breathOn ? 2.18 : lerp(2.36, 2.05, sm((dRaw + 1.8) / 1.6));
-  const brushA = baseA * zoomFine;
-  const brushB = 0.86 * lerp(1.0, 0.78, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
+  // 실제 네일샵 3터치 풀컬러 손맛: 부채꼴로 넉넉히 퍼지는 붓폭(2.18~2.36mm) 유지!
+  const brushA = breathOn ? 2.18 : lerp(2.36, 2.05, sm((dRaw + 1.8) / 1.6));
+  const brushB = 0.86;
 
   // 실제 매니큐어 표면장력 반영:
   // 붓 중심이 흰 점선 바깥(dActual > -0.12mm)으로 밀려나가거나 손떨림으로 크게 흔들릴 때 옆 살(zone 2)로 넘쳐 묻음!
@@ -1887,16 +1807,7 @@ function triggerSmearFeedback(coat) {
   STATE.smearFlash = 1.1;
 }
 
-// ─── 입력 이벤트 바인딩 (멀티터치 드래그 + 핀치 확대/이동 + 마우스 휠 확대 + 숨 참기) ───
-function panCameraByScreenDelta(dxPx, dyPx) {
-  const scaleMmPerPx = (0.14 / Math.max(1, STATE.zoom)) * (420 / Math.max(280, window.innerHeight));
-  const maxPanX = 6.2 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
-  const maxPanS = 6.8 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
-  STATE.panX = clamp(STATE.panX - dxPx * scaleMmPerPx, -maxPanX, maxPanX);
-  STATE.panS = clamp(STATE.panS - dyPx * scaleMmPerPx * 1.15, -maxPanS, maxPanS);
-  updateCameraGoalForFinger(STATE.fingerIdx, false);
-}
-
+// ─── 입력 이벤트 바인딩 (멀티터치 드래그 + 숨 참기 홀드/토글 + Space) ───
 glCanvas.addEventListener('pointerdown', e => {
   unlockAudio();
   if (STATE.phase === 'showcase') {
@@ -1913,37 +1824,7 @@ glCanvas.addEventListener('pointerdown', e => {
     updatePlayHUD();
     return;
   }
-
-  // 포인터 등록 (모바일 두 손가락 핀치 줌 감지용)
-  STATE.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (STATE.activePointers.size >= 2) {
-    // 두 번째 손가락 터치 시: 붓질 중단 후 즉시 두 손가락 핀치 확대 & 화면 이동 모드 진입!
-    STATE.painting = false;
-    STATE.paintPointerId = null;
-    STATE.prevStampX = null;
-    STATE.prevStampS = null;
-    STATE.targetLift = 2.0;
-
-    const pts = [...STATE.activePointers.values()];
-    STATE.isPinching = true;
-    STATE.pinchStartDist = Math.max(12, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
-    STATE.pinchStartZoom = STATE.zoom;
-    STATE.pinchPrevMidX = (pts[0].x + pts[1].x) * 0.5;
-    STATE.pinchPrevMidY = (pts[0].y + pts[1].y) * 0.5;
-    return;
-  }
-
-  // 화면 이동 모드(✋ 화면 이동 버튼 ON, 마우스 중클릭, 또는 Shift + 드래그)
-  if ((STATE.panMode && STATE.zoom > 1.04) || e.button === 1 || e.shiftKey) {
-    STATE.panDragging = true;
-    STATE.panPointerId = e.pointerId;
-    STATE.panStartClientX = e.clientX;
-    STATE.panStartClientY = e.clientY;
-    try { glCanvas.setPointerCapture(e.pointerId); } catch {}
-    return;
-  }
-
-  if (STATE.painting || STATE.isPinching) return;
+  if (STATE.painting) return;
 
   const loc = screenToFingerLocal(e.clientX, e.clientY, e.pointerType);
   if (!loc) return;
@@ -1972,38 +1853,6 @@ glCanvas.addEventListener('pointermove', e => {
   }
   if (STATE.phase !== 'play') return;
 
-  if (STATE.activePointers.has(e.pointerId)) {
-    STATE.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  }
-
-  // 두 손가락 핀치 줌 & 패닝 처리
-  if (STATE.isPinching && STATE.activePointers.size >= 2) {
-    const pts = [...STATE.activePointers.values()];
-    const dist = Math.max(12, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
-    const midX = (pts[0].x + pts[1].x) * 0.5;
-    const midY = (pts[0].y + pts[1].y) * 0.5;
-
-    const ratio = dist / STATE.pinchStartDist;
-    setZoomLevel(STATE.pinchStartZoom * ratio);
-
-    if (STATE.zoom > 1.05) {
-      panCameraByScreenDelta(midX - STATE.pinchPrevMidX, midY - STATE.pinchPrevMidY);
-    }
-    STATE.pinchPrevMidX = midX;
-    STATE.pinchPrevMidY = midY;
-    return;
-  }
-
-  // 한 손가락/마우스 화면 이동 모드 드래그
-  if (STATE.panDragging && e.pointerId === STATE.panPointerId) {
-    const dx = e.clientX - STATE.panStartClientX;
-    const dy = e.clientY - STATE.panStartClientY;
-    STATE.panStartClientX = e.clientX;
-    STATE.panStartClientY = e.clientY;
-    panCameraByScreenDelta(dx, dy);
-    return;
-  }
-
   if (STATE.painting && e.pointerId === STATE.paintPointerId) {
     const loc = screenToFingerLocal(e.clientX, e.clientY, e.pointerType);
     if (loc) {
@@ -2023,19 +1872,8 @@ glCanvas.addEventListener('pointermove', e => {
 });
 
 function endPaintPointer(e) {
-  if (e && STATE.activePointers.has(e.pointerId)) {
-    STATE.activePointers.delete(e.pointerId);
-  }
-  if (STATE.activePointers.size < 2) {
-    STATE.isPinching = false;
-  }
   if (STATE.phase === 'showcase') {
     STATE.showcaseDragging = false;
-  }
-  if (e && STATE.panDragging && e.pointerId === STATE.panPointerId) {
-    STATE.panDragging = false;
-    STATE.panPointerId = null;
-    return;
   }
   if (e && e.button === 2) {
     STATE.breathKeyDown = false;
@@ -2045,8 +1883,7 @@ function endPaintPointer(e) {
   if (STATE.painting && (!e || e.pointerId === STATE.paintPointerId)) {
     const coat = FINGERS[STATE.fingerIdx].coat;
     if (STATE.prevStampX != null) {
-      const zFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
-      coat.ridge(STATE.prevStampX, STATE.prevStampS, (isBreathActive() ? 1.9 : 2.1) * zFine, 0.78 * zFine, STATE.psi, 0.65);
+      coat.ridge(STATE.prevStampX, STATE.prevStampS, isBreathActive() ? 1.9 : 2.1, 0.78, STATE.psi, 0.65);
       coat.upload();
     }
     STATE.painting = false;
@@ -2063,34 +1900,6 @@ function endPaintPointer(e) {
 glCanvas.addEventListener('pointerup', endPaintPointer);
 glCanvas.addEventListener('pointercancel', endPaintPointer);
 glCanvas.addEventListener('contextmenu', e => e.preventDefault());
-
-// PC 마우스 휠 확대/축소 지원 (커서가 가리키는 손톱 위치 중심으로 줌인!)
-glCanvas.addEventListener('wheel', e => {
-  if (STATE.phase !== 'play') return;
-  e.preventDefault();
-  const loc = screenToFingerLocal(e.clientX, e.clientY, 'mouse');
-  const step = e.deltaY < 0 ? 0.28 : -0.28;
-  setZoomLevel(STATE.zoom + step, loc ? loc.x : null, loc ? loc.s : null);
-}, { passive: false });
-
-// 확대 배율 칩 & 화면 이동 토글 버튼 연결
-document.querySelectorAll('.zoom-chip').forEach(btn => {
-  btn.addEventListener('click', () => {
-    unlockAudio();
-    SFX.tick();
-    const z = Number(btn.dataset.zoom || 1);
-    setZoomLevel(z, STATE.curX, STATE.curS);
-  });
-});
-
-$('btn-pan-mode').addEventListener('click', () => {
-  if (STATE.zoom <= 1.05) return;
-  unlockAudio();
-  SFX.tick();
-  STATE.panMode = !STATE.panMode;
-  document.body.classList.toggle('pan-mode', STATE.panMode);
-  syncZoomUI();
-});
 
 // 숨 참기 버튼 (길게 누르면 홀드, 240ms 이내 짧게 탭하면 한 손 조작을 위한 토글 ON/OFF!)
 const btnBreath = $('btn-breath');
@@ -2447,13 +2256,12 @@ function animate(now) {
     });
 
     STATE.lift = lerp(STATE.lift, STATE.targetLift, 1 - Math.exp(-dt * 16));
-    const zoomFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
     setBrushLocal({
       x: STATE.curX,
       s: STATE.curS,
       lift: STATE.lift,
-      a: (breathOn ? 2.18 : 2.32) * zoomFine,
-      b: 0.86 * lerp(1.0, 0.78, clamp((STATE.zoom - 1.0) / 1.8, 0, 1)),
+      a: breathOn ? 2.18 : 2.32,
+      b: 0.86,
       psi: STATE.psi,
       A: BRUSH_AXIS,
       drop: 0.65,
@@ -2549,8 +2357,6 @@ async function boot() {
     coverPct: Number(FINGERS[STATE.fingerIdx].coat.coverPct().toFixed(1)),
     smearPx: FINGERS[STATE.fingerIdx].coat.smearPx,
     breath: Math.round(STATE.breath),
-    zoom: Number(STATE.zoom.toFixed(2)),
-    panMode: STATE.panMode,
   });
 
   requestAnimationFrame(animate);
