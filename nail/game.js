@@ -54,11 +54,11 @@ const PALETTE = [
 ];
 
 const FINGER_SPECS = [
-  { name: '엄지', label: '① 엄지', x: -33.5, y: -1.0, z: -10.5, ry: -0.14, rz: 0.08, sx: 1.08, sy: 1.02, sz: 0.94, jitterMul: 0.85 },
+  { name: '엄지', label: '① 엄지', x: -33.2, y: -1.6, z: -13.5, ry: -0.24, rz: 0.09, sx: 1.08, sy: 1.02, sz: 0.96, jitterMul: 0.85 },
   { name: '검지', label: '② 검지', x: -16.8, y: 0.0,  z: -2.2,  ry: -0.05, rz: 0.02, sx: 0.99, sy: 0.99, sz: 0.99, jitterMul: 0.95 },
   { name: '중지', label: '③ 중지', x: 0.0,   y: 0.3,  z: 0.0,   ry: 0.00,  rz: 0.00, sx: 1.02, sy: 1.01, sz: 1.03, jitterMul: 1.00 },
-  { name: '약지', label: '④ 약지', x: 16.6,  y: 0.0,  z: -2.6,  ry: 0.04,  rz: -0.02,sx: 0.96, sy: 0.97, sz: 0.98, jitterMul: 1.08 },
-  { name: '소지', label: '⑤ 소지', x: 31.8,  y: -0.5, z: -9.0,  ry: 0.09,  rz: -0.05,sx: 0.87, sy: 0.90, sz: 0.91, jitterMul: 1.18 },
+  { name: '약지', label: '④ 약지', x: 16.6,  y: 0.0,  z: -2.6,  ry: 0.05,  rz: -0.02,sx: 0.96, sy: 0.97, sz: 0.98, jitterMul: 1.08 },
+  { name: '소지', label: '⑤ 소지', x: 31.4,  y: -0.5, z: -9.2,  ry: 0.11,  rz: -0.05,sx: 0.87, sy: 0.90, sz: 0.92, jitterMul: 1.18 },
 ];
 
 function hexRgb(h) {
@@ -92,9 +92,10 @@ R.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const S = new THREE.Scene();
 const DESK_HEX = '#cfd8e2';
+const DESK_Y = -36; // 손을 크게 기울여도 손가락 끝이 절대 테이블 바닥을 뚫지 않도록 여유 높이 확보
 S.background = new THREE.Color(DESK_HEX);
 
-const CAM = new THREE.PerspectiveCamera(16.5, window.innerWidth / window.innerHeight, 25, 1300);
+const CAM = new THREE.PerspectiveCamera(16.5, window.innerWidth / window.innerHeight, 8, 1300);
 
 // 젖은 매니큐어 위로 선명한 빛줄기가 반사되도록 스트립 라이트 환경맵 구성
 {
@@ -140,7 +141,7 @@ keyLight.shadow.bias = -0.0005;
 keyLight.shadow.normalBias = 0.05;
 {
   const c = keyLight.shadow.camera;
-  c.left = -85; c.right = 85; c.top = 85; c.bottom = -85; c.near = 25; c.far = 340;
+  c.left = -115; c.right = 115; c.top = 115; c.bottom = -115; c.near = 20; c.far = 420;
   c.updateProjectionMatrix();
 }
 S.add(keyLight, keyLight.target);
@@ -149,13 +150,14 @@ const fillLight = new THREE.DirectionalLight('#dfeaff', 0.46);
 fillLight.position.set(65, 55, 75);
 S.add(fillLight);
 
-// 네일 테이블 바닥
+// 네일 테이블 바닥 (DESK_Y에 배치해 손가락 끝 관통 원천 차단)
 {
   const desk = new THREE.Mesh(
-    new THREE.PlaneGeometry(1400, 1400),
+    new THREE.PlaneGeometry(1600, 1600),
     new THREE.MeshStandardMaterial({ color: DESK_HEX, roughness: 0.82, metalness: 0, envMapIntensity: 0.25 })
   );
   desk.rotation.x = -Math.PI / 2;
+  desk.position.y = DESK_Y;
   desk.receiveShadow = true;
   S.add(desk);
 }
@@ -382,10 +384,10 @@ function buildNailMaterial() {
       k = mix3(k, lun, 0.85 * (1 - sm((e - 0.86) / 0.2)));
       const fr = sm((Math.abs(x) - p.af + 0.3) / 0.3);
       k = mix3(k, fre, 0.88 * Math.max(fr, sm((s - (NLEN - 0.75)) / 0.3)));
-      // 손톱 둘레 안쪽 흰 점선 목표선
-      if (d > -0.38 && d < -0.10) {
+      // 맨손톱 바탕에는 은은한 자연 손톱 결만 두고, 선명한 가이드는 플레이 중 3D 가이드 링이 담당(쇼케이스 시 깔끔한 손톱 감상!)
+      if (d > -0.34 && d < -0.14) {
         const ang = Math.atan2(s - 6.8, x);
-        if (Math.sin(ang * 28) > 0.12) k = mix3(k, wht, 0.86);
+        if (Math.sin(ang * 28) > 0.2) k = mix3(k, wht, 0.45);
       }
       col[o] = clamp(k[0], 0, 255);
       col[o + 1] = clamp(k[1], 0, 255);
@@ -409,7 +411,7 @@ const skinM = buildSkinMaterial();
 const nailM = buildNailMaterial();
 
 const _bendOut = { y: 0, z: 0 };
-function buildFingerGeo({ L = 46, bD = 0.1, bP = 0.34, n1 = 68, n2c = 128, nt = 156 } = {}) {
+function buildFingerGeo({ L = 54, bD = 0.04, bP = 0.08, n1 = 74, n2c = 128, nt = 156 } = {}) {
   const bend = bender(L, bD, bP), ss = [];
   for (let i = 0; i < n1; i++) ss.push(lerp(-L, SB0, i / n1));
   for (let i = 0; i <= n2c; i++) ss.push(lerp(SB0, S_END, Math.pow(i / n2c, 0.92)));
@@ -425,15 +427,30 @@ function buildFingerGeo({ L = 46, bD = 0.1, bP = 0.34, n1 = 68, n2c = 128, nt = 
   const idx = [];
   for (let i = 0; i < ns; i++) {
     const s = ss[i], p = prof(s);
+    // 안쪽 뿌리 끝(s -> -L)을 둥근 캡으로 닫아 어떤 각도에서도 절단면 구멍이 생기지 않게 처리
+    const rootDist = s - (-L);
+    const rootCap = rootDist >= 6.0 ? 1 : rootDist <= 0 ? 0 : Math.pow(1 - Math.pow((6.0 - rootDist) / 6.0, 2.2), 0.45);
+    const af = p.af * rootCap;
+    const hTf = p.hTf * rootCap;
+    const hBf = p.hBf * rootCap;
+
     for (let j = 0; j <= nt; j++) {
       const t = th(j), c = Math.cos(t), sn = Math.sin(t), o = i * (nt + 1) + j;
-      const x = p.af * Math.sign(c) * Math.pow(Math.abs(c), 2 / NE) * 0.9995;
-      let y = sn >= 0 ? (p.af > 1e-4 ? fleshTop(x, s, p) : p.ycf) : p.ycf - p.hBf * Math.pow(-sn, 2 / NEB);
-      if (y < 0) y = 0;
+      const x = af * Math.sign(c) * Math.pow(Math.abs(c), 2 / NE) * 0.9995;
+      let y;
+      if (sn >= 0) {
+        if (rootCap > 0.999) {
+          y = p.af > 1e-4 ? fleshTop(x, s, p) : p.ycf;
+        } else {
+          y = p.ycf + hTf * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(x) / Math.max(1e-4, af), NE)), 1 / NE);
+        }
+      } else {
+        y = p.ycf - hBf * Math.pow(-sn, 2 / NEB);
+      }
       bend(y, s, _bendOut);
       pos[o * 3] = x; pos[o * 3 + 1] = _bendOut.y; pos[o * 3 + 2] = _bendOut.z;
       uv[o * 2] = (t + Math.PI / 2) / TAU;
-      uv[o * 2 + 1] = (s - VS0) / VSL;
+      uv[o * 2 + 1] = clamp((s - VS0) / VSL, 0.01, 0.99);
     }
   }
   for (let i = 0; i < ns - 1; i++) {
@@ -447,6 +464,15 @@ function buildFingerGeo({ L = 46, bD = 0.1, bP = 0.34, n1 = 68, n2c = 128, nt = 
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
+  // 손끝(i = ns - 1)과 뿌리 끝(i = 0) 폴 정점 법선을 매끄럽게 정돈해 꼭짓점 주름 제거
+  const nr = g.attributes.normal.array;
+  for (let j = 0; j <= nt; j++) {
+    const oTip = ((ns - 1) * (nt + 1) + j) * 3;
+    nr[oTip] = 0; nr[oTip + 1] = 0.15; nr[oTip + 2] = 0.988;
+    const oRoot = j * 3;
+    nr[oRoot] = 0; nr[oRoot + 1] = 0.1; nr[oRoot + 2] = -0.995;
+  }
+  g.attributes.normal.needsUpdate = true;
   return g;
 }
 
@@ -741,48 +767,230 @@ class NailCoat {
   }
 }
 
-// ─── 다섯 손가락 + 손등 + 네일 벨벳 쿠션 + 매니큐어 유리병 구성 ───
+// ─── 다섯 손가락 + 일체형 손등·손목 + 네일 벨벳 쿠션 + 매니큐어 유리병 구성 ───
 const HAND_RIG = new THREE.Group();
 S.add(HAND_RIG);
 
-// 폭신한 파스텔 벨벳 네일 암레스트 쿠션
+// 폭신한 파스텔 벨벳 네일 암레스트 쿠션 (테이블 바닥 DESK_Y 위에 세워져 손목을 받침)
 const ARMREST = new THREE.Group();
 {
   const velvetM = new THREE.MeshStandardMaterial({ color: '#f3d9e2', roughness: 0.85, metalness: 0 });
   const goldLegM = new THREE.MeshStandardMaterial({ color: '#e5c17b', roughness: 0.28, metalness: 0.72 });
-  const padGeo = new THREE.CylinderGeometry(16, 17, 118, 32);
+  const padGeo = new THREE.CylinderGeometry(17, 18, 128, 36);
   padGeo.rotateZ(Math.PI / 2);
   const pad = new THREE.Mesh(padGeo, velvetM);
-  pad.scale.set(1, 0.58, 1.35);
-  pad.position.set(0, -5.2, -52);
+  pad.scale.set(1, 0.52, 1.38);
+  pad.position.set(-1, -10.5, -72);
   pad.castShadow = pad.receiveShadow = true;
   ARMREST.add(pad);
 
-  for (const lx of [-48, 48]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.8, 12, 16), goldLegM);
-    leg.position.set(lx, -6, -52);
+  const legH = -10.5 - DESK_Y;
+  for (const lx of [-52, 50]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 3.0, legH, 16), goldLegM);
+    leg.position.set(lx, DESK_Y + legH * 0.5, -72);
     leg.castShadow = true;
     ARMREST.add(leg);
   }
   S.add(ARMREST);
 }
 
-// 다섯 손가락 뒤쪽으로 자연스럽게 이어지는 입체 손등(얼굴 없음, 손등·손목만)
-{
-  const palmGeo = new THREE.SphereGeometry(1, 36, 28);
-  const palm = new THREE.Mesh(palmGeo, skinM);
-  palm.scale.set(42, 11.5, 34);
-  palm.position.set(-1.5, -4.5, -56);
-  palm.rotation.x = 0.22;
-  palm.castShadow = palm.receiveShadow = true;
-  HAND_RIG.add(palm);
+// 다섯 손가락 뿌리(너클)부터 엄지 옆살·손등·손목·팔뚝까지 끊김·구김 없이 하나로 이어지는 파라메트릭 메쉬
+function buildHandBodyGeo() {
+  const NZ = 76, NT = 96;
+  const zFront = -33.0, zBack = -235.0;
+  const pos = new Float32Array((NZ + 1) * (NT + 1) * 3);
+  const uv = new Float32Array((NZ + 1) * (NT + 1) * 2);
+  const idx = [];
 
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(29, 31, 60, 28), skinM);
-  wrist.rotation.x = Math.PI / 2 + 0.18;
-  wrist.scale.set(1.08, 1, 0.42);
-  wrist.position.set(-2, -12, -96);
-  wrist.castShadow = true;
-  HAND_RIG.add(wrist);
+  for (let iz = 0; iz <= NZ; iz++) {
+    const kz = iz / NZ;
+    // 앞쪽 너클 부근에 정점을 더 촘촘히 배치해 매끄러운 곡면 형성
+    const z = lerp(zFront, zBack, Math.pow(kz, 1.15));
+    const dFront = zFront - z;
+    const cap = dFront >= 12.0 ? 1 : dFront <= 0 ? 0 : Math.pow(1 - Math.pow((12.0 - dFront) / 12.0, 2.0), 0.52);
+
+    // 손등에서 손목(z ~ -118)으로 잘록해졌다가 팔뚝으로 이어지는 좌우 윤곽
+    const wristNarrow = sm((-z - 76) / 44);
+    const forearmWide = sm((-z - 130) / 70);
+    // 엄지 뿌리 합류부(z ~ -54..-66) 왼쪽 무지구를 매끄럽게 감싸 안음
+    const thumbJoin = sm((-z - 38) / 16) * (1 - 0.55 * wristNarrow);
+
+    let xLeft = -24.6 - 7.8 * thumbJoin - 2.6 * forearmWide;
+    let xRight = lerp(34.6, 26.8, wristNarrow) + 2.8 * forearmWide;
+
+    const cx = (xLeft + xRight) * 0.5;
+    const rx = Math.max(0.05, (xRight - xLeft) * 0.5 * cap);
+
+    // 손가락 뿌리 윗면(y ~ 12.8)을 위로 덮지 않고 매끈하게 같은 높이로 이어지는 아치
+    const cy = lerp(7.3, 6.8, sm((-z - 48) / 90));
+    const dorsalArch = 1.35 * sm((-z - 46) / 22) * (1 - 0.35 * wristNarrow);
+    const hTop = (5.25 + dorsalArch + 0.7 * forearmWide) * cap;
+    const hBot = (6.2 + 0.9 * gs(z, -65, 25) + 1.0 * forearmWide) * cap;
+
+    for (let it = 0; it <= NT; it++) {
+      const th = (it / NT) * TAU - Math.PI / 2;
+      const c = Math.cos(th), sn = Math.sin(th);
+      const o = iz * (NT + 1) + it;
+
+      const lx = rx * Math.sign(c) * Math.pow(Math.abs(c), 2 / 2.35);
+      let ly;
+      if (sn >= 0) {
+        // 손등 위쪽: 중앙이 살짝 도톰하고 가장자리로 부드럽게 떨어지는 아치
+        ly = cy + hTop * Math.pow(sn, 2 / 2.35);
+      } else {
+        ly = cy - hBot * Math.pow(-sn, 2 / 2.15);
+      }
+
+      pos[o * 3] = cx + lx;
+      pos[o * 3 + 1] = ly;
+      pos[o * 3 + 2] = z;
+      uv[o * 2] = it / NT;
+      uv[o * 2 + 1] = clamp(0.05 + kz * 0.35, 0.02, 0.98);
+    }
+  }
+
+  for (let iz = 0; iz < NZ; iz++) {
+    for (let it = 0; it < NT; it++) {
+      const a = iz * (NT + 1) + it, b = a + 1, c = a + NT + 1, d = c + 1;
+      // 손가락과 같은 와인딩 방향으로 바깥쪽 법선 생성
+      idx.push(a, c, b, b, c, d);
+    }
+  }
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+
+  // 앞코 폴(iz = 0)과 이음매(it = 0, NT) 법선을 매끄럽게 정돈해 주름 제거
+  const nr = g.attributes.normal.array;
+  for (let it = 0; it <= NT; it++) {
+    const o0 = it * 3;
+    nr[o0] = 0; nr[o0 + 1] = 0.12; nr[o0 + 2] = 0.992;
+  }
+  for (let iz = 1; iz <= NZ; iz++) {
+    const a = (iz * (NT + 1)) * 3;
+    const b = (iz * (NT + 1) + NT) * 3;
+    for (let k = 0; k < 3; k++) {
+      const avg = (nr[a + k] + nr[b + k]) * 0.5;
+      nr[a + k] = nr[b + k] = avg;
+    }
+  }
+  g.attributes.normal.needsUpdate = true;
+  return g;
+}
+
+{
+  const handBody = new THREE.Mesh(buildHandBodyGeo(), skinM);
+  handBody.castShadow = handBody.receiveShadow = true;
+  HAND_RIG.add(handBody);
+}
+
+// ─── 매니큐어 위에도 선명하게 보이는 고대비 3D 가이드 점선 링 ───
+function buildGuideRingGroup() {
+  const G = new THREE.Group();
+  const INSET = 0.20; // 목표 경계선 안쪽 오프셋(mm)
+  const hw0 = NL.hw0 - INSET, hw1 = NL.hw1 - INSET;
+  const rootD = NL.rootD - INSET, tipD = NL.tipD - INSET;
+
+  // 손톱 둘레 폐곡선 샘플 생성
+  const rawPts = [];
+  for (let i = 0; i < 64; i++) {
+    const a = Math.PI * (i / 64);
+    rawPts.push([hw0 * Math.cos(a), NL.rootD - rootD * Math.sin(a)]);
+  }
+  for (let i = 0; i < 48; i++) {
+    const k = i / 48;
+    rawPts.push([-lerp(hw0, hw1, k), lerp(NL.rootD, NL.sideS, k)]);
+  }
+  for (let i = 0; i < 64; i++) {
+    const a = Math.PI * (i / 64);
+    rawPts.push([-hw1 * Math.cos(a), NL.sideS + tipD * Math.sin(a)]);
+  }
+  for (let i = 0; i < 48; i++) {
+    const k = i / 48;
+    rawPts.push([lerp(hw1, hw0, k), lerp(NL.sideS, NL.rootD, k)]);
+  }
+
+  // 호 길이(arc-length) 균등 재샘플링하여 점선 간격을 일정하게 유지
+  const cum = [0];
+  for (let i = 1; i <= rawPts.length; i++) {
+    const p0 = rawPts[i - 1], p1 = rawPts[i % rawPts.length];
+    cum.push(cum[i - 1] + Math.hypot(p1[0] - p0[0], p1[1] - p0[1]));
+  }
+  const totalLen = cum[cum.length - 1];
+  const M = 288; // 36개 대시 × 8 세그먼트
+  const pts = [];
+  let seg = 0;
+  for (let i = 0; i < M; i++) {
+    const target = (i / M) * totalLen;
+    while (seg < rawPts.length - 1 && cum[seg + 1] < target) seg++;
+    const p0 = rawPts[seg], p1 = rawPts[(seg + 1) % rawPts.length];
+    const span = Math.max(1e-5, cum[seg + 1] - cum[seg]);
+    const u = (target - cum[seg]) / span;
+    pts.push([lerp(p0[0], p1[0], u), lerp(p0[1], p1[1], u)]);
+  }
+
+  function makeRibbonGeo(halfWidth, yLift, dashed) {
+    const rPos = [], rIdx = [];
+    let vCount = 0;
+    const DASHES = 36;
+    const perDash = M / DASHES;
+
+    for (let i = 0; i < M; i++) {
+      if (dashed && (i % perDash) >= perDash * 0.56) continue;
+      const iNext = (i + 1) % M;
+      const p0 = pts[i], p1 = pts[iNext];
+      const pPrev = pts[(i - 1 + M) % M], pAfter = pts[(i + 2) % M];
+
+      const t0x = p1[0] - pPrev[0], t0s = p1[1] - pPrev[1];
+      const l0 = Math.max(1e-5, Math.hypot(t0x, t0s));
+      const n0x = -t0s / l0, n0s = t0x / l0;
+
+      const t1x = pAfter[0] - p0[0], t1s = pAfter[1] - p0[1];
+      const l1 = Math.max(1e-5, Math.hypot(t1x, t1s));
+      const n1x = -t1s / l1, n1s = t1x / l1;
+
+      const ax0 = p0[0] - n0x * halfWidth, as0 = p0[1] - n0s * halfWidth;
+      const bx0 = p0[0] + n0x * halfWidth, bs0 = p0[1] + n0s * halfWidth;
+      const ax1 = p1[0] - n1x * halfWidth, as1 = p1[1] - n1s * halfWidth;
+      const bx1 = p1[0] + n1x * halfWidth, bs1 = p1[1] + n1s * halfWidth;
+
+      rPos.push(
+        ax0, nailTop(ax0, as0) + yLift, as0,
+        bx0, nailTop(bx0, bs0) + yLift, bs0,
+        ax1, nailTop(ax1, as1) + yLift, as1,
+        bx1, nailTop(bx1, bs1) + yLift, bs1
+      );
+      rIdx.push(vCount, vCount + 2, vCount + 1, vCount + 1, vCount + 2, vCount + 3);
+      vCount += 4;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(rPos, 3));
+    g.setIndex(rIdx);
+    return g;
+  }
+
+  // 1) 어두운 바탕 테두리 링 (밝은 살색·노란색·흰색 위에서도 선명하게 잡아줌)
+  const bgMat = new THREE.MeshBasicMaterial({
+    color: '#1b1326', transparent: true, opacity: 0.72,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const bgMesh = new THREE.Mesh(makeRibbonGeo(0.20, 0.076, false), bgMat);
+  bgMesh.renderOrder = 7;
+
+  // 2) 밝게 빛나는 고대비 대시 점선 링 (어두운 네이비·체리 레드 매니큐어 위에서도 선명!)
+  const fgMat = new THREE.MeshBasicMaterial({
+    color: '#ffffff', transparent: true, opacity: 0.96,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
+  const fgMesh = new THREE.Mesh(makeRibbonGeo(0.125, 0.088, true), fgMat);
+  fgMesh.renderOrder = 8;
+
+  G.add(bgMesh, fgMesh);
+  G.userData = { bgMat, fgMat };
+  return G;
 }
 
 let currentPalette = PALETTE[0];
@@ -792,9 +1000,11 @@ const FINGERS = FINGER_SPECS.map((spec, idx) => {
   group.rotation.set(0, spec.ry, spec.rz);
   group.scale.set(spec.sx, spec.sy, spec.sz);
   const coat = new NailCoat(currentPalette);
-  group.add(coat.mesh);
+  const guide = buildGuideRingGroup();
+  guide.visible = false;
+  group.add(coat.mesh, guide);
   HAND_RIG.add(group);
-  return { idx, spec, group, coat };
+  return { idx, spec, group, coat, guide };
 });
 
 // 매니큐어 유리병 진열 (메인 병 + 배경 파스텔 살롱 소품 병들)
@@ -837,14 +1047,14 @@ function createPolishBottle(liquidHex, withCapClosed = false) {
 }
 
 const MAIN_BOTTLE = createPolishBottle(currentPalette.bottle, false);
-MAIN_BOTTLE.position.set(-56, 0, 18);
+MAIN_BOTTLE.position.set(-56, DESK_Y, 18);
 MAIN_BOTTLE.scale.setScalar(0.82);
 S.add(MAIN_BOTTLE);
 
 const DECO_BOTTLES = new THREE.Group();
 PALETTE.forEach((pal, i) => {
   const b = createPolishBottle(pal.bottle, true);
-  b.position.set(-54 + i * 21.5, 0, -96 + Math.abs(i - 2.5) * 4);
+  b.position.set(-54 + i * 21.5, DESK_Y, -112 + Math.abs(i - 2.5) * 4);
   b.scale.setScalar(0.76);
   DECO_BOTTLES.add(b);
 });
@@ -1061,6 +1271,24 @@ const STATE = {
   strokeSfxCooldown: 0,
   smearFlash: 0,
   perfectShown: [false, false, false, false, false],
+  // 확대(Zoom) 및 시점 이동(Pan) 상태
+  zoom: 1.0,
+  panX: 0,
+  panS: 0,
+  panMode: false,
+  panDragging: false,
+  panPointerId: null,
+  panStartClientX: 0,
+  panStartClientY: 0,
+  panStartX: 0,
+  panStartS: 0,
+  activePointers: new Map(),
+  isPinching: false,
+  pinchStartDist: 0,
+  pinchStartZoom: 1.0,
+  pinchPrevMidX: 0,
+  pinchPrevMidY: 0,
+  // 쇼케이스 감상 회전 상태
   showcaseTiltX: 0,
   showcaseTiltZ: 0,
   targetTiltX: 0,
@@ -1080,20 +1308,66 @@ const camCurLook = V(0, 8, 5);
 const camGoalPos = V(0, 165, 86);
 const camGoalLook = V(0, 8, 5);
 
+function syncZoomUI() {
+  const z = STATE.zoom;
+  document.querySelectorAll('.zoom-chip').forEach(btn => {
+    const targetZ = Number(btn.dataset.zoom || 1);
+    const matched = (targetZ === 1 && z < 1.35)
+      || (targetZ === 1.8 && z >= 1.35 && z < 2.3)
+      || (targetZ === 2.8 && z >= 2.3);
+    btn.classList.toggle('active', matched);
+  });
+  const panBtn = $('btn-pan-mode');
+  if (panBtn) {
+    const canPan = z > 1.06;
+    if (!canPan && STATE.panMode) {
+      STATE.panMode = false;
+      document.body.classList.remove('pan-mode');
+    }
+    panBtn.disabled = !canPan;
+    panBtn.classList.toggle('active', STATE.panMode);
+    panBtn.textContent = STATE.panMode ? '🖌️ 색칠 모드로' : '✋ 화면 이동';
+  }
+}
+
+function setZoomLevel(nextZoom, focusLocalX = null, focusLocalS = null) {
+  const prevZoom = STATE.zoom;
+  STATE.zoom = clamp(nextZoom, 1.0, 3.2);
+  if (STATE.zoom <= 1.04) {
+    STATE.panX = 0;
+    STATE.panS = 0;
+    STATE.panMode = false;
+    document.body.classList.remove('pan-mode');
+  } else {
+    if (focusLocalX != null && focusLocalS != null && STATE.zoom > prevZoom) {
+      const k = clamp((STATE.zoom - prevZoom) / Math.max(0.3, STATE.zoom), 0.15, 0.55);
+      STATE.panX = lerp(STATE.panX, focusLocalX, k);
+      STATE.panS = lerp(STATE.panS, focusLocalS - 6.6, k);
+    }
+    const maxPanX = 6.2 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
+    const maxPanS = 6.8 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
+    STATE.panX = clamp(STATE.panX, -maxPanX, maxPanX);
+    STATE.panS = clamp(STATE.panS, -maxPanS, maxPanS);
+  }
+  syncZoomUI();
+  if (STATE.phase === 'play') updateCameraGoalForFinger(STATE.fingerIdx, false);
+}
+
 function updateCameraGoalForFinger(idx, instant = false) {
   const f = FINGERS[idx];
-  const worldCenter = V(0, 8.5, 6.6);
+  const worldCenter = V(STATE.panX, 8.5, 6.6 + STATE.panS);
   HAND_RIG.updateMatrixWorld(true);
   f.group.localToWorld(worldCenter);
 
-  // 모바일 세로 화면에서도 손톱이 가로 절반 이상 큼직하게 들어오도록 거리 조정
+  // 모바일 세로 화면에서도 손톱이 큼직하게 들어오고, 확대 배율(STATE.zoom)에 비례해 초근접 줌인!
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  const dist = aspect < 0.72 ? 156 : 142;
-  const el = 65 * DEG;
+  const baseDist = aspect < 0.72 ? 154 : 140;
+  const dist = baseDist / clamp(STATE.zoom, 1.0, 3.2);
+  const el = 66 * DEG;
 
-  camGoalLook.set(worldCenter.x, worldCenter.y + 0.6, worldCenter.z + 1.0);
+  camGoalLook.set(worldCenter.x, worldCenter.y + 0.5, worldCenter.z + 0.8);
   camGoalPos.set(
-    worldCenter.x - f.spec.ry * 18,
+    worldCenter.x - (f.spec.ry * 16) / STATE.zoom,
     worldCenter.y + dist * Math.sin(el),
     worldCenter.z + dist * Math.cos(el)
   );
@@ -1282,6 +1556,15 @@ function resetAllNails() {
   STATE.rawS = 6.5;
   STATE.curX = 0;
   STATE.curS = 6.5;
+  STATE.zoom = 1.0;
+  STATE.panX = 0;
+  STATE.panS = 0;
+  STATE.panMode = false;
+  STATE.panDragging = false;
+  STATE.activePointers.clear();
+  STATE.isPinching = false;
+  document.body.classList.remove('pan-mode');
+  syncZoomUI();
   STATE.perfectShown = [false, false, false, false, false];
   STATE.showcaseTiltX = 0;
   STATE.showcaseTiltZ = 0;
@@ -1316,14 +1599,16 @@ function beginPlayPhase() {
   HAND_RIG.visible = true;
   ARMREST.visible = true;
   DECO_BOTTLES.visible = true;
+  FINGERS.forEach(f => { f.guide.visible = true; });
   bristleMesh.position.set(0, 0, 0);
   $('btn-skip-intro').classList.add('hidden');
   $('nail-hud').classList.remove('hidden');
   $('nail-dock').classList.remove('hidden');
   $('btn-restart-quick').style.display = 'inline-flex';
-  MAIN_BOTTLE.position.set(-56, 0, 18);
+  MAIN_BOTTLE.position.set(-56, DESK_Y, 18);
   HAND_RIG.rotation.set(0, 0, 0);
   HAND_RIG.position.set(0, 0, 0);
+  setZoomLevel(1.0);
   updateCameraGoalForFinger(0, false);
   updatePlayHUD();
 }
@@ -1345,6 +1630,11 @@ function advanceToNextNail() {
     STATE.rawS = 6.5;
     STATE.curX = 0;
     STATE.curS = 6.5;
+    STATE.panX = 0;
+    STATE.panS = 0;
+    STATE.panMode = false;
+    document.body.classList.remove('pan-mode');
+    syncZoomUI();
     SFX.pop();
     updateCameraGoalForFinger(STATE.fingerIdx, false);
     addPopText(`${FINGERS[STATE.fingerIdx].spec.label} 시술 시작!`, '#fda4af');
@@ -1433,14 +1723,15 @@ async function finishAllNails() {
   $('showcase-tip').classList.remove('hidden');
   document.body.classList.add('in-showcase');
 
-  // 다섯 손가락 전체(가로 폭 ~96mm)가 모바일 세로 화면에서도 잘리지 않고 한눈에 다 들어오도록 자동 거리 계산
+  // 다섯 손가락 전체(가로 폭 ~96mm)와 매끄러운 손등이 잘리지 않고 한눈에 다 들어오도록 자동 거리 계산
+  FINGERS.forEach(f => { f.guide.visible = false; });
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
   const halfTan = Math.tan((CAM.fov * 0.5) * DEG);
-  const fitWidthDist = 52 / Math.max(0.04, halfTan * aspect);
-  const dist = clamp(Math.max(255, fitWidthDist), 255, 780);
+  const fitWidthDist = 55 / Math.max(0.04, halfTan * aspect);
+  const dist = clamp(Math.max(275, fitWidthDist), 275, 820);
   const el = 60 * DEG;
-  camGoalLook.set(-1, 2.0, -14);
-  camGoalPos.set(-1, 2.0 + dist * Math.sin(el), -14 + dist * Math.cos(el));
+  camGoalLook.set(-0.5, 6.0, -22);
+  camGoalPos.set(-0.5, 6.0 + dist * Math.sin(el), -22 + dist * Math.cos(el));
 
   SFX.nailShine();
   setTimeout(() => SFX.win(), 240);
@@ -1528,10 +1819,11 @@ function applyBrushStrokeAt(rawX, rawS, dt) {
   STATE.curX = bx;
   STATE.curS = bs;
 
-  // 실제 네일샵 3터치 풀컬러 손맛: 부채꼴로 넉넉히 퍼지는 붓폭(2.18~2.35mm) 유지!
-  // 숨을 참으면 수전증(손떨림)이 0mm로 딱 멈춰 흰 점선 코앞까지 안 묻히고 한 번에 매끈하게 채울 수 있다.
-  const brushA = breathOn ? 2.18 : lerp(2.36, 2.05, sm((dRaw + 1.8) / 1.6));
-  const brushB = 0.86;
+  // 확대 배율이 높을수록 구석 모서리를 세밀하게 메울 수 있도록 정밀 붓 크기 연동!
+  const zoomFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
+  const baseA = breathOn ? 2.18 : lerp(2.36, 2.05, sm((dRaw + 1.8) / 1.6));
+  const brushA = baseA * zoomFine;
+  const brushB = 0.86 * lerp(1.0, 0.78, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
 
   // 실제 매니큐어 표면장력 반영:
   // 붓 중심이 흰 점선 바깥(dActual > -0.12mm)으로 밀려나가거나 손떨림으로 크게 흔들릴 때 옆 살(zone 2)로 넘쳐 묻음!
@@ -1595,7 +1887,16 @@ function triggerSmearFeedback(coat) {
   STATE.smearFlash = 1.1;
 }
 
-// ─── 입력 이벤트 바인딩 (멀티터치 드래그 + 숨 참기 홀드/토글 + Space) ───
+// ─── 입력 이벤트 바인딩 (멀티터치 드래그 + 핀치 확대/이동 + 마우스 휠 확대 + 숨 참기) ───
+function panCameraByScreenDelta(dxPx, dyPx) {
+  const scaleMmPerPx = (0.14 / Math.max(1, STATE.zoom)) * (420 / Math.max(280, window.innerHeight));
+  const maxPanX = 6.2 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
+  const maxPanS = 6.8 * clamp((STATE.zoom - 1.0) / 1.4, 0.15, 1.0);
+  STATE.panX = clamp(STATE.panX - dxPx * scaleMmPerPx, -maxPanX, maxPanX);
+  STATE.panS = clamp(STATE.panS - dyPx * scaleMmPerPx * 1.15, -maxPanS, maxPanS);
+  updateCameraGoalForFinger(STATE.fingerIdx, false);
+}
+
 glCanvas.addEventListener('pointerdown', e => {
   unlockAudio();
   if (STATE.phase === 'showcase') {
@@ -1605,14 +1906,44 @@ glCanvas.addEventListener('pointerdown', e => {
     return;
   }
   if (STATE.phase !== 'play') return;
+
   if (e.button === 2) {
-    // 마우스 우클릭은 숨 참기 보조 단축키로 지원
     STATE.breathKeyDown = true;
     if (STATE.breath > 5 && STATE.exhaustTimer <= 0) SFX.breathHold();
     updatePlayHUD();
     return;
   }
-  if (STATE.painting) return;
+
+  // 포인터 등록 (모바일 두 손가락 핀치 줌 감지용)
+  STATE.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (STATE.activePointers.size >= 2) {
+    // 두 번째 손가락 터치 시: 붓질 중단 후 즉시 두 손가락 핀치 확대 & 화면 이동 모드 진입!
+    STATE.painting = false;
+    STATE.paintPointerId = null;
+    STATE.prevStampX = null;
+    STATE.prevStampS = null;
+    STATE.targetLift = 2.0;
+
+    const pts = [...STATE.activePointers.values()];
+    STATE.isPinching = true;
+    STATE.pinchStartDist = Math.max(12, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
+    STATE.pinchStartZoom = STATE.zoom;
+    STATE.pinchPrevMidX = (pts[0].x + pts[1].x) * 0.5;
+    STATE.pinchPrevMidY = (pts[0].y + pts[1].y) * 0.5;
+    return;
+  }
+
+  // 화면 이동 모드(✋ 화면 이동 버튼 ON, 마우스 중클릭, 또는 Shift + 드래그)
+  if ((STATE.panMode && STATE.zoom > 1.04) || e.button === 1 || e.shiftKey) {
+    STATE.panDragging = true;
+    STATE.panPointerId = e.pointerId;
+    STATE.panStartClientX = e.clientX;
+    STATE.panStartClientY = e.clientY;
+    try { glCanvas.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
+
+  if (STATE.painting || STATE.isPinching) return;
 
   const loc = screenToFingerLocal(e.clientX, e.clientY, e.pointerType);
   if (!loc) return;
@@ -1634,12 +1965,44 @@ glCanvas.addEventListener('pointermove', e => {
       const rect = glCanvas.getBoundingClientRect();
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-      STATE.targetTiltZ = clamp(-nx * 0.34, -0.38, 0.38);
-      STATE.targetTiltX = clamp(ny * 0.18, -0.22, 0.22);
+      STATE.targetTiltZ = clamp(-nx * 0.32, -0.35, 0.35);
+      STATE.targetTiltX = clamp(ny * 0.16, -0.20, 0.20);
     }
     return;
   }
   if (STATE.phase !== 'play') return;
+
+  if (STATE.activePointers.has(e.pointerId)) {
+    STATE.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
+  // 두 손가락 핀치 줌 & 패닝 처리
+  if (STATE.isPinching && STATE.activePointers.size >= 2) {
+    const pts = [...STATE.activePointers.values()];
+    const dist = Math.max(12, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
+    const midX = (pts[0].x + pts[1].x) * 0.5;
+    const midY = (pts[0].y + pts[1].y) * 0.5;
+
+    const ratio = dist / STATE.pinchStartDist;
+    setZoomLevel(STATE.pinchStartZoom * ratio);
+
+    if (STATE.zoom > 1.05) {
+      panCameraByScreenDelta(midX - STATE.pinchPrevMidX, midY - STATE.pinchPrevMidY);
+    }
+    STATE.pinchPrevMidX = midX;
+    STATE.pinchPrevMidY = midY;
+    return;
+  }
+
+  // 한 손가락/마우스 화면 이동 모드 드래그
+  if (STATE.panDragging && e.pointerId === STATE.panPointerId) {
+    const dx = e.clientX - STATE.panStartClientX;
+    const dy = e.clientY - STATE.panStartClientY;
+    STATE.panStartClientX = e.clientX;
+    STATE.panStartClientY = e.clientY;
+    panCameraByScreenDelta(dx, dy);
+    return;
+  }
 
   if (STATE.painting && e.pointerId === STATE.paintPointerId) {
     const loc = screenToFingerLocal(e.clientX, e.clientY, e.pointerType);
@@ -1660,8 +2023,19 @@ glCanvas.addEventListener('pointermove', e => {
 });
 
 function endPaintPointer(e) {
+  if (e && STATE.activePointers.has(e.pointerId)) {
+    STATE.activePointers.delete(e.pointerId);
+  }
+  if (STATE.activePointers.size < 2) {
+    STATE.isPinching = false;
+  }
   if (STATE.phase === 'showcase') {
     STATE.showcaseDragging = false;
+  }
+  if (e && STATE.panDragging && e.pointerId === STATE.panPointerId) {
+    STATE.panDragging = false;
+    STATE.panPointerId = null;
+    return;
   }
   if (e && e.button === 2) {
     STATE.breathKeyDown = false;
@@ -1671,7 +2045,8 @@ function endPaintPointer(e) {
   if (STATE.painting && (!e || e.pointerId === STATE.paintPointerId)) {
     const coat = FINGERS[STATE.fingerIdx].coat;
     if (STATE.prevStampX != null) {
-      coat.ridge(STATE.prevStampX, STATE.prevStampS, isBreathActive() ? 1.42 : 1.9, 0.75, STATE.psi, 0.65);
+      const zFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
+      coat.ridge(STATE.prevStampX, STATE.prevStampS, (isBreathActive() ? 1.9 : 2.1) * zFine, 0.78 * zFine, STATE.psi, 0.65);
       coat.upload();
     }
     STATE.painting = false;
@@ -1688,6 +2063,34 @@ function endPaintPointer(e) {
 glCanvas.addEventListener('pointerup', endPaintPointer);
 glCanvas.addEventListener('pointercancel', endPaintPointer);
 glCanvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// PC 마우스 휠 확대/축소 지원 (커서가 가리키는 손톱 위치 중심으로 줌인!)
+glCanvas.addEventListener('wheel', e => {
+  if (STATE.phase !== 'play') return;
+  e.preventDefault();
+  const loc = screenToFingerLocal(e.clientX, e.clientY, 'mouse');
+  const step = e.deltaY < 0 ? 0.28 : -0.28;
+  setZoomLevel(STATE.zoom + step, loc ? loc.x : null, loc ? loc.s : null);
+}, { passive: false });
+
+// 확대 배율 칩 & 화면 이동 토글 버튼 연결
+document.querySelectorAll('.zoom-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    unlockAudio();
+    SFX.tick();
+    const z = Number(btn.dataset.zoom || 1);
+    setZoomLevel(z, STATE.curX, STATE.curS);
+  });
+});
+
+$('btn-pan-mode').addEventListener('click', () => {
+  if (STATE.zoom <= 1.05) return;
+  unlockAudio();
+  SFX.tick();
+  STATE.panMode = !STATE.panMode;
+  document.body.classList.toggle('pan-mode', STATE.panMode);
+  syncZoomUI();
+});
 
 // 숨 참기 버튼 (길게 누르면 홀드, 240ms 이내 짧게 탭하면 한 손 조작을 위한 토글 ON/OFF!)
 const btnBreath = $('btn-breath');
@@ -1919,18 +2322,20 @@ function animate(now) {
     CAM.position.set(Math.sin(t * 0.35) * 26, 175, 165);
     CAM.lookAt(0, 6, -18);
     BRUSH_ROOT.visible = false;
+    FINGERS.forEach(f => { f.guide.visible = false; });
   } else if (STATE.phase === 'intro') {
     STATE.introTime += dt;
     const t = STATE.introTime;
+    FINGERS.forEach(f => { f.guide.visible = false; });
 
     if (t < 0.95) {
       // CUT 1: 네일살롱 진열된 병들과 벨벳 쿠션 위의 손 전체 샷 (하드컷!)
       HAND_RIG.visible = true;
       DECO_BOTTLES.visible = true;
       CAM.position.set(-18 + t * 14, 115, 148);
-      CAM.lookAt(-4, 8, -36);
+      CAM.lookAt(-4, 6, -38);
       BRUSH_ROOT.visible = false;
-      MAIN_BOTTLE.position.set(-48, 0, 14);
+      MAIN_BOTTLE.position.set(-48, DESK_Y, 14);
     } else if (t < 1.95) {
       // CUT 2: 선택한 매니큐어 병에서 촉촉한 붓이 스르륵 들려 나오는 단독 클로즈업 (하드컷!)
       const u = (t - 0.95) / 1.0;
@@ -1961,7 +2366,7 @@ function animate(now) {
       ARMREST.visible = true;
       DECO_BOTTLES.visible = true;
       bristleMesh.position.set(0, 0, 0);
-      MAIN_BOTTLE.position.set(-56, 0, 18);
+      MAIN_BOTTLE.position.set(-56, DESK_Y, 18);
       BRUSH_ROOT.visible = false;
       const u = ease(clamp((t - 1.95) / 0.9, 0, 1));
       updateCameraGoalForFinger(0, false);
@@ -1972,7 +2377,7 @@ function animate(now) {
       HAND_RIG.visible = true;
       ARMREST.visible = true;
       bristleMesh.position.set(0, 0, 0);
-      MAIN_BOTTLE.position.set(-56, 0, 18);
+      MAIN_BOTTLE.position.set(-56, DESK_Y, 18);
       camCurPos.copy(camGoalPos);
       camCurLook.copy(camGoalLook);
       beginPlayPhase();
@@ -2006,13 +2411,13 @@ function animate(now) {
     }
 
     // 카메라 스무딩
-    const camFollow = 1 - Math.exp(-dt * 8.5);
+    const camFollow = 1 - Math.exp(-dt * 9.5);
     camCurPos.lerp(camGoalPos, camFollow);
     camCurLook.lerp(camGoalLook, camFollow);
     CAM.position.copy(camCurPos);
     CAM.lookAt(camCurLook);
 
-    // 브러시 루트를 현재 칠하는 손가락 로컬 공간과 동기화
+    // 브러시 루트 & 고대비 가이드 링을 현재 칠하는 손가락 로컬 공간과 동기화
     const activeFinger = FINGERS[STATE.fingerIdx];
     activeFinger.group.updateMatrixWorld(true);
     BRUSH_ROOT.visible = true;
@@ -2021,20 +2426,41 @@ function animate(now) {
     BRUSH_ROOT.quaternion.copy(activeFinger.group.quaternion);
     BRUSH_ROOT.scale.copy(activeFinger.group.scale);
 
-    STATE.lift = lerp(STATE.lift, STATE.targetLift, 1 - Math.exp(-dt * 16));
     const breathOn = isBreathActive();
+    FINGERS.forEach((f, idx) => {
+      f.guide.visible = true;
+      if (idx === STATE.fingerIdx) {
+        f.guide.userData.bgMat.opacity = 0.78;
+        f.guide.userData.fgMat.opacity = 0.98;
+        f.guide.userData.fgMat.color.set(
+          STATE.smearFlash > 0.15 ? '#ff7b7b'
+            : breathOn ? '#7dd3fc'
+            : STATE.risk >= 65 ? '#fde047'
+            : '#ffffff'
+        );
+      } else {
+        // 옆 손톱에도 가이드선이 은은하고 또렷하게 보여 전체 목표 영역 파악이 쉬움
+        f.guide.userData.bgMat.opacity = 0.42;
+        f.guide.userData.fgMat.opacity = 0.72;
+        f.guide.userData.fgMat.color.set('#ffffff');
+      }
+    });
+
+    STATE.lift = lerp(STATE.lift, STATE.targetLift, 1 - Math.exp(-dt * 16));
+    const zoomFine = lerp(1.0, 0.65, clamp((STATE.zoom - 1.0) / 1.8, 0, 1));
     setBrushLocal({
       x: STATE.curX,
       s: STATE.curS,
       lift: STATE.lift,
-      a: breathOn ? 2.18 : 2.32,
-      b: 0.86,
+      a: (breathOn ? 2.18 : 2.32) * zoomFine,
+      b: 0.86 * lerp(1.0, 0.78, clamp((STATE.zoom - 1.0) / 1.8, 0, 1)),
       psi: STATE.psi,
       A: BRUSH_AXIS,
       drop: 0.65,
     });
   } else if (STATE.phase === 'showcase') {
     BRUSH_ROOT.visible = false;
+    FINGERS.forEach(f => { f.guide.visible = false; });
     const t = now * 0.001;
     // 사용자가 드래그하지 않을 때도 은은하게 좌우로 기울어 다섯 손톱 위로 빛줄기가 스윕함!
     const autoZ = STATE.showcaseDragging ? 0 : Math.sin(t * 1.35) * 0.14;
@@ -2043,8 +2469,9 @@ function animate(now) {
     STATE.showcaseTiltX = lerp(STATE.showcaseTiltX, STATE.targetTiltX + autoX, 1 - Math.exp(-dt * 6));
 
     HAND_RIG.rotation.z = STATE.showcaseTiltZ;
-    HAND_RIG.rotation.x = STATE.showcaseTiltX - 0.04;
-    HAND_RIG.position.y = 3.2;
+    HAND_RIG.rotation.x = STATE.showcaseTiltX - 0.03;
+    // 손을 쿠션·바닥 위로 살짝 들어 올려 아무리 크게 기울여도 절대 바닥이나 쿠션을 뚫지 않음!
+    HAND_RIG.position.y = 8.5;
 
     const camFollow = 1 - Math.exp(-dt * 5.5);
     camCurPos.lerp(camGoalPos, camFollow);
@@ -2122,6 +2549,8 @@ async function boot() {
     coverPct: Number(FINGERS[STATE.fingerIdx].coat.coverPct().toFixed(1)),
     smearPx: FINGERS[STATE.fingerIdx].coat.smearPx,
     breath: Math.round(STATE.breath),
+    zoom: Number(STATE.zoom.toFixed(2)),
+    panMode: STATE.panMode,
   });
 
   requestAnimationFrame(animate);
