@@ -113,9 +113,12 @@ export default async function handler(req, res) {
       ogTitle = `🎂 ${who}님의 [케이크 글씨 쓰기] 기록: ${Math.round(run.score || 0)}점`;
       ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 초코펜 레터링 기록을 깨 보세요! (${run.rank_title || '파티시에'})`;
     } else if (game === 'nail') {
-      const cleanCnt = run.actual_value != null ? Math.round(Number(run.actual_value)) : 0;
-      ogTitle = `💅 ${who}님의 [손톱 색칠하기] 기록: 정밀도 ${Number(run.score || 0).toFixed(1)}점 (무결점 ${cleanCnt}/5)`;
-      ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 살에 안 묻히기 기록을 깨 보세요! (${run.rank_title || '네일리스트'})`;
+      const tCode = Math.round(Number(run.target_value || 0));
+      const dStr = tCode === 3 ? '상' : tCode === 2 ? '중' : tCode === 1 ? '하' : '';
+      const sec = Number(run.actual_value || 0);
+      const secTxt = sec > 5 ? ` · ${sec.toFixed(1)}초` : '';
+      ogTitle = `💅 ${who}님의 [손톱 색칠하기${dStr ? ` · ${dStr}` : ''}] 총점 ${Number(run.score || 0).toFixed(1)}점${secTxt}`;
+      ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 타임어택 네일아트 기록을 깨 보세요! (${run.rank_title || '네일리스트'})`;
     }
   }
 

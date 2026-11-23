@@ -325,7 +325,7 @@
       pointer-events: none;
     }
 
-    /* 시작 모달 매니큐어 컬러 선택기 */
+    /* 시작 모달 난이도 선택 & 매니큐어 컬러 선택기 */
     .salon-badge {
       display: inline-block;
       padding: 5px 14px;
@@ -335,6 +335,74 @@
       border: 1.5px solid rgba(251, 113, 133, 0.45);
       font-size: 12px;
       font-weight: 800;
+    }
+    .diff-wrap {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .diff-btn {
+      background: rgba(24, 19, 38, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 13px;
+      padding: 8px 6px;
+      color: #ded7f0;
+      font-family: var(--font);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.14s ease;
+    }
+    .diff-btn .d-tier {
+      font-size: 13.5px;
+      font-weight: 900;
+    }
+    .diff-btn .d-sub {
+      font-size: 10.5px;
+      font-weight: 800;
+      opacity: 0.82;
+      white-space: nowrap;
+    }
+    .diff-btn.selected {
+      background: linear-gradient(145deg, rgba(255, 216, 74, 0.24), rgba(244, 63, 94, 0.22));
+      border-color: #ffd84a;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
+    }
+    .diff-desc {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fde68a;
+      text-align: center;
+      line-height: 1.38;
+      word-break: keep-all;
+    }
+    .topbar .pill-btn {
+      white-space: nowrap;
+      padding: 7px 11px;
+      font-size: 12px;
+    }
+    .timer-pill {
+      font-variant-numeric: tabular-nums;
+      color: #fde047 !important;
+      border-color: rgba(250, 204, 21, 0.48) !important;
+      font-weight: 900 !important;
+    }
+    #hud-step-title {
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .palette-wrap {
       background: rgba(255, 255, 255, 0.05);
@@ -432,10 +500,11 @@
 
   <!-- 상단 바 -->
   <div class="topbar">
-    <a href="/" class="pill-btn">← 404 아케이드</a>
-    <div style="display:flex;gap:6px">
+    <a href="/" class="pill-btn">← 메인</a>
+    <div style="display:flex;gap:5px;align-items:center">
+      <span class="pill-btn timer-pill" id="hud-timer" style="display:none">⏱ 0.0초</span>
       <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
-      <button type="button" class="pill-btn" id="btn-restart-quick" style="display:none">🔄 새 손톱</button>
+      <button type="button" class="pill-btn" id="btn-restart-quick" style="display:none">🔄 다시</button>
     </div>
   </div>
 
@@ -463,12 +532,12 @@
 
     <div class="nail-meter-card">
       <div class="meter-stat">
-        <span class="meter-label">바른 면</span>
+        <span class="meter-label" id="hud-cover-label">바른 면</span>
         <span class="meter-val" id="hud-cover">0%</span>
       </div>
       <div class="meter-mid">
         <div class="risk-top">
-          <span style="color:#d6cfe8">옆 살 위험도</span>
+          <span style="color:#d6cfe8" id="hud-step-title">옆 살 위험도</span>
           <span class="risk-tag" id="risk-tag">손톱 위를 문질러 칠해요</span>
         </div>
         <div class="risk-track">
@@ -508,33 +577,55 @@
 
   <!-- 시작 모달 -->
   <div class="modal-backdrop" id="start-modal">
-    <div class="modal-card">
-      <div class="salon-badge">💅 살에 묻으면 끝! · 숨 참기 3D 네일살롱</div>
-      <div class="modal-title" style="font-size:28px">손톱 색칠하기</div>
-      <p class="modal-sub">
-        한 번 옆 살에 묻은 매니큐어는 절대 못 지워요!<br>
-        <b>흰 점선 안쪽</b>까지 촉촉하게 문질러 채우고,<br>
-        가장자리에선 <b>😤 숨 참기</b>로 손떨림을 멈춰 보세요.
+    <div class="modal-card" style="gap:10px;padding:20px 18px">
+      <div class="salon-badge">💅 타임어택 · 숨 참기 3D 네일살롱</div>
+      <div class="modal-title" style="font-size:26px">손톱 색칠하기</div>
+      <p class="modal-sub" style="font-size:13px">
+        살에 묻은 매니큐어는 못 지워요! <b>😤 숨 참기</b>로 떨림을 멈추고<br>
+        <b>빠르고 정교하게</b> 다섯 손톱을 완성해 시간 가산점을 챙기세요!
       </p>
 
       <div id="start-rival-box" style="display:none" class="vs-card"></div>
 
-      <div class="palette-wrap">
+      <!-- 상·중·하 난이도 선택 -->
+      <div class="diff-wrap">
         <div class="palette-head">
-          <span>🎨 오늘 바를 매니큐어 컬러</span>
+          <span>🏆 시술 난이도 선택</span>
+          <span id="selected-diff-badge" style="color:#ffd84a">중 · 심플 네일아트</span>
+        </div>
+        <div class="diff-grid" id="diff-grid">
+          <button type="button" class="diff-btn" data-diff="low">
+            <span class="d-tier">🟢 하</span>
+            <span class="d-sub">원컬러 풀코트</span>
+          </button>
+          <button type="button" class="diff-btn selected" data-diff="mid">
+            <span class="d-tier">🟡 중</span>
+            <span class="d-sub">심플 네일아트</span>
+          </button>
+          <button type="button" class="diff-btn" data-diff="high">
+            <span class="d-tier">🔴 상</span>
+            <span class="d-sub">마스터 네일아트</span>
+          </button>
+        </div>
+        <div class="diff-desc" id="diff-desc">🎨 베이스 컬러 위에 귀여운 하트·프렌치·별 도안을 세필 붓으로 그려요! (+난이도·시간 가산점)</div>
+      </div>
+
+      <div class="palette-wrap" style="padding:9px 11px">
+        <div class="palette-head">
+          <span>🎨 베이스 매니큐어 컬러</span>
           <span id="selected-color-name" style="color:#fda4af">체리 레드</span>
         </div>
         <div class="palette-swatches" id="color-swatches"></div>
       </div>
 
       <div class="stat-grid" style="grid-template-columns:1fr 1fr">
-        <div class="stat-box">
-          <div class="stat-label">시술 코스</div>
-          <div class="stat-val" style="color:var(--accent)">5손톱 풀컬러</div>
+        <div class="stat-box" style="padding:8px">
+          <div class="stat-label">타임어택 규칙</div>
+          <div class="stat-val" style="color:var(--accent);font-size:15px">빠를수록 가산점!</div>
         </div>
-        <div class="stat-box">
+        <div class="stat-box" style="padding:8px">
           <div class="stat-label">내 최고 기록</div>
-          <div class="stat-val" style="color:var(--green)" id="start-best">도전 전</div>
+          <div class="stat-val" style="color:var(--green);font-size:15px" id="start-best">도전 전</div>
         </div>
       </div>
 
@@ -547,23 +638,23 @@
   <div class="modal-backdrop hidden" id="result-modal">
     <div class="modal-card">
       <div class="rank-chip" id="res-rank">👑 청담동 전설의 네일 원장님</div>
-      <div class="modal-title" id="res-headline">정밀도 97.5점</div>
-      <p class="modal-sub" id="res-comment">살에 한 방울도 안 묻히고 영롱한 빛줄기를 완성했어요!</p>
+      <div class="modal-title" id="res-headline">총점 128.5점</div>
+      <p class="modal-sub" id="res-comment">살에 한 방울도 안 묻히고 영롱한 네일아트를 완성했어요!</p>
 
       <div class="five-nails-grid" id="res-nails-grid"></div>
 
       <div class="stat-grid">
         <div class="stat-box">
-          <div class="stat-label">평균 채움률</div>
-          <div class="stat-val" id="res-avg-cov">99.1%</div>
+          <div class="stat-label">걸린 시간</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-time">34.2초</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">무결점 손톱</div>
-          <div class="stat-val" style="color:var(--green)" id="res-clean-cnt">5 / 5</div>
+          <div class="stat-label">정밀도 점수</div>
+          <div class="stat-val" id="res-avg-cov">96.4점</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">살 삐져나감</div>
-          <div class="stat-val" id="res-over-mm">0.00mm</div>
+          <div class="stat-label">시간·난이도 보너스</div>
+          <div class="stat-val" style="color:var(--green)" id="res-over-mm">+32.1점</div>
         </div>
       </div>
 
