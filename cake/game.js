@@ -245,12 +245,16 @@ function buildTubeGeo(P, rad, M = 12, ref = UP_Y, sq = 0.86, lift = 0.45) {
   const n = P.length;
   const pos = new Float32Array(n * M * 3);
   const nor = new Float32Array(n * M * 3);
-  const T = V(), N = V(), B = V();
+  const T = V(), N = V(), B = V(), prevT = V(1, 0, 0);
 
   for (let i = 0; i < n; i++) {
     T.copy(P[Math.min(n - 1, i + 1)]).sub(P[Math.max(0, i - 1)]);
-    if (T.lengthSq() < 1e-8) T.set(1, 0, 0);
-    else T.normalize();
+    if (T.lengthSq() < 1e-6) {
+      T.copy(prevT);
+    } else {
+      T.normalize();
+      prevT.copy(T);
+    }
 
     N.crossVectors(T, ref);
     if (N.lengthSq() < 1e-6) N.set(0, 0, 1);
@@ -572,6 +576,131 @@ mainWorld.add(liveStreamMesh);
 const stretchyThreadsGroup = new THREE.Group();
 mainWorld.add(stretchyThreadsGroup);
 const stretchyThreads = [];
+
+// 케이크 밖으로 나간 초콜릿이 중력을 받아 아래로 뚝뚝 떨어지며 사라지는 그룹
+const fallingChocoGroup = new THREE.Group();
+mainWorld.add(fallingChocoGroup);
+const fallingDrops = [];
+const dropSphereGeo = new THREE.SphereGeometry(1, 12, 10);
+
+// ── 실시간 3D 초콜릿 적층 높이맵 (한 곳에 번갈아 올릴수록 겹겹이 쌓임!) ──
+const CAKE_EDGE_R = RC - 0.14; // 케이크 윗면 유효 반지름 (이 밖은 허공으로 떨어짐)
+const HGRID_N = 176;
+const HGRID_HALF = RC + 0.6;
+const baseCakeGrid = new Float32Array(HGRID_N * HGRID_N);
+const chocoHeightGrid = new Float32Array(HGRID_N * HGRID_N);
+let maxStackedHeight = 0;
+
+// 케이크 기본 지형(가장자리 생크림 로제트 38개의 봉긋한 높이 + 모서리 라운드) 초기 계산
+{
+  const NR = 38;
+  const roseR = RIN + 0.96;
+  const roses = [];
+  for (let i = 0; i < NR; i++) {
+    const a = (i / NR) * TAU;
+    roses.push([Math.cos(a) * roseR, Math.sin(a) * roseR]);
+  }
+  for (let gz = 0; gz < HGRID_N; gz++) {
+    const z = ((gz / (HGRID_N - 1)) * 2 - 1) * HGRID_HALF;
+    for (let gx = 0; gx < HGRID_N; gx++) {
+      const x = ((gx / (HGRID_N - 1)) * 2 - 1) * HGRID_HALF;
+      const rho = Math.hypot(x, z);
+      let h = 0;
+      // 위 모서리 라운드 살짝 내려감
+      if (rho > RC - 0.85) {
+        const u = clamp((rho - (RC - 0.85)) / 0.85, 0, 1);
+        h -= 0.48 * u * u;
+      }
+      // 생크림 로제트 방울 봉우리 반영
+      if (rho > RIN - 0.35 && rho < RC + 0.2) {
+        for (let i = 0; i < NR; i++) {
+          const d = Math.hypot(x - roses[i][0], z - roses[i][1]);
+          if (d < 0.96) {
+            const k = 1 - (d / 0.96) * (d / 0.96);
+            h = Math.max(h, 0.92 * Math.pow(k, 0.85));
+          }
+        }
+      }
+      baseCakeGrid[gz * HGRID_N + gx] = h;
+    }
+  }
+  chocoHeightGrid.set(baseCakeGrid);
+}
+
+function resetChocoHeightGrid() {
+  chocoHeightGrid.set(baseCakeGrid);
+  maxStackedHeight = 0;
+}
+
+function sampleSurfaceY(x, z) {
+  const fx = ((x / HGRID_HALF + 1) * 0.5) * (HGRID_N - 1);
+  const fz = ((z / HGRID_HALF + 1) * 0.5) * (HGRID_N - 1);
+  const x0 = clamp(Math.floor(fx), 0, HGRID_N - 2);
+  const z0 = clamp(Math.floor(fz), 0, HGRID_N - 2);
+  const tx = clamp(fx - x0, 0, 1);
+  const tz = clamp(fz - z0, 0, 1);
+  const i00 = z0 * HGRID_N + x0;
+  const h0 = lerp(chocoHeightGrid[i00], chocoHeightGrid[i00 + 1], tx);
+  const h1 = lerp(chocoHeightGrid[i00 + HGRID_N], chocoHeightGrid[i00 + HGRID_N + 1], tx);
+  return lerp(h0, h1, tz);
+}
+
+function bakeChocoPointToGrid(x, z, baseY, r) {
+  const spreadR = r * 1.18;
+  const cellSpan = Math.ceil((spreadR / (HGRID_HALF * 2)) * (HGRID_N - 1)) + 1;
+  const cx = Math.round(((x / HGRID_HALF + 1) * 0.5) * (HGRID_N - 1));
+  const cz = Math.round(((z / HGRID_HALF + 1) * 0.5) * (HGRID_N - 1));
+  const peakAdd = r * 1.08; // 살짝 녹아 밀착되면서 도톰하게 층이 쌓이는 높이
+
+  for (let gz = Math.max(0, cz - cellSpan); gz <= Math.min(HGRID_N - 1, cz + cellSpan); gz++) {
+    const wz = ((gz / (HGRID_N - 1)) * 2 - 1) * HGRID_HALF;
+    for (let gx = Math.max(0, cx - cellSpan); gx <= Math.min(HGRID_N - 1, cx + cellSpan); gx++) {
+      const wx = ((gx / (HGRID_N - 1)) * 2 - 1) * HGRID_HALF;
+      const u = Math.hypot(wx - x, wz - z) / Math.max(0.04, spreadR);
+      if (u < 1) {
+        const dome = Math.sqrt(1 - u * u);
+        const newH = Math.min(4.4, baseY + peakAdd * dome);
+        const idx = gz * HGRID_N + gx;
+        if (newH > chocoHeightGrid[idx]) {
+          chocoHeightGrid[idx] = newH;
+          const overCake = newH - baseCakeGrid[idx];
+          if (overCake > maxStackedHeight) maxStackedHeight = overCake;
+        }
+      }
+    }
+  }
+}
+
+function bakeChocoSegmentToGrid(pA, pB) {
+  const dist = Math.hypot(pB.x - pA.x, pB.z - pA.z);
+  const steps = Math.max(1, Math.ceil(dist / 0.12));
+  for (let i = 0; i <= steps; i++) {
+    const k = i / steps;
+    bakeChocoPointToGrid(
+      lerp(pA.x, pB.x, k),
+      lerp(pA.z, pB.z, k),
+      lerp(pA.y, pB.y, k),
+      lerp(pA.r, pB.r, k)
+    );
+  }
+}
+
+// 케이크 바깥 허공에서 아래로 떨어지며 사라지는 초코 방울·줄기 스폰
+function spawnFallingChocoDrop(worldPos, radius, extraVy = -4) {
+  const mesh = new THREE.Mesh(dropSphereGeo, chocoMat);
+  mesh.position.copy(worldPos);
+  mesh.castShadow = true;
+  fallingChocoGroup.add(mesh);
+  fallingDrops.push({
+    mesh,
+    vx: (Math.random() - 0.5) * 1.8,
+    vy: extraVy - Math.random() * 2.5,
+    vz: (Math.random() - 0.5) * 1.8,
+    r0: Math.max(0.09, radius),
+    age: 0,
+    maxAge: 0.72,
+  });
+}
 
 // ── 3D 초코 짤주머니 펜 + 5손가락·손톱·팔뚝·흰 소매 ──
 const penGroup = new THREE.Group();
@@ -1091,6 +1220,7 @@ let currentGrip = 0.08;
 let currentRadius = 0.14;
 let lastSqueezeSfxAt = 0;
 let lastBlobWarnAt = 0;
+let lastOutsideDropAt = 0;
 let maxWrittenX = -RIN;
 let maxWrittenRadial = 0;
 let outOfBoundsLen = 0;
@@ -1273,6 +1403,11 @@ function setupStage(idx) {
   }
   currentStrokes = [];
   activeStroke = null;
+  resetChocoHeightGrid();
+  for (const fd of fallingDrops) {
+    fallingChocoGroup.remove(fd.mesh);
+  }
+  fallingDrops.length = 0;
   activeHeadMesh.visible = false;
   liveStreamMesh.visible = false;
   candleGroup.visible = false;
@@ -1418,9 +1553,9 @@ function screenToCakeLocal(clientX, clientY, outVec) {
   if (raycaster.ray.intersectPlane(cakeTopPlane, hitWorld)) {
     const s = cakeRoot.scale.x || 1;
     outVec.set(
-      clamp(hitWorld.x / s, -RC * 1.12, RC * 1.12),
+      clamp(hitWorld.x / s, -42, 42),
       0,
-      clamp(hitWorld.z / s, -RC * 1.12, RC * 1.12)
+      clamp(hitWorld.z / s, -42, 42)
     );
     return true;
   }
@@ -1444,9 +1579,21 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
     return;
   }
 
+  // 층을 타고 넘거나 급커브 왕복 시에도 유선형으로 매끄럽게 얹히도록 가벼운 3점 스무딩
+  const sm = pts.map((p, i) => {
+    if (i === 0 || i === pts.length - 1) return p;
+    const a = pts[i - 1], b = pts[i + 1];
+    return {
+      x: a.x * 0.18 + p.x * 0.64 + b.x * 0.18,
+      y: a.y * 0.25 + p.y * 0.50 + b.y * 0.25,
+      z: a.z * 0.18 + p.z * 0.64 + b.z * 0.18,
+      r: a.r * 0.2 + p.r * 0.6 + b.r * 0.2,
+    };
+  });
+
   const P = [], R = [];
-  const pFirst = pts[0];
-  const dir0 = V(pts[1].x - pFirst.x, 0, pts[1].z - pFirst.z);
+  const pFirst = sm[0];
+  const dir0 = V(sm[1].x - pFirst.x, 0, sm[1].z - pFirst.z);
   if (dir0.lengthSq() < 1e-6) dir0.set(1, 0, 0);
   else dir0.normalize();
 
@@ -1456,18 +1603,24 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
     R.push(pFirst.r * 0.98 * Math.cos(a));
   }
 
-  for (let i = 0; i < pts.length; i++) {
-    P.push(V(pts[i].x, pts[i].y, pts[i].z));
-    R.push(pts[i].r);
+  for (let i = 0; i < sm.length; i++) {
+    P.push(V(sm[i].x, sm[i].y, sm[i].z));
+    R.push(sm[i].r);
   }
 
-  const pLast = pts[pts.length - 1];
-  const pPrev = pts[pts.length - 2];
+  const pLast = sm[sm.length - 1];
+  const pPrev = sm[sm.length - 2];
   const dirEnd = V(pLast.x - pPrev.x, 0, pLast.z - pPrev.z);
   if (dirEnd.lengthSq() < 1e-6) dirEnd.set(1, 0, 0);
   else dirEnd.normalize();
 
-  if (closedTail) {
+  if (closedTail === 'cliff') {
+    // 케이크 모서리 밖으로 넘어간 끝자락: 모서리를 따라 살짝 아래로 흘러내리다 끊김!
+    P.push(V(pLast.x + dirEnd.x * pLast.r * 0.35, pLast.y - pLast.r * 0.45, pLast.z + dirEnd.z * pLast.r * 0.35));
+    R.push(pLast.r * 0.48);
+    P.push(V(pLast.x + dirEnd.x * pLast.r * 0.55, pLast.y - pLast.r * 1.05, pLast.z + dirEnd.z * pLast.r * 0.55));
+    R.push(0.015);
+  } else if (closedTail) {
     P.push(V(pLast.x + dirEnd.x * pLast.r * 0.45, pLast.y + pLast.r * 0.65, pLast.z + dirEnd.z * pLast.r * 0.45));
     R.push(pLast.r * 0.42);
     P.push(V(pLast.x + dirEnd.x * pLast.r * 0.85, pLast.y + pLast.r * 0.95, pLast.z + dirEnd.z * pLast.r * 0.85));
@@ -1479,6 +1632,55 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
 
   if (stroke.mesh.geometry) stroke.mesh.geometry.dispose();
   stroke.mesh.geometry = buildTubeGeo(P, R, 12, UP_Y, 0.86, 0.46);
+}
+
+// 획이 끝날 때(손을 떼거나 케이크 밖으로 넘어갔을 때) 아직 높이맵에 안 구워진 꼬리 구간까지 전부 적층 반영!
+function finalizeStrokeOnCake(stroke, tailMode = true) {
+  if (!stroke || stroke.pts.length === 0) return;
+  rebuildStrokeMesh(stroke, tailMode);
+  if (stroke.pts.length === 1) {
+    const p0 = stroke.pts[0];
+    bakeChocoPointToGrid(p0.x, p0.z, p0.y, p0.r);
+  } else {
+    for (let i = Math.max(1, stroke.bakedIdx + 1); i < stroke.pts.length; i++) {
+      bakeChocoSegmentToGrid(stroke.pts[i - 1], stroke.pts[i]);
+    }
+  }
+  stroke.bakedIdx = stroke.pts.length - 1;
+}
+
+function startNewStrokeAt(x, z, r) {
+  const surfY = sampleSurfaceY(x, z);
+  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), chocoMat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  strokesGroup.add(mesh);
+
+  const st = {
+    mesh,
+    pts: [{ x, y: surfY + 0.015, z, r }],
+    cumLen: [0],
+    bakedIdx: 0,
+  };
+  currentStrokes.push(st);
+  maxWrittenX = Math.max(maxWrittenX, x + r);
+  maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(x, z) + r);
+  rebuildStrokeMesh(st, false);
+  btnFinish.disabled = false;
+  return st;
+}
+
+// 선분 A(안쪽) -> B(바깥쪽)와 원 r = CAKE_EDGE_R 의 교차 비율 t (0~1) 계산
+function intersectCircleExitT(ax, az, bx, bz, rad) {
+  const dx = bx - ax, dz = bz - az;
+  const A = dx * dx + dz * dz;
+  if (A < 1e-8) return 0;
+  const B = 2 * (ax * dx + az * dz);
+  const C = ax * ax + az * az - rad * rad;
+  const disc = B * B - 4 * A * C;
+  if (disc <= 0) return 0;
+  const t = (-B + Math.sqrt(disc)) / (2 * A);
+  return clamp(t, 0, 1);
 }
 
 function spawnStretchyChocoThread(localEndPt, baseRadius) {
@@ -1518,30 +1720,22 @@ function onPointerDown(e) {
 
   unlockAudio();
   if (!screenToCakeLocal(e.clientX, e.clientY, pointerCakeXZ)) return;
-  if (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) > RC * 1.05) return;
 
   isPressing = true;
   pressHoldSec = 0;
   dwellCharge = 0.16;
   currentRadius = 0.18;
 
-  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), chocoMat);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  strokesGroup.add(mesh);
-
-  activeStroke = {
-    mesh,
-    pts: [{ x: pointerCakeXZ.x, y: 0.02, z: pointerCakeXZ.z, r: currentRadius }],
-  };
-  currentStrokes.push(activeStroke);
-  maxWrittenX = Math.max(maxWrittenX, pointerCakeXZ.x + currentRadius);
-  maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) + currentRadius);
-
-  rebuildStrokeMesh(activeStroke, false);
-  SFX.chocoSqueeze(0.4);
-  btnFinish.disabled = false;
-  updateSpaceHUD();
+  // 처음 누른 곳이 케이크 위면 획 시작, 케이크 바깥 허공이면 낙하 방울만 떨어뜨림!
+  if (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) <= CAKE_EDGE_R) {
+    activeStroke = startNewStrokeAt(pointerCakeXZ.x, pointerCakeXZ.z, currentRadius);
+    SFX.chocoSqueeze(0.4);
+    updateSpaceHUD();
+  } else {
+    activeStroke = null;
+    const s = cakeRoot.scale.x || 1;
+    spawnFallingChocoDrop(V(pointerCakeXZ.x * s, 0.5, pointerCakeXZ.z * s), currentRadius * s);
+  }
 }
 
 function onPointerMove(e) {
@@ -1576,11 +1770,13 @@ function finishActiveStroke(e) {
     isOrbitDragging = false;
     return;
   }
-  if (!isPressing || !activeStroke) return;
+  if (!isPressing) return;
   isPressing = false;
-  const lastPt = activeStroke.pts[activeStroke.pts.length - 1];
-  rebuildStrokeMesh(activeStroke, true);
-  spawnStretchyChocoThread(lastPt, lastPt.r);
+  if (activeStroke) {
+    const lastPt = activeStroke.pts[activeStroke.pts.length - 1];
+    finalizeStrokeOnCake(activeStroke, true);
+    spawnStretchyChocoThread(lastPt, lastPt.r);
+  }
 
   activeStroke = null;
   activeHeadMesh.visible = false;
@@ -1635,6 +1831,12 @@ function analyzeViralVerdict() {
   const rightH = rightCnt > 0 ? rightSpanSum / rightCnt : 0;
   const remCm = getRemainingCm();
 
+  if (maxStackedHeight >= 0.85) {
+    return {
+      tag: '👨‍🍳 감정 결과: 초콜릿 에베레스트 건축가',
+      text: '“글씨 쓰랬더니 쫀득한 3D 초코 동산을 층층이 쌓아 올리셨네요ㅋㅋ”',
+    };
+  }
   if (outOfBoundsLen > 1.8) {
     return {
       tag: '👨‍🍳 감정 결과: 자유로운 영혼파',
@@ -2219,103 +2421,188 @@ function updatePlaying(dt, nowSec) {
 
   const stg = activeStageObj;
   const s = cakeRoot.scale.x || 1;
+  const ptrRho = Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z);
+  const isInsideCake = ptrRho <= CAKE_EDGE_R;
 
-  if (isPressing && activeStroke) {
+  if (isPressing) {
     pressHoldSec += dt;
 
-    const pts = activeStroke.pts;
-    const last = pts[pts.length - 1];
-    const dx = pointerCakeXZ.x - last.x;
-    const dz = pointerCakeXZ.z - last.z;
-    const dist = Math.hypot(dx, dz);
-    const speed = dist / Math.max(0.004, dt);
-
-    const speedThinFactor = clamp(1.0 - speed / 26.0, 0.0, 1.0);
-    if (speed < 4.5) {
-      dwellCharge = clamp(dwellCharge + dt * 1.35, 0, 1.35);
-    } else {
-      dwellCharge = Math.max(0, dwellCharge - dt * (1.8 + speed * 0.08));
-    }
-
-    const holdBoost = clamp(pressHoldSec / 2.2, 0, 0.35);
-    const targetRadius = clamp(
-      0.105 + 0.12 * speedThinFactor + 0.32 * dwellCharge + 0.12 * holdBoost,
-      0.09,
-      0.66
-    );
-    currentRadius = lerp(currentRadius, targetRadius, clamp(dt * 16, 0, 1));
-    currentGrip = lerp(currentGrip, clamp(0.32 + dwellCharge * 0.45 + holdBoost * 0.5, 0.28, 0.98), clamp(dt * 14, 0, 1));
-
-    if (dist < 0.11) {
-      if (currentRadius > last.r) {
-        last.r = currentRadius;
-        last.y = 0.02 + currentRadius * 0.16;
-        maxWrittenX = Math.max(maxWrittenX, last.x + last.r);
-        maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(last.x, last.z) + last.r);
-        rebuildStrokeMesh(activeStroke, false);
-      }
-      if (dwellCharge > 0.92 && nowSec - lastBlobWarnAt > 0.75) {
-        lastBlobWarnAt = nowSec;
-        blobCount++;
-        SFX.blobWarn();
-        guideChipEl.textContent = '🍫 꾸르륵! 한곳에 오래 눌러 초코가 통통하게 고이고 있어요!';
-        guideChipEl.classList.add('warn');
-      }
-    } else {
-      const steps = Math.max(1, Math.ceil(dist / 0.16));
-      for (let i = 1; i <= steps; i++) {
-        const k = i / steps;
-        const nx = lerp(last.x, pointerCakeXZ.x, k);
-        const nz = lerp(last.z, pointerCakeXZ.z, k);
-        const rHere = lerp(last.r, currentRadius, k);
-        pts.push({ x: nx, y: 0.02 + rHere * 0.12, z: nz, r: rHere });
-        maxWrittenX = Math.max(maxWrittenX, nx + rHere);
-        maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(nx, nz) + rHere);
-
-        if (Math.hypot(nx, nz) + rHere * 0.7 > RIN + 0.35) {
-          outOfBoundsLen += dist / steps;
+    // 1) 케이크 바깥 허공에서 짜고 있을 때: 허공에 선을 남기지 않고 밑으로 뚝뚝 떨어져 사라짐!
+    if (!isInsideCake) {
+      if (activeStroke) {
+        // 방금 케이크 안에서 바깥으로 넘어간 순간! 케이크 모서리 교차점까지만 남기고 절벽 마감
+        const pts = activeStroke.pts;
+        const last = pts[pts.length - 1];
+        const tExit = intersectCircleExitT(last.x, last.z, pointerCakeXZ.x, pointerCakeXZ.z, CAKE_EDGE_R);
+        const ex = lerp(last.x, pointerCakeXZ.x, tExit);
+        const ez = lerp(last.z, pointerCakeXZ.z, tExit);
+        const ey = sampleSurfaceY(ex, ez) + 0.015;
+        if (Math.hypot(ex - last.x, ez - last.z) > 0.04) {
+          const prevCum = activeStroke.cumLen[activeStroke.cumLen.length - 1];
+          pts.push({ x: ex, y: ey, z: ez, r: currentRadius * 0.88 });
+          activeStroke.cumLen.push(prevCum + Math.hypot(ex - last.x, ez - last.z));
         }
+        finalizeStrokeOnCake(activeStroke, 'cliff');
+        // 모서리 너머로 뚝 떨어지는 초코 조각들 스폰!
+        for (let k = 0; k < 3; k++) {
+          const fx = lerp(ex, pointerCakeXZ.x, (k + 1) / 3) * s;
+          const fz = lerp(ez, pointerCakeXZ.z, (k + 1) / 3) * s;
+          spawnFallingChocoDrop(V(fx, ey * s - k * 0.18, fz), currentRadius * s * 0.9, -6 - k * 4);
+        }
+        activeStroke = null;
+        activeHeadMesh.visible = false;
+        liveStreamMesh.visible = false;
+        SFX.chocoSnap();
       }
-      rebuildStrokeMesh(activeStroke, false);
 
-      if (dwellCharge < 0.65 && guideChipEl.classList.contains('warn')) {
+      // 바깥에서 계속 누르고 있으면 노즐 끝에서 중력을 받아 아래로 후두둑 떨어짐!
+      currentGrip = lerp(currentGrip, 0.55, clamp(dt * 12, 0, 1));
+      currentRadius = lerp(currentRadius, 0.18, clamp(dt * 10, 0, 1));
+      _penTipW.set(pointerCakeXZ.x * s, 0.75 * s, pointerCakeXZ.z * s);
+
+      if (nowSec - lastOutsideDropAt > 0.045) {
+        lastOutsideDropAt = nowSec;
+        spawnFallingChocoDrop(
+          V(_penTipW.x, _penTipW.y - 0.15, _penTipW.z),
+          currentRadius * s * 0.95,
+          -8
+        );
+      }
+      if (nowSec - lastSqueezeSfxAt > 0.11) {
+        lastSqueezeSfxAt = nowSec;
+        SFX.chocoSqueeze(0.3);
+      }
+      guideChipEl.textContent = '🍫 케이크 밖으로 나간 초코가 바닥으로 뚝뚝 떨어져 사라져요!';
+      guideChipEl.classList.add('warn');
+    } else {
+      // 2) 케이크 바깥에서 다시 안으로 들어온 순간: 모서리 안쪽에서 새 획 자동 시작!
+      if (!activeStroke) {
+        const entryR = Math.min(ptrRho, CAKE_EDGE_R - 0.04);
+        const ang = Math.atan2(pointerCakeXZ.z, pointerCakeXZ.x);
+        const sx = ptrRho > 0.01 ? Math.cos(ang) * entryR : pointerCakeXZ.x;
+        const sz = ptrRho > 0.01 ? Math.sin(ang) * entryR : pointerCakeXZ.z;
+        activeStroke = startNewStrokeAt(sx, sz, currentRadius);
         guideChipEl.textContent = stg.tip;
         guideChipEl.classList.remove('warn');
       }
+
+      const pts = activeStroke.pts;
+      const last = pts[pts.length - 1];
+      const dx = pointerCakeXZ.x - last.x;
+      const dz = pointerCakeXZ.z - last.z;
+      const dist = Math.hypot(dx, dz);
+      const speed = dist / Math.max(0.004, dt);
+
+      const speedThinFactor = clamp(1.0 - speed / 26.0, 0.0, 1.0);
+      if (speed < 4.5) {
+        dwellCharge = clamp(dwellCharge + dt * 1.35, 0, 1.35);
+      } else {
+        dwellCharge = Math.max(0, dwellCharge - dt * (1.8 + speed * 0.08));
+      }
+
+      const holdBoost = clamp(pressHoldSec / 2.2, 0, 0.35);
+      const targetRadius = clamp(
+        0.105 + 0.12 * speedThinFactor + 0.32 * dwellCharge + 0.12 * holdBoost,
+        0.09,
+        0.66
+      );
+      currentRadius = lerp(currentRadius, targetRadius, clamp(dt * 16, 0, 1));
+      currentGrip = lerp(currentGrip, clamp(0.32 + dwellCharge * 0.45 + holdBoost * 0.5, 0.28, 0.98), clamp(dt * 14, 0, 1));
+
+      if (dist < 0.11) {
+        if (currentRadius > last.r) {
+          const surfY = sampleSurfaceY(last.x, last.z);
+          last.r = currentRadius;
+          last.y = surfY + 0.015 + currentRadius * 0.14;
+          maxWrittenX = Math.max(maxWrittenX, last.x + last.r);
+          maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(last.x, last.z) + last.r);
+          rebuildStrokeMesh(activeStroke, false);
+        }
+        if (dwellCharge > 0.92 && nowSec - lastBlobWarnAt > 0.75) {
+          lastBlobWarnAt = nowSec;
+          blobCount++;
+          SFX.blobWarn();
+          guideChipEl.textContent = '🍫 꾸르륵! 한곳에 오래 눌러 초코가 통통하게 고이고 있어요!';
+          guideChipEl.classList.add('warn');
+        }
+      } else {
+        const steps = Math.max(1, Math.ceil(dist / 0.14));
+        const rStart = last.r;
+        const xStart = last.x;
+        const zStart = last.z;
+        for (let i = 1; i <= steps; i++) {
+          const k = i / steps;
+          const nx = lerp(xStart, pointerCakeXZ.x, k);
+          const nz = lerp(zStart, pointerCakeXZ.z, k);
+          const rHere = lerp(rStart, currentRadius, k);
+          // 현재 아래에 깔린(이전에 짠 초코 + 왕복 시 지나간 초코 + 크림 로제트) 표면 높이 위로 적층!
+          const surfY = sampleSurfaceY(nx, nz);
+          const prevPt = pts[pts.length - 1];
+          const segLen = Math.hypot(nx - prevPt.x, nz - prevPt.z);
+          pts.push({ x: nx, y: surfY + 0.015, z: nz, r: rHere });
+          activeStroke.cumLen.push(activeStroke.cumLen[activeStroke.cumLen.length - 1] + segLen);
+
+          maxWrittenX = Math.max(maxWrittenX, nx + rHere);
+          maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(nx, nz) + rHere);
+
+          if (Math.hypot(nx, nz) + rHere * 0.7 > RIN + 0.35) {
+            outOfBoundsLen += segLen;
+          }
+        }
+
+        // 같은 획 안에서 번갈아 왕복해 쌓을 수 있도록, 현재 끝점에서 1.4cm 이상 지나온 궤적을 실시간으로 높이맵에 구움!
+        const totalArc = activeStroke.cumLen[activeStroke.cumLen.length - 1];
+        while (
+          activeStroke.bakedIdx + 1 < pts.length &&
+          totalArc - activeStroke.cumLen[activeStroke.bakedIdx + 1] >= 1.4
+        ) {
+          const bi = activeStroke.bakedIdx + 1;
+          bakeChocoSegmentToGrid(pts[bi - 1], pts[bi]);
+          activeStroke.bakedIdx = bi;
+        }
+
+        rebuildStrokeMesh(activeStroke, false);
+
+        if (dwellCharge < 0.65 && guideChipEl.classList.contains('warn')) {
+          guideChipEl.textContent = stg.tip;
+          guideChipEl.classList.remove('warn');
+        }
+      }
+
+      if (nowSec - lastSqueezeSfxAt > 0.085) {
+        lastSqueezeSfxAt = nowSec;
+        SFX.chocoSqueeze(clamp((currentRadius - 0.1) / 0.5, 0, 1));
+      }
+
+      const curEnd = pts[pts.length - 1];
+      activeHeadMesh.visible = true;
+      activeHeadMesh.position.set(curEnd.x, curEnd.y + curEnd.r * 0.48, curEnd.z);
+      activeHeadMesh.scale.set(curEnd.r * 1.04, curEnd.r * 0.88, curEnd.r * 1.04);
+
+      const tipHoverH = (curEnd.y + 0.48 + currentRadius * 1.25) * s;
+      _penTipW.set(pointerCakeXZ.x * s, tipHoverH, pointerCakeXZ.z * s);
+
+      const headWorld = V(curEnd.x * s, (curEnd.y + curEnd.r * 0.52) * s, curEnd.z * s);
+      const midWorld = _penTipW.clone().lerp(headWorld, 0.52);
+      midWorld.y -= 0.05;
+      liveStreamMesh.visible = true;
+      if (liveStreamMesh.geometry) liveStreamMesh.geometry.dispose();
+      liveStreamMesh.geometry = buildTubeGeo(
+        [_penTipW.clone(), midWorld, headWorld],
+        [Math.max(0.06, currentRadius * s * 0.52), Math.max(0.07, currentRadius * s * 0.68), Math.max(0.09, currentRadius * s * 0.92)],
+        10,
+        V(0, 0, 1),
+        1,
+        0
+      );
+
+      updateSpaceHUD();
     }
-
-    if (nowSec - lastSqueezeSfxAt > 0.085) {
-      lastSqueezeSfxAt = nowSec;
-      SFX.chocoSqueeze(clamp((currentRadius - 0.1) / 0.5, 0, 1));
-    }
-
-    const curEnd = pts[pts.length - 1];
-    activeHeadMesh.visible = true;
-    activeHeadMesh.position.set(curEnd.x, curEnd.y + curEnd.r * 0.48, curEnd.z);
-    activeHeadMesh.scale.set(curEnd.r * 1.04, curEnd.r * 0.88, curEnd.r * 1.04);
-
-    const tipHoverH = (0.48 + currentRadius * 1.25) * s;
-    _penTipW.set(pointerCakeXZ.x * s, tipHoverH, pointerCakeXZ.z * s);
-
-    const headWorld = V(curEnd.x * s, (curEnd.y + curEnd.r * 0.52) * s, curEnd.z * s);
-    const midWorld = _penTipW.clone().lerp(headWorld, 0.52);
-    midWorld.y -= 0.06;
-    liveStreamMesh.visible = true;
-    if (liveStreamMesh.geometry) liveStreamMesh.geometry.dispose();
-    liveStreamMesh.geometry = buildTubeGeo(
-      [_penTipW.clone(), midWorld, headWorld],
-      [Math.max(0.06, currentRadius * s * 0.52), Math.max(0.07, currentRadius * s * 0.68), Math.max(0.09, currentRadius * s * 0.92)],
-      10,
-      V(0, 0, 1),
-      1,
-      0
-    );
-
-    updateSpaceHUD();
   } else {
     currentGrip = lerp(currentGrip, 0.08, clamp(dt * 12, 0, 1));
     currentRadius = lerp(currentRadius, 0.13, clamp(dt * 10, 0, 1));
-    _penTipW.set(pointerCakeXZ.x * s, 1.65, pointerCakeXZ.z * s);
+    const hoverGround = isInsideCake ? sampleSurfaceY(pointerCakeXZ.x, pointerCakeXZ.z) * s : 0;
+    _penTipW.set(pointerCakeXZ.x * s, hoverGround + 1.65, pointerCakeXZ.z * s);
     liveStreamMesh.visible = false;
     activeHeadMesh.visible = false;
   }
@@ -2328,6 +2615,7 @@ function updatePlaying(dt, nowSec) {
   updatePenAndHand(_penTipW, _penAxis, currentGrip, currentRadius * s * 0.85);
 
   updateStretchyThreads(dt);
+  updateFallingDrops(dt);
 
   // 기계적인 3칸 상자·강제 줌인 없이, 실제로 펜 끝이 생크림 테두리 코앞에 다가갔을 때만 원형 테두리 링으로 자연스럽게 알림!
   const pointerEdgeMargin = (RIN - (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) + currentRadius)) * s;
@@ -2350,6 +2638,27 @@ function updatePlaying(dt, nowSec) {
     _camTarget.z + camDist * Math.cos(CAM_EL)
   );
   camera.lookAt(_camTarget);
+}
+
+function updateFallingDrops(dt) {
+  for (let i = fallingDrops.length - 1; i >= 0; i--) {
+    const fd = fallingDrops[i];
+    fd.age += dt;
+    fd.vy -= 76 * dt; // 중력 가속도
+    fd.mesh.position.x += fd.vx * dt;
+    fd.mesh.position.y += fd.vy * dt;
+    fd.mesh.position.z += fd.vz * dt;
+
+    const k = clamp(fd.age / fd.maxAge, 0, 1);
+    const shrink = Math.max(0.001, fd.r0 * (1 - k * k));
+    // 아래로 떨어질수록 물방울처럼 세로로 길쭉하게 늘어지며 작아지다 사라짐!
+    fd.mesh.scale.set(shrink * 0.85, shrink * (1.2 + Math.min(2.2, Math.abs(fd.vy) * 0.045)), shrink * 0.85);
+
+    if (k >= 1 || fd.mesh.position.y <= DESK_Y + 0.2) {
+      fallingChocoGroup.remove(fd.mesh);
+      fallingDrops.splice(i, 1);
+    }
+  }
 }
 
 function updateStretchyThreads(dt) {
@@ -2407,6 +2716,7 @@ function updateStretchyThreads(dt) {
 function updateShowcase(dt, nowSec) {
   ovCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   updateStretchyThreads(dt);
+  updateFallingDrops(dt);
 
   if (autoSpin && !isOrbitDragging) {
     targetAzimuth += dt * 0.42;

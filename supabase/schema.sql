@@ -265,7 +265,8 @@ begin
     coalesce(p_seed, 1),
     coalesce(p_meta, '{}'::jsonb)
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update set
+    nickname = excluded.nickname;
 
   return jsonb_build_object('ok', true, 'id', v_id);
 end;

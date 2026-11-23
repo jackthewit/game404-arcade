@@ -722,17 +722,42 @@ leftHandGroup.position.set(-0.20, 2.45, -1.35);
 leftHandGroup.rotation.set(0.18, -0.35, -0.15);
 bodyGroup.add(leftHandGroup);
 
+// 손에 감긴 휴지 뭉치 앞·뒤 단면 (심지 없이 겹겹이 감긴 하얀 휴지 결 동심원!)
+const handBundleEndTex = canvasTex(256, 256, (g, w, h) => {
+  const cx = w / 2, cy = h / 2;
+  g.fillStyle = '#fbfbf9';
+  g.fillRect(0, 0, w, h);
+  for (let r = 122; r >= 26; r -= 5.2) {
+    g.strokeStyle = r % 10 < 5 ? '#d6dfe5' : '#e8eef2';
+    g.lineWidth = 1.8;
+    g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+  }
+});
+const handBundleEndMat = new THREE.MeshStandardMaterial({ map: handBundleEndTex, roughness: 0.78 });
+const goldBundleEndMat = new THREE.MeshStandardMaterial({ map: handBundleEndTex, color: '#ffe88a', emissive: '#d97706', emissiveIntensity: 0.22, roughness: 0.45 });
+
 // 왼손 주위에 실제로 겹겹이 감겨 점점 거대해지는 3D 휴지 패드 뭉치!
+// 손가락·손바닥이 뻗은 방향(Z축)을 구멍 축으로 삼아 90도 올바른 방향으로 손 둘레에 돌돌 감김!
 const wrappedPadGroup = new THREE.Group();
-wrappedPadGroup.position.set(0, 0, -0.38);
+wrappedPadGroup.position.set(0, -0.02, -0.28);
 leftHandGroup.add(wrappedPadGroup);
 
+// paperMat의 절취선 방향도 원통 둘레를 따라 감기도록 90도 회전한 전용 텍스처 사용
+const wrapBandTex = paperTex.clone();
+wrapBandTex.needsUpdate = true;
+wrapBandTex.center.set(0.5, 0.5);
+wrapBandTex.rotation = Math.PI / 2;
+wrapBandTex.wrapS = wrapBandTex.wrapT = THREE.RepeatWrapping;
+wrapBandTex.repeat.set(1, 2.2);
+const wrapSideMat = new THREE.MeshStandardMaterial({ map: wrapBandTex, color: '#ffffff', roughness: 0.72 });
+const goldWrapSideMat = new THREE.MeshStandardMaterial({ map: wrapBandTex, color: '#ffe88a', emissive: '#d97706', emissiveIntensity: 0.24, roughness: 0.42 });
+
 const wrappedPad = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.62, 0.64, 1.32, 24),
-  [mummyMat, paperMat, paperMat]
+  new THREE.CylinderGeometry(0.62, 0.64, 0.96, 28),
+  [wrapSideMat, handBundleEndMat, handBundleEndMat]
 );
-wrappedPad.scale.set(1.15, 1.0, 0.72); // 손바닥 모양에 맞게 살짝 납작하게 감긴 리얼 휴지 뭉치!
-wrappedPad.rotation.z = Math.PI / 2;
+// Cylinder 기본 축(Y)을 손가락 길이 방향(Z)으로 눕혀서 손을 끼운 방향으로 감기게 설정!
+wrappedPad.rotation.x = Math.PI / 2;
 wrappedPad.visible = false;
 wrappedPadGroup.add(wrappedPad);
 
@@ -757,21 +782,21 @@ bodyGroup.add(rightHandGroup);
 const legsGroup = new THREE.Group();
 bodyGroup.add(legsGroup);
 
-// CUT 3·4에서 다리와 팔 사이가 어색하게 비지 않게 이어주는 맨투맨 허리·배(얼굴 없음, 플레이 시점에서는 숨김)
+// CUT 3·4에서 다리와 팔 사이를 자연스럽게 이어주는 둥근 맨투맨 몸통(얼굴 없음, 각진 원통 느낌 제거)
 const torsoLower = new THREE.Group();
 {
-  const waist = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.35, 1.65, 20), sleeveMat);
-  waist.scale.set(1.18, 1, 0.85);
-  waist.position.set(0, 3.10, 1.55);
+  const waist = new THREE.Mesh(new THREE.CapsuleGeometry(1.18, 0.95, 14, 22), sleeveMat);
+  waist.scale.set(1.16, 0.92, 0.82);
+  waist.position.set(0, 2.95, 1.58);
   waist.castShadow = true;
   torsoLower.add(waist);
 
-  const hem = new THREE.Mesh(new THREE.CylinderGeometry(1.38, 1.36, 0.34, 20), cuffMat);
-  hem.scale.set(1.18, 1, 0.86);
-  hem.position.set(0, 2.32, 1.55);
+  const hem = new THREE.Mesh(new THREE.CylinderGeometry(1.34, 1.32, 0.32, 20), cuffMat);
+  hem.scale.set(1.16, 1, 0.84);
+  hem.position.set(0, 2.28, 1.56);
   torsoLower.add(hem);
 
-  const hip = new THREE.Mesh(new THREE.SphereGeometry(1.38, 18, 14), jeansMat);
+  const hip = new THREE.Mesh(new THREE.SphereGeometry(1.36, 18, 14), jeansMat);
   hip.scale.set(1.18, 0.62, 0.85);
   hip.position.set(0, 2.02, 1.55);
   torsoLower.add(hip);
@@ -1142,8 +1167,8 @@ function resetRound() {
   ribbonMesh.material = paperMat;
 
   wrappedPad.visible = false;
-  wrappedPad.scale.set(0.01, 0.01, 0.01);
-  wrappedPad.material = [mummyMat, paperMat, paperMat];
+  wrappedPadGroup.scale.set(0.01, 0.01, 0.01);
+  wrappedPad.material = [wrapSideMat, handBundleEndMat, handBundleEndMat];
   looseTails.forEach(t => { t.visible = false; t.material = mummyMat; });
   leftHandGroup.userData.armMummy.visible = false;
   rightHandGroup.userData.armMummy.visible = false;
@@ -2007,13 +2032,16 @@ function updateMummyVisuals(nowSec) {
   const pMat = isGold ? goldPaperMat : paperMat;
   const mMat = isGold ? goldMummyMat : mummyMat;
 
-  // 1) 왼손 주위에 감긴 3D 휴지 패드가 1바퀴마다 점점 두꺼워짐!
+  // 1) 왼손 주위에 감긴 3D 휴지 패드가 손바닥·손가락(Z축) 둘레를 감싸며 두꺼워짐!
   if (m > 0.25) {
     wrappedPad.visible = true;
-    wrappedPad.material = [mMat, pMat, pMat];
-    const thick = Math.min(2.35, 0.45 + Math.log10(1 + m * 1.6) * 0.92);
-    wrappedPad.scale.set(thick * 1.15, 0.92 + thick * 0.18, thick * 0.72);
-    wrappedPad.rotation.x = state.rollAngle * 0.25;
+    wrappedPad.material = isGold
+      ? [goldWrapSideMat, goldBundleEndMat, goldBundleEndMat]
+      : [wrapSideMat, handBundleEndMat, handBundleEndMat];
+    const thick = Math.min(2.25, 0.48 + Math.log10(1 + m * 1.6) * 0.88);
+    // X(손바닥 가로 폭)는 넓고 Y(손 두께)는 살짝 납작한 타원 형태를 유지한 채 Z(휴지 폭) 방향으로 손에 끼워짐!
+    wrappedPadGroup.scale.set(thick * 1.16, thick * 0.78, 0.88 + thick * 0.12);
+    wrapBandTex.offset.x = -(state.rollAngle * 0.22) % 1;
   }
 
   // 2) 팔뚝 미라 붕대 슬리브 (왼팔 8m+, 오른팔 14m+)

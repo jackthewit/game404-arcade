@@ -267,22 +267,80 @@ function buildLocalGlobalLadder(gameId, myEntry, refEntry) {
   };
 }
 
+// 같은 판에서 [URL 공유하기]를 여러 번 눌러도 순위가 복제되지 않도록 직전 저장 세션 캐시
+let lastSavedSession = null;
+
 // 스코어 서버 저장 + 전체 글로벌 랭킹 사다리 조회 + 내 위치 핀이 담긴 공유 URL(?ref=...) 생성
 export async function saveResultAndBuildShare(run, incomingRef = null) {
-  const id = makeShortId(6);
-  const roomId = (incomingRef && incomingRef.roomId) ? incomingRef.roomId : id;
   const nickname = saveNickname(run.nickname || getSavedNickname() || '익명 도전자');
+  const tVal = run.targetValue != null ? Number(Number(run.targetValue).toFixed(2)) : 0;
+  const vVal = run.actualValue != null ? Number(Number(run.actualValue).toFixed(2)) : 0;
+  const scVal = Number(Number(run.score || 0).toFixed(1));
+  const eVal = run.errorMm != null ? Number(Number(run.errorMm).toFixed(2)) : null;
+  const seedVal = run.seed || 1;
+
+  const roundSig = JSON.stringify([run.gameId, tVal, vVal, scVal, eVal, seedVal]);
+
+  // 이미 방금 저장한 같은 라운드인 경우: 새 ID를 만들지 않고 기존 ID 재사용! (중복 등록 원천 차단)
+  if (lastSavedSession && lastSavedSession.sig === roundSig) {
+    if (lastSavedSession.result.nickname === nickname) {
+      return lastSavedSession.result;
+    }
+    // 닉네임만 새로 바꾼 경우: 기존 ID 그대로 유지하여 중복 행 생성 방지
+    const prev = lastSavedSession.result;
+    const sb = await getSupabaseConfig();
+    if (sb && prev.savedToSupabase) {
+      try {
+        await fetch(`${sb.url}/rest/v1/rpc/g404_submit_run`, {
+          method: 'POST',
+          headers: {
+            apikey: sb.key,
+            Authorization: `Bearer ${sb.key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            p_id: prev.id,
+            p_room_id: prev.roomId,
+            p_game_id: run.gameId,
+            p_nickname: nickname,
+            p_target_value: tVal,
+            p_actual_value: vVal,
+            p_score: scVal,
+            p_error_mm: eVal,
+            p_rank_title: run.rankTitle || '',
+            p_seed: seedVal,
+            p_meta: run.meta || {},
+          }),
+        });
+      } catch {
+        // ignore
+      }
+    }
+    const updatedLadder = (prev.ladder || []).map(row => (
+      row.is_me ? { ...row, nickname } : row
+    ));
+    const updatedResult = {
+      ...prev,
+      nickname,
+      ladder: updatedLadder,
+    };
+    lastSavedSession = { sig: roundSig, result: updatedResult };
+    return updatedResult;
+  }
+
+  const id = run.id || makeShortId(6);
+  const roomId = (incomingRef && incomingRef.roomId) ? incomingRef.roomId : id;
 
   const compact = {
     id,
     g: run.gameId,
     n: nickname,
-    t: run.targetValue != null ? Number(Number(run.targetValue).toFixed(2)) : 0,
-    v: run.actualValue != null ? Number(Number(run.actualValue).toFixed(2)) : 0,
-    sc: Number(Number(run.score || 0).toFixed(1)),
-    e: run.errorMm != null ? Number(Number(run.errorMm).toFixed(2)) : null,
+    t: tVal,
+    v: vVal,
+    sc: scVal,
+    e: eVal,
     r: run.rankTitle || '',
-    s: run.seed || 1,
+    s: seedVal,
     m: run.meta || {},
   };
 
@@ -397,7 +455,7 @@ export async function saveResultAndBuildShare(run, incomingRef = null) {
       : `${origin}/${run.gameId}/?ref=${encoded}`;
   }
 
-  return {
+  const finalResult = {
     id,
     roomId,
     nickname,
@@ -409,6 +467,8 @@ export async function saveResultAndBuildShare(run, incomingRef = null) {
     totalCount,
     topPercent,
   };
+  lastSavedSession = { sig: roundSig, result: finalResult };
+  return finalResult;
 }
 
 // 전체 글로벌 랭킹 + "내가 아는 ○○님의 위치는 여기예요!" HTML 렌더링
