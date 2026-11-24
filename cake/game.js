@@ -30,6 +30,11 @@ const thickFillEl = document.getElementById('thick-fill');
 
 const bottomDock = document.getElementById('bottom-dock');
 const guideChipEl = document.getElementById('guide-chip');
+const btnModeDraw = document.getElementById('btn-mode-draw');
+const btnModePan = document.getElementById('btn-mode-pan');
+const btnZoomOut = document.getElementById('btn-zoom-out');
+const btnZoomReset = document.getElementById('btn-zoom-reset');
+const btnZoomIn = document.getElementById('btn-zoom-in');
 const btnFinish = document.getElementById('btn-finish');
 const btnSkipIntro = document.getElementById('btn-skip-intro');
 
@@ -526,13 +531,14 @@ let flameOuterMesh, flameInnerMesh, candleLight;
   candleGroup.add(candleLight);
 }
 
-// 케이크 윗면 은은한 크림 점선 밑그림 메쉬 + 오른쪽 공간 부족 점선 경고 칸
+// 케이크 윗면 은은한 크림 점선 초고해상도(2048px) 밑그림 메쉬
 const guideCanvas = document.createElement('canvas');
-guideCanvas.width = 1024;
-guideCanvas.height = 1024;
+guideCanvas.width = 2048;
+guideCanvas.height = 2048;
 const guideCtx = guideCanvas.getContext('2d');
 const guideTex = new THREE.CanvasTexture(guideCanvas);
 guideTex.colorSpace = THREE.SRGBColorSpace;
+guideTex.anisotropy = 8;
 
 const guidePlane = new THREE.Mesh(
   new THREE.PlaneGeometry(RIN * 2, RIN * 2),
@@ -846,13 +852,14 @@ function setHandVisible(vis) {
   cuffMesh.visible = vis;
 }
 
-function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
+function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14, visualScale = 1.0) {
   _basisY.copy(axisDir).normalize();
   _basisX.set(0.72, 0.7, 0).addScaledVector(_basisY, -0.72 * _basisY.x - 0.7 * _basisY.y).normalize();
   _basisZ.crossVectors(_basisX, _basisY);
   _mat4.makeBasis(_basisX, _basisY, _basisZ);
   penGroup.quaternion.setFromRotationMatrix(_mat4);
   penGroup.position.copy(tipWorld);
+  penGroup.scale.setScalar(visualScale);
 
   if (Math.abs(grip - lastBuiltGrip) > 0.018) {
     lastBuiltGrip = grip;
@@ -905,24 +912,24 @@ function updatePenAndHand(tipWorld, axisDir, grip, dropRadius = 0.14) {
     heelMesh.scale.set(1.75, 2.3, 2.0);
   }
 
-  nozzleDropMesh.scale.setScalar(dropRadius);
+  nozzleDropMesh.scale.setScalar(dropRadius / Math.max(0.25, visualScale));
   nozzleDropMesh.position.set(0, 0.03, 0);
 
   const pr = bagRadiusAt(GY, grip) + 1.4;
   penGroup.updateMatrixWorld(true);
   _wristW.copy(polVec(pr + 2.4, 26 * DEG, GY + 0.3));
   penGroup.localToWorld(_wristW);
-  _elbowW.copy(_wristW).addScaledVector(ELB_DIR, 56);
+  _elbowW.copy(_wristW).addScaledVector(ELB_DIR, 56 * visualScale);
   _tmpA.copy(_wristW).lerp(_elbowW, 0.17);
-  linkCyl(foreArmMesh, _wristW, _tmpA, 1.88);
-  foreArmMesh.scale.z = 1.52;
+  linkCyl(foreArmMesh, _wristW, _tmpA, 1.88 * visualScale);
+  foreArmMesh.scale.z = 1.52 * visualScale;
 
   _tmpB.copy(_wristW).lerp(_elbowW, 0.12);
-  linkCyl(sleeveMesh, _tmpB, _elbowW, 2.72);
-  sleeveMesh.scale.z = 2.38;
+  linkCyl(sleeveMesh, _tmpB, _elbowW, 2.72 * visualScale);
+  sleeveMesh.scale.z = 2.38 * visualScale;
   _tmpA.copy(_wristW).lerp(_elbowW, 0.155);
-  linkCyl(cuffMesh, _tmpB, _tmpA, 2.92);
-  cuffMesh.scale.z = 2.58;
+  linkCyl(cuffMesh, _tmpB, _tmpA, 2.92 * visualScale);
+  cuffMesh.scale.z = 2.58 * visualScale;
 }
 
 // ── 4컷 하드컷 베이커리 오프닝 세트 ──
@@ -1247,9 +1254,32 @@ let latestCardDataUrl = '';
 let latestCardFile = null;
 
 const CAM_EL = 60 * DEG;
-const CAM_A = { tg: V(0.8, 0, 2.2), d: 72 };
+const CAM_A = { tg: V(0.5, 0, 1.8), d: 63 };
 const CAM_B = { tg: V(5.4, 0, 1.2), d: 46 };
 let camZoom = 0;
+
+// 그리기 모드 vs 손모드(이동·확대) 및 두 손가락 핀치 상태
+let playToolMode = 'draw'; // 'draw' | 'pan'
+const MIN_PLAY_ZOOM = 1.0;
+const MAX_PLAY_ZOOM = 3.5;
+const BASE_PLAY_X = 0.5;
+const BASE_PLAY_Z = 1.8;
+let playZoom = 1.0;
+let targetPlayZoom = 1.0;
+let playPanX = BASE_PLAY_X;
+let playPanZ = BASE_PLAY_Z;
+let targetPlayPanX = BASE_PLAY_X;
+let targetPlayPanZ = BASE_PLAY_Z;
+
+const activePointers = new Map();
+let isPanningPlay = false;
+let panPrevX = 0;
+let panPrevY = 0;
+let prevPinchDist = 0;
+let pinchPrevMidX = 0;
+let pinchPrevMidY = 0;
+let gestureLockUntilAllUp = false;
+let activeStrokeStartedAt = 0;
 
 // ── BGM 버튼 ──
 function syncBgmBtn() {
@@ -1425,13 +1455,32 @@ function setupStage(idx) {
   cakeRoot.rotation.set(0, 0, 0);
   cakeRoot.scale.setScalar(stg.cakeScale);
   applyPhotoTheme('mint');
+  playToolMode = 'draw';
+  playZoom = 1.0;
+  targetPlayZoom = 1.0;
+  playPanX = BASE_PLAY_X;
+  playPanZ = BASE_PLAY_Z;
+  targetPlayPanX = BASE_PLAY_X;
+  targetPlayPanZ = BASE_PLAY_Z;
+  isPanningPlay = false;
+  gestureLockUntilAllUp = false;
+  if (btnModeDraw && btnModePan) {
+    btnModeDraw.classList.add('active');
+    btnModePan.classList.remove('active');
+  }
+  if (btnZoomReset) {
+    btnZoomReset.textContent = '1.0×';
+    btnZoomReset.classList.remove('zoomed');
+  }
   setHandVisible(true);
-  document.body.classList.remove('in-showcase', 'clean-capture');
+  document.body.classList.remove('in-showcase', 'clean-capture', 'in-pan-mode');
   cleanHint.classList.add('hidden');
 
   // 케이크 윗면 은은한 가이드 렌더링 (실측 너비 자동 맞춤으로 어떤 문구든 원 안쪽에 100% 쏙 담김!)
-  guideCtx.clearRect(0, 0, 1024, 1024);
+  guideCtx.setTransform(1, 0, 0, 1, 0, 0);
+  guideCtx.clearRect(0, 0, 2048, 2048);
   guideCtx.save();
+  guideCtx.scale(2, 2);
   guideCtx.strokeStyle = 'rgba(195, 168, 132, 0.28)';
   guideCtx.lineWidth = 4;
   guideCtx.setLineDash([16, 14]);
@@ -1699,34 +1748,245 @@ function spawnStretchyChocoThread(localEndPt, baseRadius) {
   });
 }
 
-// ── 포인터 입력 (글씨 쓰기 + 쇼케이스 360° 드래그 회전 + 깔끔 캡처 복귀) ──
+// ── 그리기 모드 / 손모드(이동·확대) 및 두 손가락 핀치 제어 ──
+function clampPlayPan() {
+  const s = activeStageObj.cakeScale || 1;
+  const maxR = lerp(3.2, (RIN + 2.4) * s, clamp((targetPlayZoom - 1.0) / 1.4, 0, 1));
+  const dx = targetPlayPanX - BASE_PLAY_X;
+  const dz = targetPlayPanZ - BASE_PLAY_Z;
+  const dist = Math.hypot(dx, dz);
+  if (dist > maxR && dist > 1e-5) {
+    targetPlayPanX = BASE_PLAY_X + (dx / dist) * maxR;
+    targetPlayPanZ = BASE_PLAY_Z + (dz / dist) * maxR;
+  }
+}
+
+function syncPlayZoomUi() {
+  if (!btnZoomReset) return;
+  btnZoomReset.textContent = `${targetPlayZoom.toFixed(1)}×`;
+  const isMoved =
+    targetPlayZoom > 1.03 ||
+    Math.hypot(targetPlayPanX - BASE_PLAY_X, targetPlayPanZ - BASE_PLAY_Z) > 0.6;
+  btnZoomReset.classList.toggle('zoomed', isMoved);
+}
+
+function setPlayZoom(nextZoom, pivotClientX, pivotClientY) {
+  const prevZoom = targetPlayZoom;
+  const clamped = clamp(Math.round(nextZoom * 100) / 100, MIN_PLAY_ZOOM, MAX_PLAY_ZOOM);
+
+  if (pivotClientX != null && pivotClientY != null && Math.abs(clamped - prevZoom) > 1e-4) {
+    const pivotLocal = V();
+    if (screenToCakeLocal(pivotClientX, pivotClientY, pivotLocal)) {
+      const s = cakeRoot.scale.x || 1;
+      const wx = pivotLocal.x * s;
+      const wz = pivotLocal.z * s;
+      const pull = 1 - prevZoom / clamped;
+      targetPlayPanX += (wx - targetPlayPanX) * pull;
+      targetPlayPanZ += (wz - targetPlayPanZ) * pull;
+    }
+  }
+
+  targetPlayZoom = clamped;
+  if (clamped <= 1.01) {
+    targetPlayZoom = 1.0;
+    targetPlayPanX = lerp(targetPlayPanX, BASE_PLAY_X, 0.35);
+    targetPlayPanZ = lerp(targetPlayPanZ, BASE_PLAY_Z, 0.35);
+  }
+  clampPlayPan();
+  syncPlayZoomUi();
+}
+
+function resetPlayView(playSfx = true) {
+  targetPlayZoom = 1.0;
+  targetPlayPanX = BASE_PLAY_X;
+  targetPlayPanZ = BASE_PLAY_Z;
+  syncPlayZoomUi();
+  if (playSfx) SFX.pop();
+}
+
+function setPlayToolMode(mode) {
+  if (isPressing) finishActiveStroke();
+  playToolMode = mode;
+  const isPan = mode === 'pan';
+  if (btnModeDraw) btnModeDraw.classList.toggle('active', !isPan);
+  if (btnModePan) btnModePan.classList.toggle('active', isPan);
+  document.body.classList.toggle('in-pan-mode', state === 'playing' && isPan);
+
+  if (state === 'playing') {
+    setHandVisible(!isPan);
+    if (isPan) {
+      liveStreamMesh.visible = false;
+      activeHeadMesh.visible = false;
+      guideChipEl.textContent = '✋ 한 손으로 밀어 이동하고, 두 손가락으로 확대·축소하세요!';
+      guideChipEl.classList.remove('warn');
+    } else {
+      guideChipEl.textContent = activeStageObj.tip;
+      guideChipEl.classList.remove('warn');
+    }
+  }
+}
+
+if (btnModeDraw) {
+  btnModeDraw.addEventListener('click', () => {
+    unlockAudio();
+    setPlayToolMode('draw');
+    SFX.pop();
+  });
+}
+if (btnModePan) {
+  btnModePan.addEventListener('click', () => {
+    unlockAudio();
+    setPlayToolMode('pan');
+    SFX.pop();
+  });
+}
+if (btnZoomIn) {
+  btnZoomIn.addEventListener('click', () => {
+    unlockAudio();
+    setPlayZoom(targetPlayZoom + 0.5);
+    SFX.pop();
+  });
+}
+if (btnZoomOut) {
+  btnZoomOut.addEventListener('click', () => {
+    unlockAudio();
+    setPlayZoom(targetPlayZoom - 0.5);
+    SFX.pop();
+  });
+}
+if (btnZoomReset) {
+  btnZoomReset.addEventListener('click', () => {
+    unlockAudio();
+    resetPlayView(true);
+    showToast('🔍 1.0배 기본 보기로 돌아왔어요');
+  });
+}
+
+function getTwoPointerInfo() {
+  const arr = Array.from(activePointers.values());
+  if (arr.length < 2) return { dist: 0, midX: 0, midY: 0 };
+  return {
+    dist: Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y),
+    midX: (arr[0].x + arr[1].x) * 0.5,
+    midY: (arr[0].y + arr[1].y) * 0.5,
+  };
+}
+
+function applyPlayScreenPanDelta(dxPx, dyPx) {
+  const afPlay = lerp(1, getAspectDistFactor(), 0.42);
+  const camDist = (CAM_A.d / Math.max(1, playZoom)) * afPlay;
+  const worldPerPx = (2 * camDist * Math.tan((camera.fov * DEG) * 0.5)) / Math.max(1, window.innerHeight);
+  targetPlayPanX -= dxPx * worldPerPx;
+  targetPlayPanZ -= (dyPx * worldPerPx) / Math.sin(CAM_EL);
+  clampPlayPan();
+  syncPlayZoomUi();
+}
+
+function recomputeWrittenBoundsAndHeight() {
+  resetChocoHeightGrid();
+  maxWrittenX = -RIN;
+  maxWrittenRadial = 0;
+  for (const st of currentStrokes) {
+    for (let i = 0; i < st.pts.length; i++) {
+      const p = st.pts[i];
+      maxWrittenX = Math.max(maxWrittenX, p.x + p.r);
+      maxWrittenRadial = Math.max(maxWrittenRadial, Math.hypot(p.x, p.z) + p.r);
+      if (i > 0) bakeChocoSegmentToGrid(st.pts[i - 1], p);
+    }
+    if (st.pts.length === 1) {
+      const p0 = st.pts[0];
+      bakeChocoPointToGrid(p0.x, p0.z, p0.y, p0.r);
+    }
+    st.bakedIdx = Math.max(0, st.pts.length - 1);
+  }
+  btnFinish.disabled = currentStrokes.length === 0;
+  updateSpaceHUD();
+}
+
+function cancelOrFinalizeForMultiTouch() {
+  if (!isPressing) return;
+  isPressing = false;
+  if (activeStroke) {
+    const elapsedMs = performance.now() - activeStrokeStartedAt;
+    const arcLen = activeStroke.cumLen[activeStroke.cumLen.length - 1] || 0;
+    if (elapsedMs < 220 && arcLen < 0.95) {
+      const idx = currentStrokes.indexOf(activeStroke);
+      if (idx >= 0) currentStrokes.splice(idx, 1);
+      strokesGroup.remove(activeStroke.mesh);
+      activeStroke.mesh.geometry.dispose();
+      recomputeWrittenBoundsAndHeight();
+    } else {
+      const lastPt = activeStroke.pts[activeStroke.pts.length - 1];
+      finalizeStrokeOnCake(activeStroke, true);
+      spawnStretchyChocoThread(lastPt, lastPt.r);
+    }
+  }
+  activeStroke = null;
+  activeHeadMesh.visible = false;
+  liveStreamMesh.visible = false;
+  dwellCharge = 0;
+  pressHoldSec = 0;
+  updateSpaceHUD();
+}
+
+// ── 포인터 입력 (글씨 쓰기 + 손모드/두 손가락 확대·이동 + 쇼케이스 360° 드래그 회전) ──
 function onPointerDown(e) {
   if (state === 'intro') {
     finishIntroToPlay();
     return;
   }
 
+  activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
   if (state === 'showcase') {
-    isOrbitDragging = true;
     autoSpin = false;
     chipSpin.classList.remove('active');
-    orbitStartX = orbitPrevX = e.clientX;
-    orbitStartY = orbitPrevY = e.clientY;
+    if (activePointers.size === 2) {
+      prevPinchDist = getTwoPointerInfo().dist;
+      isOrbitDragging = false;
+    } else if (activePointers.size === 1) {
+      isOrbitDragging = true;
+      orbitStartX = orbitPrevX = e.clientX;
+      orbitStartY = orbitPrevY = e.clientY;
+    }
     return;
   }
 
   if (state !== 'playing') return;
   if (e.button != null && e.button !== 0) return;
 
+  // 1) 두 손가락 이상 터치 시: 그리기 모드에서도 즉시 핀치 확대·이동으로 전환!
+  if (activePointers.size >= 2) {
+    cancelOrFinalizeForMultiTouch();
+    isPanningPlay = false;
+    gestureLockUntilAllUp = true;
+    const info = getTwoPointerInfo();
+    prevPinchDist = info.dist;
+    pinchPrevMidX = info.midX;
+    pinchPrevMidY = info.midY;
+    return;
+  }
+
+  if (gestureLockUntilAllUp) return;
+
+  // 2) 손모드(이동·확대) 한 손가락 이동
+  if (playToolMode === 'pan') {
+    isPanningPlay = true;
+    panPrevX = e.clientX;
+    panPrevY = e.clientY;
+    return;
+  }
+
+  // 3) 그리기 모드 초코펜 짜기
   unlockAudio();
   if (!screenToCakeLocal(e.clientX, e.clientY, pointerCakeXZ)) return;
 
   isPressing = true;
+  activeStrokeStartedAt = performance.now();
   pressHoldSec = 0;
   dwellCharge = 0.16;
   currentRadius = 0.18;
 
-  // 처음 누른 곳이 케이크 위면 획 시작, 케이크 바깥 허공이면 낙하 방울만 떨어뜨림!
   if (Math.hypot(pointerCakeXZ.x, pointerCakeXZ.z) <= CAKE_EDGE_R) {
     activeStroke = startNewStrokeAt(pointerCakeXZ.x, pointerCakeXZ.z, currentRadius);
     SFX.chocoSqueeze(0.4);
@@ -1739,14 +1999,26 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
+  if (activePointers.has(e.pointerId)) {
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
   if (state === 'showcase') {
+    if (activePointers.size >= 2) {
+      const { dist } = getTwoPointerInfo();
+      if (prevPinchDist > 0 && dist > 0) {
+        const delta = prevPinchDist - dist;
+        targetDist = clamp(targetDist + delta * 0.14, 42, 92);
+      }
+      prevPinchDist = dist;
+      return;
+    }
     if (!isOrbitDragging) return;
     const dx = e.clientX - orbitPrevX;
     const dy = e.clientY - orbitPrevY;
     orbitPrevX = e.clientX;
     orbitPrevY = e.clientY;
 
-    // 좌우 드래그: 360° 자유 회전, 상하 드래그: 측면 얼짱각도(22°) ~ 완전 탑뷰(84°) 자유 조절!
     targetAzimuth -= dx * 0.0085;
     targetElevation = clamp(targetElevation + dy * 0.0065, 22 * DEG, 84 * DEG);
     chipAngleHero.classList.remove('active');
@@ -1755,11 +2027,47 @@ function onPointerMove(e) {
   }
 
   if (state !== 'playing') return;
+
+  // 1) 두 손가락 핀치 확대·축소 + 동시 이동
+  if (activePointers.size >= 2) {
+    const { dist, midX, midY } = getTwoPointerInfo();
+    if (prevPinchDist > 8 && dist > 8) {
+      setPlayZoom(targetPlayZoom * (dist / prevPinchDist), midX, midY);
+    }
+    const mdx = midX - pinchPrevMidX;
+    const mdy = midY - pinchPrevMidY;
+    if (Math.hypot(mdx, mdy) > 0.2) {
+      applyPlayScreenPanDelta(mdx, mdy);
+    }
+    prevPinchDist = dist;
+    pinchPrevMidX = midX;
+    pinchPrevMidY = midY;
+    return;
+  }
+
+  if (gestureLockUntilAllUp) return;
+
+  // 2) 손모드 한 손가락 이동
+  if (playToolMode === 'pan') {
+    if (!isPanningPlay) return;
+    const dx = e.clientX - panPrevX;
+    const dy = e.clientY - panPrevY;
+    panPrevX = e.clientX;
+    panPrevY = e.clientY;
+    applyPlayScreenPanDelta(dx, dy);
+    return;
+  }
+
   screenToCakeLocal(e.clientX, e.clientY, pointerCakeXZ);
 }
 
 function finishActiveStroke(e) {
+  if (e && e.pointerId != null) {
+    activePointers.delete(e.pointerId);
+  }
+
   if (state === 'showcase') {
+    if (activePointers.size < 2) prevPinchDist = 0;
     if (isOrbitDragging && document.body.classList.contains('clean-capture') && e && e.clientX != null) {
       const moved = Math.hypot(e.clientX - orbitStartX, e.clientY - orbitStartY);
       if (moved < 8) {
@@ -1767,9 +2075,20 @@ function finishActiveStroke(e) {
         cleanHint.classList.add('hidden');
       }
     }
-    isOrbitDragging = false;
+    if (activePointers.size === 0) {
+      isOrbitDragging = false;
+    }
     return;
   }
+
+  if (activePointers.size < 2) {
+    prevPinchDist = 0;
+  }
+  if (activePointers.size === 0) {
+    isPanningPlay = false;
+    gestureLockUntilAllUp = false;
+  }
+
   if (!isPressing) return;
   isPressing = false;
   if (activeStroke) {
@@ -1791,11 +2110,16 @@ window.addEventListener('pointermove', onPointerMove);
 window.addEventListener('pointerup', finishActiveStroke);
 window.addEventListener('pointercancel', finishActiveStroke);
 
-// 마우스 휠 줌 지원 (쇼케이스에서 확대/축소)
+// 마우스 휠 줌 지원 (글씨 쓰는 중 & 쇼케이스 모두 확대/축소)
 gl.addEventListener('wheel', e => {
-  if (state !== 'showcase') return;
-  e.preventDefault();
-  targetDist = clamp(targetDist + e.deltaY * 0.04, 42, 92);
+  if (state === 'showcase') {
+    e.preventDefault();
+    targetDist = clamp(targetDist + e.deltaY * 0.04, 42, 92);
+  } else if (state === 'playing') {
+    e.preventDefault();
+    const factor = Math.exp(-e.deltaY * 0.0022);
+    setPlayZoom(targetPlayZoom * factor, e.clientX, e.clientY);
+  }
 }, { passive: false });
 
 // ── 바이럴 포인트: 초코 획 물리 분석 → 빵모자 사장님의 팩폭 감정평 생성! ──
@@ -1884,6 +2208,7 @@ function enterShowcase() {
   finishActiveStroke();
   state = 'showcase';
   BGM.setUrgent(false);
+  document.body.classList.remove('in-pan-mode');
 
   // 밑그림·경고링·손을 모두 비켜 오직 내가 만든 3D 케이크 작품만 돋보이게!
   guidePlane.visible = false;
@@ -2610,9 +2935,21 @@ function updatePlaying(dt, nowSec) {
   const thickPct = clamp(((currentRadius - 0.09) / 0.55) * 100, 12, 100);
   thickFillEl.style.width = `${thickPct.toFixed(0)}%`;
 
-  const rightBias = clamp((pointerCakeXZ.x - 2.0) / 8.0, 0, 1);
-  _penAxis.set(lerp(0.32, 0.06, rightBias), 0.34, lerp(0.88, 0.94, rightBias)).normalize();
-  updatePenAndHand(_penTipW, _penAxis, currentGrip, currentRadius * s * 0.85);
+  playZoom = lerp(playZoom, targetPlayZoom, clamp(dt * 14, 0, 1));
+  playPanX = lerp(playPanX, targetPlayPanX, clamp(dt * 14, 0, 1));
+  playPanZ = lerp(playPanZ, targetPlayPanZ, clamp(dt * 14, 0, 1));
+
+  if (playToolMode === 'draw') {
+    setHandVisible(true);
+    const penVisScale = 1 / Math.pow(Math.max(1, playZoom), 0.72);
+    const rightBias = clamp((pointerCakeXZ.x - 2.0) / 8.0, 0, 1);
+    _penAxis.set(lerp(0.32, 0.06, rightBias), 0.34, lerp(0.88, 0.94, rightBias)).normalize();
+    updatePenAndHand(_penTipW, _penAxis, currentGrip, currentRadius * s * 0.85, penVisScale);
+  } else {
+    setHandVisible(false);
+    liveStreamMesh.visible = false;
+    activeHeadMesh.visible = false;
+  }
 
   updateStretchyThreads(dt);
   updateFallingDrops(dt);
@@ -2630,8 +2967,8 @@ function updatePlaying(dt, nowSec) {
   }
 
   const afPlay = lerp(1, getAspectDistFactor(), 0.42);
-  _camTarget.copy(CAM_A.tg);
-  const camDist = CAM_A.d * afPlay;
+  _camTarget.set(playPanX, 0, playPanZ);
+  const camDist = (CAM_A.d / Math.max(1, playZoom)) * afPlay;
   camera.position.set(
     _camTarget.x,
     _camTarget.y + camDist * Math.sin(CAM_EL),

@@ -20,10 +20,12 @@
       cursor: crosshair;
       z-index: 1;
     }
-    body.in-showcase #gl {
+    body.in-showcase #gl,
+    body.in-pan-mode #gl {
       cursor: grab;
     }
-    body.in-showcase #gl:active {
+    body.in-showcase #gl:active,
+    body.in-pan-mode #gl:active {
       cursor: grabbing;
     }
     #ov {
@@ -212,6 +214,99 @@
     .btn-bakery:disabled {
       opacity: 0.45;
       box-shadow: none;
+    }
+
+    /* 그리기 모드 / 손모드(이동·확대) 및 배율 조절 바 */
+    .mode-zoom-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 7px;
+      border-radius: 16px;
+      background: rgba(22, 17, 34, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+    }
+    .draw-mode-seg {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .mode-seg-btn {
+      padding: 7px 8px;
+      border-radius: 9px;
+      border: 0;
+      background: transparent;
+      color: #c4bdd6;
+      font-size: 12.5px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: all 0.14s ease;
+    }
+    .mode-seg-btn.active {
+      background: #ffd84a;
+      color: #241605;
+      box-shadow: 0 3px 10px rgba(255, 216, 74, 0.35);
+    }
+    #btn-mode-pan.active {
+      background: #38bdf8;
+      color: #082032;
+      box-shadow: 0 3px 10px rgba(56, 189, 248, 0.35);
+    }
+    .zoom-stepper {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .zoom-step-btn {
+      width: 31px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      color: #f3eeff;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+    .zoom-step-btn:active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+    .zoom-reset-btn {
+      min-width: 48px;
+      height: 32px;
+      padding: 0 6px;
+      border: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.14);
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(0, 0, 0, 0.28);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .zoom-reset-btn.zoomed {
+      background: rgba(56, 189, 248, 0.24);
+      color: #bae6fd;
     }
 
     /* ── 360° 케이크 쇼케이스 & 캡처 스튜디오 UI ── */
@@ -477,6 +572,17 @@
   <!-- 하단 조작 바 (글씨 쓰는 중) -->
   <div class="bottom-dock hidden" id="bottom-dock">
     <div class="guide-chip" id="guide-chip">누른 채 머물면 초코가 통통해지고, 빠르게 그으면 얇아져요!</div>
+    <div class="mode-zoom-bar">
+      <div class="draw-mode-seg" role="tablist" aria-label="조작 모드">
+        <button type="button" class="mode-seg-btn active" id="btn-mode-draw">✏️ 그리기</button>
+        <button type="button" class="mode-seg-btn" id="btn-mode-pan">✋ 손모드</button>
+      </div>
+      <div class="zoom-stepper">
+        <button type="button" class="zoom-step-btn" id="btn-zoom-out" aria-label="축소">－</button>
+        <button type="button" class="zoom-reset-btn" id="btn-zoom-reset" title="누르면 1.0배 기본 보기로 초기화">1.0×</button>
+        <button type="button" class="zoom-step-btn" id="btn-zoom-in" aria-label="확대">＋</button>
+      </div>
+    </div>
     <button type="button" class="btn btn-primary btn-bakery" id="btn-finish" disabled style="width:100%">🎂 다 썼어요! 케이크 완성하기</button>
   </div>
 
