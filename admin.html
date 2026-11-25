@@ -10,8 +10,11 @@
     html, body {
       height: auto;
       min-height: 100%;
+      overflow-x: hidden;
       overflow-y: auto;
       touch-action: pan-y;
+      user-select: text;
+      -webkit-user-select: text;
       background: #100d1a;
       color: #f6f2ff;
     }
@@ -70,6 +73,7 @@
       resize: vertical;
     }
     .btn {
+      width: auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -83,7 +87,12 @@
       font-weight: 800;
       cursor: pointer;
       text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: filter 0.12s ease, transform 0.1s ease;
+    }
+    .btn.block {
+      width: 100%;
     }
     .btn:hover { filter: brightness(1.12); }
     .btn:active { transform: scale(0.98); }
@@ -219,20 +228,22 @@
       border-color: transparent;
     }
 
-    .topbar {
+    .admin-topbar {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .topbar h1 {
+    .admin-topbar h1 {
       font-size: 20px;
       font-weight: 900;
       margin: 0;
     }
     .topbar-actions {
       display: flex;
+      align-items: center;
       gap: 8px;
       flex-wrap: wrap;
     }
@@ -547,9 +558,9 @@
         <form id="login-form" style="display:flex;flex-direction:column;gap:10px;">
           <input id="pw-input" class="input" type="password" placeholder="1차 관리자 비밀번호 입력" autocomplete="current-password" required>
           <div id="login-err" class="err-msg"></div>
-          <button type="submit" class="btn primary" id="login-btn">다음: 6자리 코드 인증 →</button>
+          <button type="submit" class="btn primary block" id="login-btn">다음: 6자리 코드 인증 →</button>
         </form>
-        <a class="btn" href="./">🏠 404 아케이드 메인으로</a>
+        <a class="btn block" href="./">🏠 404 아케이드 메인으로</a>
       </div>
 
       <!-- STEP 2: 아이폰 「암호」 앱 6자리 OTP 입력 -->
@@ -610,7 +621,7 @@
 
     <!-- 대시보드 화면 -->
     <section id="dash-view" class="hidden" style="display:flex;flex-direction:column;gap:16px;">
-      <header class="card-box topbar">
+      <header class="card-box admin-topbar">
         <div>
           <h1>⚙ 404 아케이드 관리자 <span class="pill-cnt" style="vertical-align:middle;margin-left:6px;">🔐 2중 보안 인증됨</span></h1>
           <div style="font-size:12px;color:#9f96be;margin-top:3px;">구역 배치와 순서 변경은 메인 페이지에 즉시 반영됩니다.</div>
