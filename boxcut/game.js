@@ -52,37 +52,37 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.08;
+renderer.toneMappingExposure = 0.98;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#1c1829');
-scene.fog = new THREE.Fog('#1c1829', 46, 92);
+scene.background = new THREE.Color('#c8bca9');
+scene.fog = new THREE.Fog('#b9ad9c', 58, 112);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / Math.max(1, window.innerHeight), 0.5, 160);
 
-// 조명 세팅
-const hemiLight = new THREE.HemisphereLight('#fff8eb', '#2b2440', 0.95);
+// 조명 세팅 (눈부심 없이 입체 음영이 살아나는 따뜻한 현관 & 거실 마루 조명)
+const hemiLight = new THREE.HemisphereLight('#fff8ee', '#6b5847', 0.94);
 scene.add(hemiLight);
 
-const dirLight = new THREE.DirectionalLight('#fff7e6', 2.05);
-dirLight.position.set(-14, 38, 22);
+const dirLight = new THREE.DirectionalLight('#fff3dc', 1.82);
+dirLight.position.set(-12, 37, 22);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.set(1024, 1024);
 dirLight.shadow.camera.near = 8;
-dirLight.shadow.camera.far = 90;
-dirLight.shadow.camera.left = -22;
-dirLight.shadow.camera.right = 22;
-dirLight.shadow.camera.top = 30;
-dirLight.shadow.camera.bottom = -26;
+dirLight.shadow.camera.far = 105;
+dirLight.shadow.camera.left = -26;
+dirLight.shadow.camera.right = 26;
+dirLight.shadow.camera.top = 36;
+dirLight.shadow.camera.bottom = -32;
 dirLight.shadow.bias = -0.0006;
 scene.add(dirLight);
 
-const rimLight = new THREE.DirectionalLight('#93c5fd', 0.65);
+const rimLight = new THREE.DirectionalLight('#fde68a', 0.52);
 rimLight.position.set(18, 24, -18);
 scene.add(rimLight);
 
@@ -286,76 +286,576 @@ const bubbleWrapMat = new THREE.MeshStandardMaterial({
   metalness: 0.05,
 });
 
-// ─── 작업대 & 뒤쪽 컨베이어 벨트 무대 구성 ───
-const WORK_Z = 4.2;     // 주인공 택배가 놓이는 앞쪽 작업대 Z 좌표
+// ─── 신발장 옆 우리 집 현관 & 열린 현관문 택배 폭주 3D 무대 구성 ───
+const WORK_Z = 4.2;              // 주인공 택배가 놓이는 앞쪽 마루 작업 자리 Z 좌표
 const BOX_W = 11.4;
 const BOX_D = 11.4;
 const BOX_H = 4.2;
-const WORK_TOP_Y = 0.0; // 주인공 상자 윗면이 놓이는 월드 Y 높이 (기준 평면 y = 0)
-const DESK_Y = -BOX_H;  // 작업대 상판 높이 (-4.2)
+const WORK_TOP_Y = 0.0;          // 주인공 상자 윗면 월드 Y 높이 (슬라이스 기준 평면 y = 0)
+const DESK_Y = -BOX_H;           // 거실 원목 마루 상판 높이 (-4.2)
+const ENTRY_Y = DESK_Y - 0.65;   // 한 단 낮은 한국식 현관 타일 바닥 높이 (-4.85)
+const DOOR_Z = -21.2;            // 아파트 현관문 벽체 Z 위치 (HUD 아래로 시원하게 보이도록 배치!)
 
 const stageGroup = new THREE.Group();
 scene.add(stageGroup);
 
-// 앞쪽 나무/매트 언박싱 작업대
-const deskTex = makeCanvasTexture(512, 512, (g, w, h) => {
-  g.fillStyle = '#282338';
+// 1) 앞쪽 거실 원목 마루 바닥 (따뜻한 오크 플로어링)
+const woodFloorTex = makeCanvasTexture(512, 512, (g, w, h) => {
+  g.fillStyle = '#c89d6c';
   g.fillRect(0, 0, w, h);
-  // 커팅 매트 눈금 격자 느낌
-  g.strokeStyle = 'rgba(255, 255, 255, 0.055)';
+  const plankH = 64;
+  const tones = ['#cfa474', '#c29563', '#d4ab7c', '#bc8e5c'];
+  for (let row = 0; row < h / plankH; row++) {
+    const y = row * plankH;
+    const offset = (row % 2) * 128;
+    for (let col = -1; col < 5; col++) {
+      const x = col * 160 + offset;
+      g.fillStyle = tones[(row * 3 + col + 8) % tones.length];
+      g.fillRect(x + 1, y + 1, 158, plankH - 2);
+      // 잔잔한 나뭇결
+      g.fillStyle = 'rgba(92, 54, 22, 0.08)';
+      for (let k = 0; k < 5; k++) {
+        const gy = y + 8 + ((k * 11 + row * 7) % (plankH - 14));
+        g.fillRect(x + 6, gy, 146, 2);
+      }
+    }
+    g.fillStyle = 'rgba(78, 46, 18, 0.28)';
+    g.fillRect(0, y, w, 2);
+  }
+});
+woodFloorTex.wrapS = THREE.RepeatWrapping;
+woodFloorTex.wrapT = THREE.RepeatWrapping;
+woodFloorTex.repeat.set(4.5, 2.2);
+
+const livingFloorMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(72, 1.4, 30),
+  new THREE.MeshStandardMaterial({ map: woodFloorTex, roughness: 0.52, metalness: 0.04 })
+);
+livingFloorMesh.position.set(0, DESK_Y - 0.7, 13.0);
+livingFloorMesh.receiveShadow = true;
+stageGroup.add(livingFloorMesh);
+
+// 주인공 택배 언박싱 매트 (원목 마루 위에 깔린 차콜 스티치 데스크 패드 — 상자와 테이프 가독성 극대화)
+const unboxPadTex = makeCanvasTexture(512, 512, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  g.fillStyle = '#262936';
+  roundRectPath(g, 10, 10, w - 20, h - 20, 36);
+  g.fill();
+
+  g.strokeStyle = 'rgba(255, 255, 255, 0.06)';
   g.lineWidth = 2;
-  for (let i = 0; i <= w; i += 32) {
+  for (let i = 48; i < w - 32; i += 32) {
+    g.beginPath(); g.moveTo(i, 28); g.lineTo(i, h - 28); g.stroke();
+    g.beginPath(); g.moveTo(28, i); g.lineTo(w - 28, i); g.stroke();
+  }
+
+  g.strokeStyle = '#fbbf24';
+  g.lineWidth = 4;
+  g.setLineDash([14, 10]);
+  roundRectPath(g, 26, 26, w - 52, h - 52, 26);
+  g.stroke();
+  g.setLineDash([]);
+});
+const unboxPadMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(15.4, 14.6),
+  new THREE.MeshStandardMaterial({ map: unboxPadTex, transparent: true, roughness: 0.68, metalness: 0.05 })
+);
+unboxPadMesh.rotation.x = -Math.PI / 2;
+unboxPadMesh.position.set(0, DESK_Y + 0.025, WORK_Z);
+unboxPadMesh.receiveShadow = true;
+stageGroup.add(unboxPadMesh);
+
+// 2) 현관 ↔ 거실 경계 크림 대리석 디딤석(마루턱)
+const marbleStepTex = makeCanvasTexture(512, 128, (g, w, h) => {
+  g.fillStyle = '#efeae1';
+  g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(148, 138, 124, 0.26)';
+  g.lineWidth = 3;
+  for (let i = 0; i < 9; i++) {
+    g.beginPath();
+    const sx = i * 62;
+    g.moveTo(sx, 0);
+    g.bezierCurveTo(sx + 24, h * 0.4, sx - 18, h * 0.7, sx + 34, h);
+    g.stroke();
+  }
+});
+marbleStepTex.wrapS = THREE.RepeatWrapping;
+marbleStepTex.repeat.set(4, 1);
+
+const marbleStepMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(72, 0.72, 1.25),
+  new THREE.MeshStandardMaterial({ map: marbleStepTex, roughness: 0.28, metalness: 0.06 })
+);
+marbleStepMesh.position.set(0, DESK_Y - 0.34, -2.05);
+marbleStepMesh.receiveShadow = true;
+marbleStepMesh.castShadow = true;
+stageGroup.add(marbleStepMesh);
+
+// 3) 현관 테라조 포세린 타일 바닥 (차분한 웜그레이 스톤 타일로 택배·신발·신발장 대비 극대화)
+const terrazzoTex = makeCanvasTexture(512, 512, (g, w, h) => {
+  g.fillStyle = '#d3cbc0';
+  g.fillRect(0, 0, w, h);
+  const chipColors = ['#b4aa9c', '#c98a67', '#7b8fa0', '#9f9585', '#ede8df'];
+  for (let i = 0; i < 420; i++) {
+    const cx = (i * 97 + 13) % w;
+    const cy = (i * 151 + 29) % h;
+    const r = 1.8 + (i % 4) * 1.15;
+    g.fillStyle = chipColors[i % chipColors.length];
+    g.beginPath();
+    g.arc(cx, cy, r, 0, TAU);
+    g.fill();
+  }
+  // 정사각 현관 타일 줄눈
+  g.strokeStyle = 'rgba(96, 86, 74, 0.38)';
+  g.lineWidth = 3;
+  for (let p = 0; p <= w; p += 128) {
+    g.beginPath(); g.moveTo(p, 0); g.lineTo(p, h); g.stroke();
+    g.beginPath(); g.moveTo(0, p); g.lineTo(w, p); g.stroke();
+  }
+});
+terrazzoTex.wrapS = THREE.RepeatWrapping;
+terrazzoTex.wrapT = THREE.RepeatWrapping;
+terrazzoTex.repeat.set(2.4, 2.5);
+
+const entryFloorMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(19.2, 1.0, 20.4),
+  new THREE.MeshStandardMaterial({ map: terrazzoTex, roughness: 0.48, metalness: 0.04 })
+);
+entryFloorMesh.position.set(0, ENTRY_Y - 0.5, -11.7);
+entryFloorMesh.receiveShadow = true;
+stageGroup.add(entryFloorMesh);
+
+// 현관문 앞 코이어 발매트 (HOME 매트)
+const doormatTex = makeCanvasTexture(512, 256, (g, w, h) => {
+  g.fillStyle = '#362e28';
+  roundRectPath(g, 6, 6, w - 12, h - 12, 22);
+  g.fill();
+  g.fillStyle = '#b48250';
+  roundRectPath(g, 22, 22, w - 44, h - 44, 14);
+  g.fill();
+  for (let i = 0; i < 350; i++) {
+    g.fillStyle = i % 2 === 0 ? 'rgba(72,45,18,0.16)' : 'rgba(255,235,205,0.10)';
+    g.fillRect((i * 83) % (w - 52) + 26, (i * 59) % (h - 52) + 26, 4, 3);
+  }
+  g.fillStyle = '#2d2118';
+  g.font = '900 46px "Pretendard","Apple SD Gothic Neo",sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText('HOME SWEET HOME', w / 2, h / 2 + 2);
+});
+const doormatMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(7.6, 0.10, 3.5),
+  new THREE.MeshStandardMaterial({ map: doormatTex, roughness: 0.88, metalness: 0.02 })
+);
+doormatMesh.position.set(0, ENTRY_Y + 0.05, -18.2);
+doormatMesh.receiveShadow = true;
+stageGroup.add(doormatMesh);
+
+// 4) 왼쪽 벽: 붙박이 신발장(키큰장 + 우드 카운터 벤치장) & 하부 간접조명 & 현관 신발들!
+const wallCreamMat = new THREE.MeshStandardMaterial({ color: '#d8cdbc', roughness: 0.76, metalness: 0.02 });
+const cabinetWhiteMat = new THREE.MeshStandardMaterial({ color: '#fbf9f5', roughness: 0.34, metalness: 0.04 });
+const warmOakMat = new THREE.MeshStandardMaterial({ color: '#bf8750', roughness: 0.45, metalness: 0.05 });
+const darkHandleMat = new THREE.MeshStandardMaterial({ color: '#273244', roughness: 0.35, metalness: 0.55 });
+
+// 좌우 벽체 & 거실 확장 가벽 (와이드 화면에서도 빈틈없이 마감)
+const leftWallBack = new THREE.Mesh(new THREE.BoxGeometry(1.4, 24.0, 21.0), wallCreamMat);
+leftWallBack.position.set(-11.4, ENTRY_Y + 11.0, -11.7);
+stageGroup.add(leftWallBack);
+
+const leftLivingWing = new THREE.Mesh(new THREE.BoxGeometry(36, 26.0, 1.4), wallCreamMat);
+leftLivingWing.position.set(-28.7, DESK_Y + 12.0, -2.1);
+stageGroup.add(leftLivingWing);
+
+const rightLivingWing = new THREE.Mesh(new THREE.BoxGeometry(36, 26.0, 1.4), wallCreamMat);
+rightLivingWing.position.set(27.2, DESK_Y + 12.0, -2.1);
+stageGroup.add(rightLivingWing);
+
+// [신발장 A] 안쪽 키큰 신발장 (z = -21.0 ~ -13.2, 앞면 x = -8.25, 하부 띄움 시공!)
+const tallCabH = 10.2;
+const tallCab = new THREE.Mesh(new THREE.BoxGeometry(2.5, tallCabH, 7.8), cabinetWhiteMat);
+tallCab.position.set(-9.5, ENTRY_Y + 1.35 + tallCabH / 2, -17.1);
+tallCab.castShadow = true;
+tallCab.receiveShadow = true;
+stageGroup.add(tallCab);
+
+// 키큰장 도어 줄눈 & 손잡이
+const doorGrooveMat = new THREE.MeshBasicMaterial({ color: '#cbc3b5' });
+for (const dz of [-19.0, -17.1, -15.2]) {
+  const groove = new THREE.Mesh(new THREE.BoxGeometry(0.06, tallCabH - 0.5, 0.06), doorGrooveMat);
+  groove.position.set(-8.23, ENTRY_Y + 1.35 + tallCabH / 2, dz);
+  stageGroup.add(groove);
+}
+for (const hz of [-17.45, -16.75]) {
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 0.14), darkHandleMat);
+  handle.position.set(-8.16, ENTRY_Y + 4.6, hz);
+  stageGroup.add(handle);
+}
+
+// [신발장 B] 앞쪽 허리 높이 우드 상판 신발장 (모바일에서도 상판 화분·스탠드·신발이 통째로 들어옴!)
+const lowCabH = 4.8;
+const lowCab = new THREE.Mesh(new THREE.BoxGeometry(2.5, lowCabH, 10.8), cabinetWhiteMat);
+lowCab.position.set(-9.5, ENTRY_Y + 1.35 + lowCabH / 2, -7.8);
+lowCab.castShadow = true;
+lowCab.receiveShadow = true;
+stageGroup.add(lowCab);
+
+// 우드 상판 카운터
+const lowCabTopY = ENTRY_Y + 1.35 + lowCabH;
+const woodCounter = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.30, 11.0), warmOakMat);
+woodCounter.position.set(-9.45, lowCabTopY + 0.15, -7.8);
+woodCounter.castShadow = true;
+woodCounter.receiveShadow = true;
+stageGroup.add(woodCounter);
+
+// 하부장 도어 줄눈 & 손잡이
+for (const dz of [-10.5, -7.8, -5.1]) {
+  const groove = new THREE.Mesh(new THREE.BoxGeometry(0.06, lowCabH - 0.4, 0.06), doorGrooveMat);
+  groove.position.set(-8.23, ENTRY_Y + 1.35 + lowCabH / 2, dz);
+  stageGroup.add(groove);
+
+  const knob = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.85, 0.14), darkHandleMat);
+  knob.position.set(-8.16, lowCabTopY - 0.9, dz + 0.95);
+  stageGroup.add(knob);
+}
+
+// 신발장 하부 띄움 전구색 LED 간접조명 바 + 포인트 라이트
+const underGlowMat = new THREE.MeshBasicMaterial({ color: '#ffd17a' });
+const underGlowBar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 18.4), underGlowMat);
+underGlowBar.position.set(-8.55, ENTRY_Y + 1.30, -11.6);
+stageGroup.add(underGlowBar);
+
+const shoeRackLight = new THREE.PointLight('#ffa93a', 10.5, 17, 1.5);
+shoeRackLight.position.set(-7.3, ENTRY_Y + 1.25, -9.5);
+stageGroup.add(shoeRackLight);
+
+// 신발장 우드 카운터 위 아기자기한 현관 소품들 (모바일 화면 안쪽 x = -9.15 라인에 배치!)
+{
+  const propY = lowCabTopY + 0.30;
+  // 1. 따뜻한 미니 단스탠드 조명
+  const lampStand = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.38, 1.0, 12), warmOakMat);
+  lampStand.position.set(-9.15, propY + 0.50, -3.9);
+  const lampShadeMat = new THREE.MeshStandardMaterial({
+    color: '#fff1c9',
+    emissive: '#ffa93a',
+    emissiveIntensity: 0.75,
+    roughness: 0.4,
+  });
+  const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.84, 0.90, 16), lampShadeMat);
+  lampShade.position.set(-9.15, propY + 1.22, -3.9);
+  stageGroup.add(lampStand, lampShade);
+
+  // 2. 테라코타 토분 & 싱그러운 초록 식물
+  const potMat = new THREE.MeshStandardMaterial({ color: '#c8643d', roughness: 0.65 });
+  const leafMat = new THREE.MeshStandardMaterial({ color: '#16a34a', roughness: 0.42 });
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.46, 1.0, 14), potMat);
+  pot.position.set(-9.15, propY + 0.50, -7.5);
+  pot.castShadow = true;
+  stageGroup.add(pot);
+  const leafOffsets = [
+    [0, 1.30, 0, 0.52],
+    [-0.38, 1.14, 0.30, 0.44],
+    [0.40, 1.18, -0.26, 0.46],
+    [-0.30, 1.20, -0.34, 0.42],
+    [0.34, 1.12, 0.34, 0.42],
+  ];
+  for (const [lx, ly, lz, lr] of leafOffsets) {
+    const lf = new THREE.Mesh(new THREE.SphereGeometry(lr, 10, 10), leafMat);
+    lf.scale.set(1.15, 0.72, 0.95);
+    lf.position.set(-9.15 + lx, propY + ly, -7.5 + lz);
+    lf.castShadow = true;
+    stageGroup.add(lf);
+  }
+
+  // 3. 우드 키 트레이 + 디퓨저 병 + 예비 커터칼
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.14, 2.2), new THREE.MeshStandardMaterial({ color: '#7c4d28', roughness: 0.5 }));
+  tray.position.set(-9.15, propY + 0.07, -11.1);
+  const diffuser = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.30, 0.34, 0.78, 12),
+    new THREE.MeshPhysicalMaterial({ color: '#7dd3fc', roughness: 0.1, transmission: 0.5, transparent: true, opacity: 0.88 })
+  );
+  diffuser.position.set(-9.25, propY + 0.50, -11.55);
+  const spareCutter = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 1.10), new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.3 }));
+  spareCutter.rotation.y = 0.35;
+  spareCutter.position.set(-9.05, propY + 0.18, -10.55);
+  stageGroup.add(tray, diffuser, spareCutter);
+}
+
+// 신발장 앞 현관 타일 & 마루턱에 놓인 입체 신발 생성기 (사람 얼굴 없이 신발 소품만!)
+function createShoePairMesh({ mainColor, soleColor = '#f8fafc', style = 'sneaker' }) {
+  const pair = new THREE.Group();
+  const mainMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.45 });
+  const soleMat = new THREE.MeshStandardMaterial({ color: soleColor, roughness: 0.52 });
+
+  for (const side of [-1, 1]) {
+    const shoe = new THREE.Group();
+    shoe.position.z = side * 0.52;
+    shoe.rotation.y = side * 0.06;
+
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.24, 0.80), soleMat);
+    sole.position.y = 0.12;
+    shoe.add(sole);
+
+    if (style === 'slipper') {
+      const strap = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.42, 0.82), mainMat);
+      strap.position.set(0.14, 0.35, 0);
+      shoe.add(strap);
+    } else {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.50, 0.76), mainMat);
+      body.position.set(-0.08, 0.40, 0);
+      const toe = new THREE.Mesh(new THREE.SphereGeometry(0.40, 10, 8), style === 'sneaker' ? soleMat : mainMat);
+      toe.scale.set(1.15, 0.65, 0.96);
+      toe.position.set(0.64, 0.31, 0);
+      shoe.add(body, toe);
+      if (style === 'sneaker') {
+        const lace = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.14, 0.78), soleMat);
+        lace.position.set(0.18, 0.60, 0);
+        shoe.add(lace);
+      }
+    }
+    shoe.traverse(o => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
+    });
+    pair.add(shoe);
+  }
+  pair.scale.setScalar(1.12);
+  return pair;
+}
+
+// 현관 신발 4켤레 & 우산꽂이 배치 (모바일 화면에서도 선명하게 보이는 신발장 옆 라인!)
+{
+  // 1) 거실 마루턱 위 언박싱 매트 왼쪽 옆에 가지런한 노란 실내화
+  const houseSlippers = createShoePairMesh({ mainColor: '#facc15', soleColor: '#fef3c7', style: 'slipper' });
+  houseSlippers.position.set(-8.35, DESK_Y, 0.4);
+  houseSlippers.rotation.y = -1.25;
+  stageGroup.add(houseSlippers);
+
+  // 2) 현관 타일 앞쪽 민트 슬리퍼
+  const porchSlippers = createShoePairMesh({ mainColor: '#34d399', soleColor: '#ecfdf5', style: 'slipper' });
+  porchSlippers.position.set(-7.15, ENTRY_Y, -3.55);
+  porchSlippers.rotation.y = 0.35;
+  stageGroup.add(porchSlippers);
+
+  // 3) 신발장 앞 레드&화이트 스니커즈
+  const sneakers = createShoePairMesh({ mainColor: '#ef4444', soleColor: '#ffffff', style: 'sneaker' });
+  sneakers.position.set(-7.45, ENTRY_Y, -7.85);
+  sneakers.rotation.y = 0.08;
+  stageGroup.add(sneakers);
+
+  // 4) 신발장 앞 네이비 캐주얼 로퍼
+  const loafers = createShoePairMesh({ mainColor: '#1e3a8a', soleColor: '#e2e8f0', style: 'loafer' });
+  loafers.position.set(-7.55, ENTRY_Y, -11.9);
+  loafers.rotation.y = -0.10;
+  stageGroup.add(loafers);
+
+  // 키큰장 앞 화이트 원통 우산꽂이 & 우산 2개
+  const standMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.35, metalness: 0.15 });
+  const umbStand = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.58, 2.1, 16), standMat);
+  umbStand.position.set(-7.40, ENTRY_Y + 1.05, -15.2);
+  umbStand.castShadow = true;
+  const umb1 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.09, 3.2, 10), new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.4 }));
+  umb1.position.set(-7.32, ENTRY_Y + 1.80, -15.1);
+  umb1.rotation.z = -0.14;
+  const umb2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.09, 2.95, 10), new THREE.MeshStandardMaterial({ color: '#0ea5e9', roughness: 0.4 }));
+  umb2.position.set(-7.50, ENTRY_Y + 1.68, -15.35);
+  umb2.rotation.z = 0.12;
+  stageGroup.add(umbStand, umb1, umb2);
+}
+
+// 5) 오른쪽 현관 벽면: 아치형 거울 + 월패드 스위치 + 이미 뜯어 접어둔 빈 박스 묶음!
+const rightWallMesh = new THREE.Mesh(new THREE.BoxGeometry(1.4, 24.0, 21.0), wallCreamMat);
+rightWallMesh.position.set(9.65, ENTRY_Y + 11.0, -11.7);
+rightWallMesh.receiveShadow = true;
+stageGroup.add(rightWallMesh);
+
+// 우드 걸레받이
+const baseboardR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.55, 19.6), warmOakMat);
+baseboardR.position.set(8.88, ENTRY_Y + 0.28, -11.7);
+stageGroup.add(baseboardR);
+
+// 벽걸이 우드 프레임 거울 & 스마트 월패드
+{
+  const mirrorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.20, 6.2, 4.2), warmOakMat);
+  mirrorFrame.position.set(8.86, ENTRY_Y + 5.4, -11.2);
+  const mirrorGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(0.24, 5.6, 3.6),
+    new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.08, metalness: 0.86 })
+  );
+  mirrorGlass.position.set(8.84, ENTRY_Y + 5.4, -11.2);
+  stageGroup.add(mirrorFrame, mirrorGlass);
+
+  // 현관 일괄소등·도어벨 스위치 패널
+  const padBody = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.35, 0.95), new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.3 }));
+  padBody.position.set(8.85, ENTRY_Y + 5.6, -5.2);
+  const padLed = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.45), new THREE.MeshBasicMaterial({ color: '#4ade80' }));
+  padLed.position.set(8.83, ENTRY_Y + 5.9, -5.2);
+  stageGroup.add(padBody, padLed);
+
+  // 오른쪽 구석에 뜯어서 접어 세워둔 납작한 골판지 박스 묶음 + 박스테이프 롤
+  const flatCardMat = new THREE.MeshStandardMaterial({ color: '#c4935c', roughness: 0.75 });
+  for (let i = 0; i < 3; i++) {
+    const flatBox = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.5 - i * 0.25, 3.6 - i * 0.2), flatCardMat);
+    flatBox.position.set(8.25 - i * 0.26, ENTRY_Y + 1.70, -4.1);
+    flatBox.rotation.z = 0.11 + i * 0.02;
+    flatBox.castShadow = true;
+    stageGroup.add(flatBox);
+  }
+  const tapeRoll = new THREE.Mesh(
+    new THREE.TorusGeometry(0.48, 0.18, 10, 20),
+    new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.32 })
+  );
+  tapeRoll.rotation.x = Math.PI / 2;
+  tapeRoll.position.set(7.25, ENTRY_Y + 0.18, -3.1);
+  stageGroup.add(tapeRoll);
+}
+
+// 6) 정면 뒤쪽: 아파트 현관문 프레임 + 활짝 열린 방화문(디지털 도어락) + 천장 센서등 + 문밖 복도!
+const doorFrameMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.42, metalness: 0.38 });
+const doorLeafMat = new THREE.MeshStandardMaterial({ color: '#2b3950', roughness: 0.38, metalness: 0.32 });
+const steelThresholdMat = new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.28, metalness: 0.78 });
+
+// 중앙 통로(x = -4.8 ~ +4.8, 폭 9.6) 양옆 현관 정면 벽체 & 상인방 벽체
+const backWallLeft = new THREE.Mesh(new THREE.BoxGeometry(32, 24.0, 1.2), wallCreamMat);
+backWallLeft.position.set(-20.8, ENTRY_Y + 11.0, DOOR_Z);
+const backWallRight = new THREE.Mesh(new THREE.BoxGeometry(32, 24.0, 1.2), wallCreamMat);
+backWallRight.position.set(20.8, ENTRY_Y + 11.0, DOOR_Z);
+const backWallHeader = new THREE.Mesh(new THREE.BoxGeometry(10.2, 13.5, 1.2), wallCreamMat);
+backWallHeader.position.set(0, ENTRY_Y + 16.8, DOOR_Z);
+stageGroup.add(backWallLeft, backWallRight, backWallHeader);
+
+// 스틸 문틀 기둥 & 상단 문틀 & 스테인리스 문지방
+const jambL = new THREE.Mesh(new THREE.BoxGeometry(0.58, 10.4, 1.45), doorFrameMat);
+jambL.position.set(-4.95, ENTRY_Y + 5.2, DOOR_Z);
+const jambR = new THREE.Mesh(new THREE.BoxGeometry(0.58, 10.4, 1.45), doorFrameMat);
+jambR.position.set(4.95, ENTRY_Y + 5.2, DOOR_Z);
+const jambTop = new THREE.Mesh(new THREE.BoxGeometry(10.48, 0.65, 1.45), doorFrameMat);
+jambTop.position.set(0, ENTRY_Y + 10.15, DOOR_Z);
+const thresholdMesh = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.16, 1.45), steelThresholdMat);
+thresholdMesh.position.set(0, ENTRY_Y + 0.06, DOOR_Z);
+stageGroup.add(jambL, jambR, jambTop, thresholdMesh);
+
+// 활짝 열려 있는 아파트 현관 방화문 (파란 디지털 도어락이 HUD 아래에서 또렷하게 보이는 각도!)
+const entryDoorPivot = new THREE.Group();
+entryDoorPivot.position.set(4.70, ENTRY_Y + 0.12, DOOR_Z - 0.25);
+const DOOR_BASE_OPEN_YAW = -1.28; // 복도 바깥 오른쪽 대각선으로 시원하게 열린 각도
+entryDoorPivot.rotation.y = DOOR_BASE_OPEN_YAW;
+stageGroup.add(entryDoorPivot);
+
+{
+  const doorW = 9.2;
+  const doorH = 9.8;
+  const leaf = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.42), doorLeafMat);
+  leaf.position.set(-doorW / 2, doorH / 2, 0);
+  leaf.castShadow = true;
+  entryDoorPivot.add(leaf);
+
+  // 방화문 입체 몰딩 패널
+  const trimMat = new THREE.MeshStandardMaterial({ color: '#1a2436', roughness: 0.45, metalness: 0.3 });
+  const panelTop = new THREE.Mesh(new THREE.BoxGeometry(doorW * 0.72, 3.2, 0.50), trimMat);
+  panelTop.position.set(-doorW / 2, doorH * 0.68, 0);
+  const panelBot = new THREE.Mesh(new THREE.BoxGeometry(doorW * 0.72, 3.2, 0.50), trimMat);
+  panelBot.position.set(-doorW / 2, doorH * 0.26, 0);
+  entryDoorPivot.add(panelTop, panelBot);
+
+  // 스마트 디지털 도어락 (파란 키패드 불빛 + 은색 레버 손잡이)
+  const lockBody = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.35, 0.72), new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.2, metalness: 0.6 }));
+  lockBody.position.set(-doorW + 1.15, doorH * 0.46, 0);
+  const lockScreen = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.95, 0.78), new THREE.MeshBasicMaterial({ color: '#38bdf8' }));
+  lockScreen.position.set(-doorW + 1.15, doorH * 0.52, 0);
+  const handleBar = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.24, 0.96), steelThresholdMat);
+  handleBar.position.set(-doorW + 1.25, doorH * 0.39, 0);
+  entryDoorPivot.add(lockBody, lockScreen, handleBar);
+}
+
+// 현관 천장 센서등 (새 택배가 문지방을 넘을 때마다 반짝 점등!)
+const sensorBulbMat = new THREE.MeshStandardMaterial({
+  color: '#fffbeb',
+  emissive: '#ffd166',
+  emissiveIntensity: 0.9,
+  roughness: 0.2,
+});
+const sensorFixture = new THREE.Mesh(new THREE.CylinderGeometry(1.10, 1.10, 0.28, 20), warmOakMat);
+sensorFixture.position.set(0, ENTRY_Y + 9.65, DOOR_Z + 1.25);
+const sensorBulb = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 12), sensorBulbMat);
+sensorBulb.scale.set(1, 0.45, 1);
+sensorBulb.position.set(0, ENTRY_Y + 9.48, DOOR_Z + 1.25);
+stageGroup.add(sensorFixture, sensorBulb);
+
+const sensorPointLight = new THREE.PointLight('#ffe08a', 11, 26, 1.45);
+sensorPointLight.position.set(0, ENTRY_Y + 8.6, DOOR_Z + 1.4);
+stageGroup.add(sensorPointLight);
+
+// 7) 열린 현관문 너머 아파트 복도 바닥 & 겹겹이 줄지어 집으로 밀려오는 택배 대홍수!
+const corridorFloorTex = makeCanvasTexture(256, 256, (g, w, h) => {
+  g.fillStyle = '#8d96a3';
+  g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(51, 65, 85, 0.38)';
+  g.lineWidth = 3;
+  for (let i = 0; i <= w; i += 64) {
     g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke();
     g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke();
   }
-  g.strokeStyle = 'rgba(255, 216, 74, 0.16)';
-  g.lineWidth = 4;
-  g.strokeRect(24, 24, w - 48, h - 48);
 });
-const deskMesh = new THREE.Mesh(
-  new THREE.BoxGeometry(30, 1.4, 20),
-  new THREE.MeshStandardMaterial({ map: deskTex, roughness: 0.62, metalness: 0.06 })
+corridorFloorTex.wrapS = THREE.RepeatWrapping;
+corridorFloorTex.wrapT = THREE.RepeatWrapping;
+corridorFloorTex.repeat.set(4, 4);
+
+const corridorFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(36, 1.0, 34),
+  new THREE.MeshStandardMaterial({ map: corridorFloorTex, roughness: 0.68, metalness: 0.06 })
 );
-deskMesh.position.set(0, DESK_Y - 0.7, WORK_Z + 1.5);
-deskMesh.receiveShadow = true;
-stageGroup.add(deskMesh);
+corridorFloor.position.set(0, ENTRY_Y - 0.62, DOOR_Z - 17.0);
+corridorFloor.receiveShadow = true;
+stageGroup.add(corridorFloor);
 
-// 작업 자리 노란 코너 가이드 마크
-const padMat = new THREE.MeshBasicMaterial({ color: '#ffd84a', transparent: true, opacity: 0.35 });
-const padRing = new THREE.Mesh(new THREE.RingGeometry(6.9, 7.25, 4), padMat);
-padRing.rotation.x = -Math.PI / 2;
-padRing.rotation.z = Math.PI / 4;
-padRing.position.set(0, DESK_Y + 0.02, WORK_Z);
-stageGroup.add(padRing);
+const corridorBackWall = new THREE.Mesh(
+  new THREE.BoxGeometry(40, 22, 1.2),
+  new THREE.MeshStandardMaterial({ color: '#b8c2cf', roughness: 0.78 })
+);
+corridorBackWall.position.set(0, ENTRY_Y + 9.5, DOOR_Z - 33.5);
+stageGroup.add(corridorBackWall);
 
-// 뒤쪽에서 택배들이 밀려 들어오는 롤러 컨베이어 트랙
-const beltGroup = new THREE.Group();
-stageGroup.add(beltGroup);
+const corridorLight = new THREE.PointLight('#f8fafc', 9, 34, 1.5);
+corridorLight.position.set(0, ENTRY_Y + 9.8, DOOR_Z - 10.5);
+stageGroup.add(corridorLight);
 
-const railMat = new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.38, metalness: 0.68 });
-const rollerMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.30, metalness: 0.75 });
-const beltFloorMat = new THREE.MeshStandardMaterial({ color: '#1e1b2e', roughness: 0.75, metalness: 0.1 });
+// 문밖 복도에서 현관문 통로를 가득 메우며 밀려 들어오는 1·2층 배경 택배 대열 (8개!)
+const corridorRushBoxes = [];
+for (let i = 0; i < 8; i++) {
+  const th = THEME_MATERIALS[i % THEME_MATERIALS.length];
+  const gBox = new THREE.Group();
+  const isUpper = i >= 5;
+  const bw = isUpper ? 5.2 : (5.8 + (i % 3) * 0.45);
+  const bh = isUpper ? 2.2 : (2.5 + (i % 2) * 0.40);
+  const bd = isUpper ? 5.2 : (5.8 + ((i + 1) % 3) * 0.45);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), [
+    th.sideMat, th.sideMat, th.topMat, th.sideMat, th.sideMat, th.sideMat,
+  ]);
+  body.position.y = bh / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(bw * 0.34, bd * 0.24), th.labelMat);
+  lbl.rotation.x = -Math.PI / 2;
+  lbl.position.set(-bw * 0.16, bh + 0.02, -bd * 0.15);
+  const tp = new THREE.Mesh(new THREE.PlaneGeometry(1.0, bd * 0.96), new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? '#d97706' : '#0284c7' }));
+  tp.rotation.x = -Math.PI / 2;
+  tp.position.set(0, bh + 0.015, 0);
+  gBox.add(body, lbl, tp);
 
-const beltBase = new THREE.Mesh(new THREE.BoxGeometry(15.6, 1.1, 44), beltFloorMat);
-beltBase.position.set(0, DESK_Y - 0.65, -26);
-beltBase.receiveShadow = true;
-beltGroup.add(beltBase);
-
-for (const sx of [-7.9, 7.9]) {
-  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.35, 44), railMat);
-  rail.position.set(sx, DESK_Y - 0.35, -26);
-  beltGroup.add(rail);
+  const rowIdx = isUpper ? (i - 5) : i;
+  const laneX = (rowIdx % 2 === 0 ? -1.75 : 1.75) + (isUpper ? 0.25 : 0);
+  const baseY = (ENTRY_Y - 0.12) + (isUpper ? 2.65 : 0);
+  const startZ = DOOR_Z - 2.4 - rowIdx * 5.2 - (isUpper ? 1.8 : 0);
+  gBox.position.set(laneX, baseY, startZ);
+  gBox.rotation.y = (i % 2 === 0 ? 0.11 : -0.13);
+  stageGroup.add(gBox);
+  corridorRushBoxes.push({ mesh: gBox, laneX, baseY, baseYaw: gBox.rotation.y });
 }
 
-const rollers = [];
-for (let i = 0; i < 18; i++) {
-  const rMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 14.9, 12), rollerMat);
-  rMesh.rotation.z = Math.PI / 2;
-  rMesh.position.set(0, DESK_Y - 0.12, -5.8 - i * 2.35);
-  rMesh.receiveShadow = true;
-  beltGroup.add(rMesh);
-  rollers.push(rMesh);
-}
+let doorSwingKick = 0;
+let sensorFlash = 0;
 
 // ─── 10종 랜덤 3D 입체 선물 카탈로그 & 메쉬 생성기 ───
 const GIFT_CATALOG = [
@@ -844,17 +1344,18 @@ const STATE = {
   lastShareData: null,
 };
 
-// 대기열 슬롯 좌표 계산 (뒤쪽 컨베이어에 2열 × 층층이 깔끔하게 정렬!)
+// 대기열 슬롯 좌표 계산 (신발장 옆 현관 테라조 타일 바닥에 2열 × 2단으로 착착 쌓임!)
 function getQueueSlotPos(idx) {
+  const firstFloorY = ENTRY_Y + BOX_H * 0.62; // 1층 택배가 현관 바닥에 딱 닿는 높이 (-2.246)
   if (idx < 4) {
-    const col = idx % 2 === 0 ? -4.35 : 4.35;
+    const col = idx % 2 === 0 ? -3.15 : 4.05;
     const row = Math.floor(idx / 2);
-    return new THREE.Vector3(col, 0, -8.8 - row * 9.4);
+    return new THREE.Vector3(col, firstFloorY, -6.6 - row * 6.8);
   }
   const sub = idx - 4;
-  const col = sub % 2 === 0 ? -4.1 : 4.1;
+  const col = sub % 2 === 0 ? -3.05 : 3.90;
   const row = Math.floor(sub / 2);
-  return new THREE.Vector3(col, BOX_H * 0.65 + 0.25, -8.8 - row * 9.4);
+  return new THREE.Vector3(col, firstFloorY + BOX_H * 0.62 + 0.04, -6.6 - row * 6.8);
 }
 
 // 다음 택배 스펙 생성 (단계가 오를수록 1줄 → 십자/평행/X자 2줄 → 중량 H자 3줄 진화!)
@@ -955,10 +1456,23 @@ function enqueueNewParcel(withDropAnim = true) {
   const idx = STATE.queueParcels.length;
   const slot = getQueueSlotPos(idx);
   obj.slotPos = slot.clone();
-  obj.dropOffsetY = withDropAnim ? 14.0 : 0.0;
-  obj.dropVelY = 0;
-  obj.root.position.set(slot.x, slot.y + obj.dropOffsetY, slot.z);
-  obj.root.scale.setScalar(0.62); // 대기열에서는 서로 겹치지 않는 아담한 비율, 앞자리 오면 1.0으로 확대!
+
+  // 열린 현관문 바깥 복도에서 문지방을 넘어 집 안으로 휙휙! 밀려 들어오는 진입 애니메이션
+  const fromX = clamp(slot.x * 0.38 + (nextRand() - 0.5) * 1.6, -3.1, 3.1);
+  const fromY = ENTRY_Y + BOX_H * 0.62;
+  const fromZ = DOOR_Z - 7.8;
+  obj.entryFrom = new THREE.Vector3(fromX, fromY, fromZ);
+  obj.entryT = withDropAnim ? 0.0 : 1.0;
+  obj.entryArcH = idx >= 4 ? 4.4 : 2.6;
+
+  if (withDropAnim) {
+    obj.root.position.copy(obj.entryFrom);
+    doorSwingKick = 1.0;
+    sensorFlash = 1.0;
+  } else {
+    obj.root.position.copy(slot);
+  }
+  obj.root.scale.setScalar(0.62); // 대기열에서는 현관에 차곡차곡 쌓이는 아담한 비율, 앞자리 오면 1.0으로 확대!
   STATE.queueParcels.push(obj);
   if (withDropAnim && STATE.phase === 'play') {
     SFX.boxDrop(clamp(getTotalStacked() / MAX_STACK, 0, 1));
@@ -1676,18 +2190,24 @@ async function triggerGameOver(reason) {
   SFX.fail();
   STATE.camShake = 0.35;
 
-  // 하늘에서 택배 상자 5개가 우르르 쏟아지는 피날레 연출!
-  for (let i = 0; i < 5; i++) {
+  // 열린 현관문을 통해 택배 상자 7개가 거실 마루턱까지 우르르 쏟아져 들어오는 피날레 연출!
+  for (let i = 0; i < 7; i++) {
     const p = createParcelObject(nextParcelSpec());
-    p.root.position.set((nextRand() - 0.5) * 9, 15 + i * 3.8, WORK_Z + (nextRand() - 0.5) * 5);
+    p.root.position.set((nextRand() - 0.5) * 4.2, ENTRY_Y + 3.2 + i * 1.4, DOOR_Z - 2.0 - i * 2.2);
+    p.root.scale.setScalar(0.84);
     STATE.avalancheBoxes.push({
       parcel: p,
-      vy: -8 - i * 2,
-      rx: (nextRand() - 0.5) * 3,
-      rz: (nextRand() - 0.5) * 3,
-      targetY: 1.2 + i * 1.1,
+      vx: (nextRand() - 0.5) * 7.5,
+      vy: 6.5 + nextRand() * 4.5,
+      vz: 26 + nextRand() * 14,
+      rx: (nextRand() - 0.5) * 3.2,
+      rz: (nextRand() - 0.5) * 3.2,
+      targetY: -0.6 + (i % 3) * 1.35,
+      maxZ: WORK_Z + 1.8 - (i % 4) * 2.8,
     });
   }
+  doorSwingKick = 1.4;
+  sensorFlash = 1.4;
 
   addPopText(
     reason === 'stack' ? '📦 택배 과부하!! 현관이 꽉 찼어요!' : '⏰ 시간 초과!! 택배가 밀렸어요!',
@@ -1881,42 +2401,47 @@ function drawOverlay(dt) {
       continue;
     }
     const k = p.age / p.dur;
-    const alpha = k < 0.16 ? k / 0.16 : 1 - (k - 0.16) / 0.84;
-    const py = h * p.yRatio - k * 34;
+    const alpha = k < 0.10 ? k / 0.10 : (k < 0.72 ? 1.0 : 1 - (k - 0.72) / 0.28);
+    const py = h * p.yRatio - k * 28;
 
     ovCtx.save();
     ovCtx.globalAlpha = clamp(alpha, 0, 1);
     ovCtx.textAlign = 'center';
-    const fontPx = Math.round(20 * (p.scale || 1));
+    ovCtx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ovCtx.shadowBlur = 10;
+    ovCtx.shadowOffsetY = 3;
+    const fontPx = Math.round(21 * (p.scale || 1));
     ovCtx.font = `900 ${fontPx}px "Pretendard","Apple SD Gothic Neo",sans-serif`;
-    ovCtx.lineWidth = 5.5;
-    ovCtx.strokeStyle = 'rgba(15, 11, 24, 0.92)';
+    ovCtx.lineWidth = 7.5;
+    ovCtx.lineJoin = 'round';
+    ovCtx.strokeStyle = 'rgba(18, 13, 28, 0.96)';
     ovCtx.strokeText(p.text, w / 2, py);
     ovCtx.fillStyle = p.color;
     ovCtx.fillText(p.text, w / 2, py);
 
     if (p.subText) {
-      ovCtx.font = '800 13.5px "Pretendard","Apple SD Gothic Neo",sans-serif';
-      ovCtx.lineWidth = 4;
-      ovCtx.strokeText(p.subText, w / 2, py + 22);
+      ovCtx.font = '800 14px "Pretendard","Apple SD Gothic Neo",sans-serif';
+      ovCtx.lineWidth = 5.5;
+      ovCtx.strokeText(p.subText, w / 2, py + 23);
       ovCtx.fillStyle = '#ffffff';
-      ovCtx.fillText(p.subText, w / 2, py + 22);
+      ovCtx.fillText(p.subText, w / 2, py + 23);
     }
     ovCtx.restore();
   }
 }
 
-// ─── 카메라 반응형 구도 업데이트 ───
+// ─── 카메라 반응형 구도 업데이트 (신발장·현관문·택배 행렬과 앞자리 작업대가 한눈에 잡히는 구도) ───
 function updateCameraPose(nowSec) {
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  // 모바일 세로 화면(aspect < 0.7)에서도 상자와 뒤쪽 대기열이 한눈에 시원하게 들어오도록 거리 조정
-  const portraitScale = aspect < 0.78 ? clamp(0.78 / Math.max(0.42, aspect), 1.0, 1.48) : 1.0;
-  const baseY = 25.5 * portraitScale;
-  const baseZ = WORK_Z + 19.2 * portraitScale;
+  // 모바일 세로 화면(aspect < 0.78)에서도 신발장 옆 현관과 열린 현관문 택배 러시가 통째로 들어오도록 보정
+  const portraitScale = aspect < 0.78 ? clamp(0.78 / Math.max(0.42, aspect), 1.0, 1.54) : 1.0;
+  const baseY = 23.6 * portraitScale;
+  const baseZ = WORK_Z + 20.2 * portraitScale;
+  const sideBiasX = aspect < 0.78 ? -0.42 : 0;
 
   if (STATE.phase === 'menu') {
-    camera.position.set(Math.sin(nowSec * 0.45) * 2.8, baseY * 0.96, baseZ);
-    camera.lookAt(0, -1.2, WORK_Z - 3.6);
+    camera.position.set(sideBiasX + Math.sin(nowSec * 0.45) * 2.3, baseY * 0.96, baseZ);
+    camera.lookAt(sideBiasX * 0.4, -1.1, WORK_Z - 3.6);
   } else {
     let sx = 0;
     let sy = 0;
@@ -1924,8 +2449,8 @@ function updateCameraPose(nowSec) {
       sx = (Math.sin(nowSec * 65) * 0.65) * STATE.camShake;
       sy = (Math.cos(nowSec * 79) * 0.55) * STATE.camShake;
     }
-    camera.position.set(sx, baseY + sy, baseZ + (IS_REC ? 2.2 : 0));
-    camera.lookAt(0, IS_REC ? -2.9 : -1.2, WORK_Z - (IS_REC ? 1.8 : 3.8));
+    camera.position.set(sideBiasX + sx, baseY + sy, baseZ + (IS_REC ? 1.6 : 0));
+    camera.lookAt(sideBiasX * 0.4, IS_REC ? -2.3 : -1.05, WORK_Z - (IS_REC ? 2.5 : 3.6));
   }
 }
 
@@ -1951,14 +2476,40 @@ function tick(now) {
     STATE.sliceSfxCd = Math.max(0, STATE.sliceSfxCd - dt);
   }
 
+  // 문밖 복도에서 현관문으로 끝없이 밀려오는 택배 행렬 & 현관문·센서등 애니메이션
+  const waveForEnv = getWaveInfo(STATE.openedCount);
+  const rushSpeed = STATE.phase === 'play' ? (5.2 + waveForEnv.lv * 2.2) : 3.6;
+  for (let i = 0; i < corridorRushBoxes.length; i++) {
+    const cb = corridorRushBoxes[i];
+    cb.mesh.position.z += dt * rushSpeed;
+    if (cb.mesh.position.z > DOOR_Z - 1.5) {
+      cb.mesh.position.z -= 26.0;
+    }
+    cb.mesh.position.y = cb.baseY + Math.abs(Math.sin(nowSec * (5.5 + waveForEnv.lv) + i * 1.3)) * 0.24;
+    cb.mesh.rotation.z = Math.sin(nowSec * 8 + i) * 0.03;
+  }
+
+  if (doorSwingKick > 0) {
+    doorSwingKick = Math.max(0, doorSwingKick - dt * 3.4);
+  }
+  entryDoorPivot.rotation.y = DOOR_BASE_OPEN_YAW + Math.sin(nowSec * 28) * 0.09 * doorSwingKick;
+
+  if (sensorFlash > 0) {
+    sensorFlash = Math.max(0, sensorFlash - dt * 2.6);
+  }
+  const dangerBlink = (getTotalStacked() >= 6 && STATE.phase === 'play')
+    ? (0.5 + 0.5 * Math.sin(nowSec * 14))
+    : 0;
+  sensorPointLight.color.set(dangerBlink > 0.45 ? '#ff7b72' : '#ffe08a');
+  sensorPointLight.intensity = 12.5 + sensorFlash * 15.0 + dangerBlink * 6.0;
+  sensorBulbMat.emissive.set(dangerBlink > 0.45 ? '#fb7185' : '#ffd166');
+  sensorBulbMat.emissiveIntensity = 0.85 + sensorFlash * 1.4 + dangerBlink * 0.8;
+
   if (STATE.phase === 'play') {
     STATE.elapsedSec += dt;
     STATE.timeLeft = Math.max(0, STATE.timeLeft - dt);
 
-    // 컨베이어 롤러 회전 애니메이션 (단계가 오를수록 벨트 속도도 맹렬하게 가속!)
-    const wave = getWaveInfo(STATE.openedCount);
-    const beltSpeed = 2.6 + wave.lv * 1.4;
-    for (const r of rollers) r.rotation.x += dt * beltSpeed;
+    const wave = waveForEnv;
 
     // 단계별로 급격히 빨라지는 택배 유입 타이머!
     const spawnInterval = Math.max(0.38, wave.baseSpawn - Math.min(0.12, STATE.elapsedSec * 0.002));
@@ -1991,32 +2542,42 @@ function tick(now) {
     updateHUD();
   }
 
-  // 앞자리 주인공 택배 슬라이드 진입 애니메이션
+  // 앞자리 주인공 택배 슬라이드 진입 애니메이션 (현관 바닥에서 마루턱을 넘어 언박싱 매트로 척!)
   if (STATE.activeParcel && STATE.activeSlideT < 1) {
-    STATE.activeSlideT = Math.min(1, STATE.activeSlideT + dt / 0.14);
+    STATE.activeSlideT = Math.min(1, STATE.activeSlideT + dt / 0.15);
     const e = easeOutCubic(STATE.activeSlideT);
     STATE.activeParcel.root.position.lerpVectors(
       STATE.activeFromPos,
       new THREE.Vector3(0, 0, WORK_Z),
       e
     );
+    STATE.activeParcel.root.position.y += Math.sin(STATE.activeSlideT * Math.PI) * 1.25;
     const sc = lerp(0.62, 1.0, e);
     STATE.activeParcel.root.scale.setScalar(sc);
+    STATE.activeParcel.root.rotation.x = 0;
   }
 
-  // 대기열 택배 낙하 및 앞으로 당겨짐 애니메이션
+  // 대기열 택배: 열린 현관문을 돌파해 집 안 현관 타일 바닥으로 슈웅— 탁! 미끄러져 쌓이는 애니메이션
   const stackedDanger = getTotalStacked() >= 6 && STATE.phase === 'play';
   STATE.queueParcels.forEach((p, idx) => {
-    if (p.dropOffsetY > 0) {
-      p.dropVelY += 68 * dt;
-      p.dropOffsetY = Math.max(0, p.dropOffsetY - p.dropVelY * dt);
+    const jitterX = stackedDanger ? Math.sin(nowSec * 22 + idx) * 0.14 : 0;
+    if (p.entryT !== undefined && p.entryT < 1) {
+      p.entryT = Math.min(1, p.entryT + dt / 0.30);
+      const e = easeOutCubic(p.entryT);
+      p.root.position.x = lerp(p.entryFrom.x, p.slotPos.x, e) + jitterX;
+      p.root.position.z = lerp(p.entryFrom.z, p.slotPos.z, e);
+      p.root.position.y = lerp(p.entryFrom.y, p.slotPos.y, e) + Math.sin(p.entryT * Math.PI) * (p.entryArcH || 2.6);
+      p.root.rotation.x = Math.sin(p.entryT * TAU) * 0.13 * (1 - p.entryT);
+      // 착지 순간 쫀득한 탄성 스쿼시
+      const bounce = p.entryT > 0.78 ? Math.sin(((p.entryT - 0.78) / 0.22) * Math.PI) * 0.07 : 0;
+      p.root.scale.set(0.62 * (1 + bounce), 0.62 * (1 - bounce * 1.3), 0.62 * (1 + bounce));
+    } else {
+      p.root.position.x = lerp(p.root.position.x, p.slotPos.x + jitterX, Math.min(1, dt * 14));
+      p.root.position.y = lerp(p.root.position.y, p.slotPos.y, Math.min(1, dt * 14));
+      p.root.position.z = lerp(p.root.position.z, p.slotPos.z, Math.min(1, dt * 14));
+      p.root.rotation.x = 0;
+      p.root.scale.setScalar(0.62);
     }
-    const tx = p.slotPos.x + (stackedDanger ? Math.sin(nowSec * 22 + idx) * 0.14 : 0);
-    const ty = p.slotPos.y + p.dropOffsetY;
-    const tz = p.slotPos.z;
-    p.root.position.x = lerp(p.root.position.x, tx, Math.min(1, dt * 14));
-    p.root.position.y = ty;
-    p.root.position.z = lerp(p.root.position.z, tz, Math.min(1, dt * 14));
   });
 
   // 개봉되어 날아가는 상자 날개 열림 & 퇴장 물리
@@ -2095,13 +2656,20 @@ function tick(now) {
     c.mat.opacity = 1 - c.age / c.dur;
   }
 
-  // 게임오버 택배 산사태 업데이트
+  // 게임오버: 열린 현관문에서 쏟아져 들어오는 택배 산사태 업데이트
   for (const a of STATE.avalancheBoxes) {
-    if (a.parcel.root.position.y > a.targetY) {
-      a.vy -= 55 * dt;
+    if (a.parcel.root.position.z < a.maxZ || a.parcel.root.position.y > a.targetY) {
+      a.vy -= 48 * dt;
+      a.parcel.root.position.x += a.vx * dt;
+      a.parcel.root.position.z = Math.min(a.maxZ, a.parcel.root.position.z + a.vz * dt);
       a.parcel.root.position.y = Math.max(a.targetY, a.parcel.root.position.y + a.vy * dt);
-      a.parcel.root.rotation.x += a.rx * dt;
-      a.parcel.root.rotation.z += a.rz * dt;
+      if (a.parcel.root.position.y <= a.targetY) {
+        a.vx *= 0.85;
+        a.vz *= 0.85;
+      } else {
+        a.parcel.root.rotation.x += a.rx * dt;
+        a.parcel.root.rotation.z += a.rz * dt;
+      }
     }
   }
 
