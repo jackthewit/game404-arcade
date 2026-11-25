@@ -1326,6 +1326,8 @@ const STATE = {
   posePhase: 0,
   poseAmount: 0,
   currentMatchPct: 0,
+  recentPeakMatch: 0,
+  recentPeakTimer: 0,
   isBlockedByChaos: false,
   blockingChaosLabel: '',
   prevReadyLock: false,
@@ -1349,24 +1351,31 @@ function getResponsiveCamBaseDist() {
 function applyDynamicCamera({
   spot, comp, uVal, vVal, zoomVal, tiltVal, swaySec = 0, stageLv = 1, instant = false,
 }) {
-  const fov = zoomVal === 0.5 ? 56 : zoomVal === 2 ? 26 : 40;
+  const fov = zoomVal === 0.5 ? 58 : zoomVal === 2 ? 25 : 40;
   if (instant || Math.abs(camera.fov - fov) > 0.05) {
     camera.fov = instant ? fov : lerp(camera.fov, fov, 0.35);
     camera.updateProjectionMatrix();
   }
 
-  const dist = getResponsiveCamBaseDist();
-  // uVal: 좌우 궤도 방위각(±42°) + 삼분할 여백 시선 이동을 자연스럽게 결합!
+  const baseDist = getResponsiveCamBaseDist();
+  // 하이앵글·로우앵글일 때 거리를 살짝 당겨 구도 입체감을 드라마틱하게 강조!
+  const dist = baseDist * (1 - Math.abs(vVal) * 0.18);
+
+  // uVal: 좌우 궤도 방위각(±50°) + 삼분할 여백 시선 이동을 결합!
   const isThirds = comp && (comp.id === 'wide_thirds_l' || comp.id === 'wide_thirds_r');
-  const orbitYaw = spot.rotY + (isThirds ? uVal * 0.18 : uVal * 0.68);
-  const lookSideShift = isThirds ? uVal * 2.35 : uVal * 0.35;
+  const orbitYaw = spot.rotY + (isThirds ? uVal * 0.22 : uVal * 0.88);
+  const lookSideShift = isThirds ? uVal * 2.85 : uVal * 0.45;
 
-  // vVal: 음수면 바닥 가까이 무릎 꿇은 로우앵글(하늘 올려다봄!), 양수면 위에서 내려다보는 하이앵글!
-  const camHeight = clamp(2.45 + vVal * 2.55, 0.55, 5.8);
-  const baseLookY = (comp && comp.focusFeet) ? 0.85 : 1.90;
-  const lookHeight = baseLookY - vVal * 0.55;
+  // vVal: 음수면 바닥 위 0.38m에서 하늘을 올려다보는 극적 로우앵글, 양수면 9.2m 위에서 내려다보는 MZ 항공 하이앵글!
+  const camHeight = vVal >= 0
+    ? lerp(2.35, 9.2, clamp(vVal / 1.15, 0, 1.15))
+    : lerp(2.35, 0.38, clamp(-vVal / 1.10, 0, 1.0));
+  const baseLookY = (comp && comp.focusFeet) ? 0.72 : 1.95;
+  const lookHeight = vVal >= 0
+    ? baseLookY - vVal * 0.45
+    : baseLookY + (-vVal) * 0.95;
 
-  const swayAmp = (swaySec > 0 && stageLv > 2) ? Math.min(0.16, 0.03 + stageLv * 0.013) : 0;
+  const swayAmp = (swaySec > 0 && stageLv > 2) ? Math.min(0.15, 0.025 + stageLv * 0.012) : 0;
   const sx = swaySec > 0 ? Math.sin(swaySec * 1.9) * swayAmp : 0;
   const sy = swaySec > 0 ? Math.cos(swaySec * 2.4) * (swayAmp * 0.6) : 0;
 
@@ -1382,7 +1391,7 @@ function applyDynamicCamera({
   );
 
   // 사선(더치 앵글) 카메라 롤 회전 적용!
-  const targetRoll = tiltVal * (12.5 * DEG);
+  const targetRoll = tiltVal * (15.5 * DEG);
   if (instant) {
     STATE.smoothRoll = targetRoll;
   } else {
@@ -1541,7 +1550,8 @@ function updateActiveChaos(dt, nowSec) {
   STATE.blockingChaosLabel = '';
 
   const curM = STATE.missions[STATE.missionIdx];
-  const camYaw = curM ? (curM.spot.rotY + STATE.dragU * 0.55) : 0;
+  const isThirds = curM && curM.comp && (curM.comp.id === 'wide_thirds_l' || curM.comp.id === 'wide_thirds_r');
+  const camYaw = curM ? (curM.spot.rotY + STATE.dragU * (isThirds ? 0.22 : 0.88)) : 0;
   const rightX = Math.cos(camYaw);
   const rightZ = -Math.sin(camYaw);
   const fwdX = Math.sin(camYaw);
@@ -1665,6 +1675,9 @@ function loadCurrentMissionCard() {
   }
   $('ref-cap').textContent = m.poseLabel;
   clearActiveChaos();
+  STATE.recentPeakMatch = 0;
+  STATE.recentPeakTimer = 0;
+  STATE.chaosTimer = Math.max(STATE.chaosTimer, 1.35);
   setupMissionStartCamera(m);
 }
 
@@ -1726,8 +1739,8 @@ $('btn-recenter').innerHTML = '<span>📐</span><span>앵글맞춤</span>';
 $('btn-recenter').addEventListener('click', () => {
   const m = STATE.missions[STATE.missionIdx];
   if (!m) return;
-  STATE.dragU = lerp(STATE.dragU, m.targetU, 0.85);
-  STATE.dragV = lerp(STATE.dragV, m.targetV, 0.85);
+  STATE.dragU = lerp(STATE.dragU, m.targetU, 0.94);
+  STATE.dragV = lerp(STATE.dragV, m.targetV, 0.94);
   STATE.currentZoom = m.zoom;
   STATE.currentTilt = m.tilt;
   SFX.tick();
@@ -1880,7 +1893,9 @@ function triggerShutter() {
   const shotUrl = captureCurrentCanvasAsDataURL(0.85);
   const cfg = STAGE_CONFIGS[STATE.stageIdx];
   const m = STATE.missions[STATE.missionIdx];
-  const matchPct = STATE.currentMatchPct;
+  const matchPct = STATE.isBlockedByChaos
+    ? STATE.currentMatchPct
+    : Math.max(STATE.currentMatchPct, STATE.recentPeakMatch);
 
   if (STATE.isBlockedByChaos || matchPct < cfg.minMatch) {
     SFX.photoFail();
@@ -2247,6 +2262,18 @@ function tick(now) {
 
     updateActiveChaos(dt, nowSec);
     STATE.currentMatchPct = evaluateLiveMatch();
+    if (!STATE.isBlockedByChaos) {
+      if (STATE.currentMatchPct >= STATE.recentPeakMatch) {
+        STATE.recentPeakMatch = STATE.currentMatchPct;
+        STATE.recentPeakTimer = 0.28;
+      } else {
+        STATE.recentPeakTimer -= dt;
+        if (STATE.recentPeakTimer <= 0) STATE.recentPeakMatch = STATE.currentMatchPct;
+      }
+    } else {
+      STATE.recentPeakMatch = 0;
+      STATE.recentPeakTimer = 0;
+    }
 
     const readyNow = !STATE.isBlockedByChaos && STATE.currentMatchPct >= cfg.minMatch;
     if (readyNow && !STATE.prevReadyLock) SFX.focusBeep();
