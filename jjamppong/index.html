@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>짬뽕 탄막 — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="하필 새하얀 흰 티 입은 날 시켜버린 사악한 해물짬뽕! 젓가락질할 때마다 사방으로 튀는 크고 작은 국물 탄막을 피해 최대한 오래 살아남으세요!">
+  <link rel="stylesheet" href="/shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl { touch-action: none; cursor: grab; }
+    #gl:active { cursor: grabbing; }
+    #ov { pointer-events: none; z-index: 26; }
+
+    /* ─── 시네마틱 인트로 레터박스 & 대사창 ─── */
+    .intro-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 38;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .intro-layer.hidden {
+      display: none;
+    }
+    .letterbox-top, .letterbox-bot {
+      width: 100%;
+      height: clamp(46px, 8.5vh, 78px);
+      background: linear-gradient(180deg, rgba(10, 6, 8, 0.96), rgba(16, 8, 10, 0.88));
+      border-color: rgba(251, 191, 36, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 16px;
+    }
+    .letterbox-top { border-bottom: 1.5px solid rgba(251, 191, 36, 0.35); }
+    .letterbox-bot { border-top: 1.5px solid rgba(251, 191, 36, 0.35); }
+
+    .skip-intro-btn {
+      pointer-events: auto;
+      margin-top: max(0px, env(safe-area-inset-top));
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(253, 224, 71, 0.65);
+      background: rgba(34, 14, 16, 0.88);
+      color: #fde047;
+      font-size: 12.5px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    }
+    .skip-intro-btn:active { transform: scale(0.96); }
+
+    .intro-dialogue-wrap {
+      position: fixed;
+      bottom: calc(clamp(46px, 8.5vh, 78px) + max(14px, env(safe-area-inset-bottom)));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92vw, 440px);
+      z-index: 39;
+      pointer-events: none;
+    }
+    .intro-dialogue-card {
+      background: linear-gradient(145deg, rgba(36, 12, 14, 0.94), rgba(20, 9, 14, 0.95));
+      border: 2px solid #f59e0b;
+      border-radius: 18px;
+      padding: 12px 16px 14px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.62), inset 0 0 18px rgba(245, 158, 11, 0.14);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .intro-speaker {
+      align-self: flex-start;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fef08a;
+      border: 1px solid rgba(254, 240, 138, 0.55);
+    }
+    .intro-line {
+      font-size: clamp(14.5px, 3.9vw, 17px);
+      font-weight: 900;
+      line-height: 1.42;
+      color: #fffbeb;
+      word-break: keep-all;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+    }
+
+    /* ─── 상단 생존 시계 & 흰 티 청결도 계기판 (중화 금박 보스전 테마) ─── */
+    .jjam-hud {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 46px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: min(94vw, 456px);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .jjam-hud.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 106px);
+    }
+    .jjam-hud.hidden {
+      display: none;
+    }
+
+    .jjam-card {
+      background: linear-gradient(160deg, rgba(35, 14, 16, 0.92), rgba(22, 13, 20, 0.92));
+      border: 2px solid rgba(251, 191, 36, 0.65);
+      border-radius: 18px;
+      padding: 9px 14px 10px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.48);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .jjam-card.danger-pulse {
+      border-color: #fb7185;
+      box-shadow: 0 0 26px rgba(244, 63, 94, 0.55), 0 10px 26px rgba(0, 0, 0, 0.55);
+      animation: cardTremble 0.32s ease-in-out infinite alternate;
+    }
+    @keyframes cardTremble {
+      from { transform: translateY(0); }
+      to { transform: translateY(-1.5px); }
+    }
+
+    .jjam-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .survive-box {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .survive-label {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #fde68a;
+      white-space: nowrap;
+    }
+    .survive-clock {
+      font-size: clamp(22px, 5.8vw, 29px);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      text-shadow: 0 2px 0 #991b1b, 0 4px 12px rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
+    }
+
+    .stage-pill {
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      background: rgba(249, 115, 22, 0.22);
+      color: #fed7aa;
+      border: 1px solid rgba(251, 146, 60, 0.55);
+      white-space: nowrap;
+    }
+    .stage-pill.lv3 { background: rgba(234, 179, 8, 0.26); color: #fef08a; border-color: #facc15; }
+    .stage-pill.lv4 { background: rgba(239, 68, 68, 0.28); color: #fecaca; border-color: #f87171; }
+    .stage-pill.lv5 { background: linear-gradient(135deg, #dc2626, #9333ea); color: #ffffff; border-color: #fde047; }
+
+    .jjam-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 2px;
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .clean-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #e0f2fe;
+    }
+    .shirt-shields {
+      display: inline-flex;
+      gap: 4px;
+      font-size: 14px;
+    }
+    .stat-mini {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #fcd34d;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* 후루룩 / 대왕 방울 경보 띠 */
+    .slurp-alert {
+      align-self: center;
+      padding: 5px 16px;
+      border-radius: 999px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #facc15,
+        #facc15 10px,
+        #1e1b18 10px,
+        #1e1b18 20px
+      );
+      border: 2px solid #fef08a;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: scale(0.88);
+      transition: opacity 0.14s ease, transform 0.14s ease;
+    }
+    .slurp-alert.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .slurp-alert span {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: rgba(20, 12, 12, 0.92);
+      color: #fde047;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    /* 하단 조작·상태 안내 알약 */
+    .bottom-guide {
+      position: fixed;
+      bottom: max(15px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: min(92vw, 420px);
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .bottom-guide.hidden { display: none; }
+    .guide-pill {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(26, 14, 18, 0.88);
+      border: 1.5px solid rgba(251, 191, 36, 0.48);
+      color: #fef3c7;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(6px);
+    }
+    .guide-pill.hit {
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(153, 27, 27, 0.95));
+      border-color: #fecaca;
+      color: #ffffff;
+    }
+    .guide-pill.graze {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.92), rgba(3, 105, 161, 0.92));
+      border-color: #bae6fd;
+      color: #ffffff;
+    }
+
+    /* 위험 비네트 */
+    .stain-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 24;
+      opacity: 0;
+      box-shadow: inset 0 0 90px rgba(249, 115, 22, 0.72);
+      transition: opacity 0.2s ease;
+    }
+    .stain-vignette.active {
+      opacity: 1;
+      animation: stainPulse 0.45s ease-in-out infinite alternate;
+    }
+    @keyframes stainPulse {
+      from { opacity: 0.42; }
+      to { opacity: 0.92; }
+    }
+
+    /* 모달 커스텀 */
+    .china-badge {
+      align-self: center;
+      padding: 5px 14px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      color: #fde047;
+      border: 2px solid #fbbf24;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .jjam-title {
+      font-size: 30px !important;
+      font-weight: 900 !important;
+      color: #ffedd5;
+      text-shadow: 0 3px 0 #b91c1c, 0 6px 18px rgba(234, 88, 12, 0.55);
+    }
+    .rule-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(251, 191, 36, 0.22);
+      border-radius: 15px;
+      padding: 11px 13px;
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: #f3e8ff;
+      word-break: keep-all;
+    }
+    .rule-box b { color: #fde047; }
+    .sub-action-link {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 4px 8px;
+      align-self: center;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+  <div class="stain-vignette" id="stain-vignette"></div>
+
+  <!-- 상단 공통 바 -->
+  <div class="topbar" id="topbar">
+    <a href="/" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="best-pill" style="color:#fde047">🏆 최고 0.00초</span>
+    </div>
+  </div>
+
+  <!-- 지인 기록 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <!-- 시네마틱 인트로 레이어 (중국집 입장 → 주문 → 사악한 짬뽕 씨익 미소!) -->
+  <div class="intro-layer hidden" id="intro-layer">
+    <div class="letterbox-top">
+      <button type="button" class="skip-intro-btn" id="btn-skip-intro">⏭ 인트로 건너뛰기</button>
+    </div>
+    <div class="intro-dialogue-wrap">
+      <div class="intro-dialogue-card">
+        <span class="intro-speaker" id="intro-speaker">👕 나 (새하얀 흰 티 착용)</span>
+        <div class="intro-line" id="intro-line">하필 오늘 새하얀 흰 티를 입었는데…</div>
+      </div>
+    </div>
+    <div class="letterbox-bot"></div>
+  </div>
+
+  <!-- 본게임 계기판 -->
+  <div class="jjam-hud hidden" id="jjam-hud">
+    <div class="jjam-card" id="jjam-card">
+      <div class="jjam-top-row">
+        <div class="survive-box">
+          <span class="survive-label">⏱ 버틴 시간</span>
+          <span class="survive-clock" id="hud-time">0.00초</span>
+        </div>
+        <span class="stage-pill" id="hud-stage">LV.1 첫 젓가락</span>
+      </div>
+      <div class="jjam-sub-row">
+        <div class="clean-status">
+          <span id="hud-clean-txt">👕 깨끗함 100%</span>
+          <span class="shirt-shields" id="hud-shields">🤍🤍🤍</span>
+        </div>
+        <span class="stat-mini" id="hud-waves">🥢 0젓가락 · ✨ 아슬 0</span>
+      </div>
+    </div>
+    <div class="slurp-alert" id="slurp-alert">
+      <span id="slurp-alert-txt">⚠️ 후루룩 주의!! 대왕 국물 방울!!</span>
+    </div>
+  </div>
+
+  <!-- 하단 상태 바 -->
+  <div class="bottom-guide hidden" id="bottom-guide">
+    <div class="guide-pill" id="guide-pill">화면을 드래그해 새하얀 흰 티로 튀는 국물을 피하세요!</div>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="china-badge">🏮 중화반점 극한 생존 탄막 🏮</div>
+      <div class="modal-title jjam-title">짬뽕 탄막</div>
+      <p class="modal-sub">
+        새하얀 흰 티를 입은 날 시켜버린 <b>사악한 해물짬뽕!</b><br>
+        젓가락질할 때마다 사방으로 튀는 국물을 끝까지 피하세요!
+      </p>
+      <div class="rule-box">
+        <div>🥢 <b>젓가락질 공격</b> — 면을 집어 들어 올릴 때마다 <b>고추기름 국물 방울</b>이 쏟아집니다!</div>
+        <div>🔥 <b>갈수록 흉악해지는 국물</b> — 오래 버틸수록 <b>국물 개수가 폭증</b>하고 <b>대왕 방울·분열 방울</b>까지 날아와요!</div>
+        <div>👕 <b>오래 버티면 승리!</b> — 화면 어디든 드래그(또는 방향키)해 흰 티 중앙 코어를 지켜 <b>최장 생존 기록</b>을 세우세요! (3방울 묻으면 끝!)</div>
+      </div>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">내 최장 생존 기록</div>
+          <div class="stat-val" style="color:var(--accent)" id="start-best">도전 전</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">최다 방어 젓가락</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best-waves">0회</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start-intro" style="font-size:16.5px">🏮 중국집 들어가서 짬뽕 주문하기!</button>
+      <button type="button" class="sub-action-link" id="btn-start-direct">⚡ 인트로 건너뛰고 바로 국물 피하기</button>
+    </div>
+  </div>
+
+  <!-- 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">👕 전설의 순백 수호신</div>
+      <div class="modal-title" id="res-headline" style="color:#fde047">0.00초 생존</div>
+      <p class="modal-sub" id="res-comment">…흰 티 입은 날은 짜장면이요.</p>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">버틴 시간</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-time">0.00초</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">피한 젓가락질</div>
+          <div class="stat-val" id="res-waves">0회</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">아슬 회피</div>
+          <div class="stat-val" style="color:var(--green)" id="res-graze">0회</div>
+        </div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (생존 랭킹 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 생존 시간 기록 URL 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 버티기!</button>
+      </div>
+      <button type="button" class="sub-action-link" id="btn-replay-intro">🎬 사악한 짬뽕 인트로 다시 보기</button>
+      <a href="/" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="/jjamppong/game.js"></script>
+</body>
+</html>

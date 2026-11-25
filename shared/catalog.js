@@ -4,6 +4,20 @@ import { startGameEngagementTracker } from './popularity.js';
 
 export const DEFAULT_GAMES = [
   {
+    id: 'jjamppong',
+    title: '짬뽕 탄막',
+    kicker: '흰 티 입은 날 · 사악한 국물 회피!',
+    badge: '🍜 3D 중국집 인트로 · 생존 랭킹',
+    description: '하필 새하얀 흰 티 입은 날 시킨 사악한 해물짬뽕! 젓가락질할 때마다 커지고 많아지는 국물 탄막을 피해 최장 생존 기록에 도전하세요.',
+    metric_label: '생존 시간(초) 랭킹',
+    thumb_url: './assets/thumb-jjamppong.jpg',
+    href: './jjamppong/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: true,
+    sort_order: 5,
+  },
+  {
     id: 'boxcut',
     title: '열려라 택배!',
     kicker: '밀려드는 택배 · 칼각 직선 슬라이스!',
@@ -143,6 +157,10 @@ export function formatBestText(gameId) {
   if (gameId === 'cake') return '📸 360° 돌려보고 공유';
   const b = getBestRecord(gameId);
   if (!b) return '기록 없음';
+  if (gameId === 'jjamppong' && b.score != null) {
+    const wv = b.actualValue ? ` (${Math.round(Number(b.actualValue))}젓가락)` : '';
+    return `최고 ${Number(b.score).toFixed(2)}초${wv}`;
+  }
   if (gameId === 'boxcut' && b.score != null) {
     const bx = b.actualValue ? ` (${Math.round(Number(b.actualValue))}상자)` : '';
     return `최고 ${Math.round(Number(b.score)).toLocaleString()}점${bx}`;
@@ -262,7 +280,9 @@ export async function loadLayoutConfig(forceRefresh = false) {
       if (res.ok) {
         const row = await res.json();
         if (row && row.id && row.meta && Array.isArray(row.meta.newIds)) {
-          cachedLayout = { newIds: row.meta.newIds.map(String) };
+          const savedIds = row.meta.newIds.map(String);
+          if (!savedIds.includes('jjamppong')) savedIds.unshift('jjamppong');
+          cachedLayout = { newIds: savedIds };
           return cachedLayout;
         }
       }
@@ -270,7 +290,7 @@ export async function loadLayoutConfig(forceRefresh = false) {
       // fallback below
     }
   }
-  cachedLayout = { newIds: ['boxcut'] };
+  cachedLayout = { newIds: ['jjamppong', 'boxcut'] };
   return cachedLayout;
 }
 

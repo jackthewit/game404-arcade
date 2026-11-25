@@ -14,8 +14,8 @@ export const DEFAULT_SOCIAL_STATS = {
       "ytViews": 1431,
       "igViews": 0,
       "ytLikes": 8,
-      "igLikes": 565,
-      "likes": 573,
+      "igLikes": 566,
+      "likes": 574,
       "comments": 6,
       "shares": 0
   },
@@ -25,8 +25,8 @@ export const DEFAULT_SOCIAL_STATS = {
       "ytViews": 1219,
       "igViews": 0,
       "ytLikes": 8,
-      "igLikes": 197,
-      "likes": 205,
+      "igLikes": 199,
+      "likes": 207,
       "comments": 6,
       "shares": 0
   },
@@ -36,8 +36,8 @@ export const DEFAULT_SOCIAL_STATS = {
       "ytViews": 3516,
       "igViews": 0,
       "ytLikes": 8,
-      "igLikes": 189,
-      "likes": 197,
+      "igLikes": 193,
+      "likes": 201,
       "comments": 12,
       "shares": 82
   },
@@ -66,12 +66,23 @@ export const DEFAULT_SOCIAL_STATS = {
   boxcut: {
       "ytId": "XuuolbLucZs",
       "igCode": "DgJpsXPiFva",
-      "ytViews": 384,
+      "ytViews": 542,
       "igViews": 0,
       "ytLikes": 1,
-      "igLikes": 8,
-      "likes": 9,
+      "igLikes": 11,
+      "likes": 12,
       "comments": 0,
+      "shares": 0
+  },
+  jjamppong: {
+      "ytId": "DavQKBq1piI",
+      "igCode": "",
+      "ytViews": 1901,
+      "igViews": 0,
+      "ytLikes": 2,
+      "igLikes": 0,
+      "likes": 2,
+      "comments": 1,
       "shares": 0
   },
 };

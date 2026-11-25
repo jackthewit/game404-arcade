@@ -926,7 +926,7 @@
 
   <script type="module">
     import { showToast } from './shared/challenge.js';
-    import { loadLayoutConfig, saveLayoutConfig } from './shared/catalog.js';
+    import { DEFAULT_GAMES, loadLayoutConfig, saveLayoutConfig } from './shared/catalog.js';
     import { computeGamesPopularity, saveSocialStatsOverride } from './shared/popularity.js';
     import { loadDonateConfig, saveDonateConfig, openDonateModal, resolveQrImageSrc } from './shared/donate.js';
 
@@ -935,7 +935,7 @@
     let sessionToken = '';
     let manualOtpKey = '';
     let games = [];
-    let newIdSet = new Set(['boxcut']);
+    let newIdSet = new Set(['jjamppong', 'boxcut']);
     let otpDigits = '';
     let verifyingOtp = false;
 
@@ -1136,9 +1136,18 @@
         sessionToken = res.sessionToken;
         preToken = '';
         games = Array.isArray(res.games) ? res.games : [];
+        const existingIds = new Set(games.map(g => g.id));
+        const missingDefs = DEFAULT_GAMES.filter(d => !existingIds.has(d.id));
+        if (missingDefs.length > 0) {
+          for (const d of missingDefs) {
+            try { await adminRpc('save_game', d); } catch {}
+          }
+          const refreshed = await adminRpc('list_games').catch(() => null);
+          if (refreshed && Array.isArray(refreshed.games)) games = refreshed.games;
+        }
 
         const layout = await loadLayoutConfig(true);
-        newIdSet = new Set(layout.newIds || ['boxcut']);
+        newIdSet = new Set(layout.newIds || ['jjamppong', 'boxcut']);
 
         loginView.classList.add('hidden');
         dashView.classList.remove('hidden');
@@ -1197,7 +1206,7 @@
         loadLayoutConfig(true),
       ]);
       games = Array.isArray(res.games) ? res.games : [];
-      newIdSet = new Set(layout.newIds || ['boxcut']);
+      newIdSet = new Set(layout.newIds || ['jjamppong', 'boxcut']);
       renderGames();
       syncRunsFilter();
     }

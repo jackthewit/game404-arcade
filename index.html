@@ -770,7 +770,7 @@
 
     let currentGames = [...DEFAULT_GAMES];
     let popMap = {};
-    let newIdSet = new Set(['boxcut']);
+    let newIdSet = new Set(['jjamppong', 'boxcut']);
     let normalSort = 'custom';
 
     function sortByOrder(list) {
@@ -989,7 +989,7 @@
         loadLayoutConfig(true),
       ]);
       popMap = pop;
-      newIdSet = new Set(layout.newIds || ['boxcut']);
+      newIdSet = new Set(layout.newIds || ['jjamppong', 'boxcut']);
       renderGames();
 
       const { games } = await fetchPublicCatalog();
