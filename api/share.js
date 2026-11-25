@@ -160,6 +160,9 @@ export default async function handler(req, res) {
       : rawD
         ? `?ref=${encodeURIComponent(rawD)}`
         : '';
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'game404-arcade.vercel.app').split(',')[0].trim();
+  const origin = `https://${host}`;
+  const ogImg = `${origin}/assets/thumb-${game}.jpg`;
   const targetPath = `/${game}/${qs}`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -168,13 +171,17 @@ export default async function handler(req, res) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/png" href="/assets/icon-192.png">
   <title>${esc(ogTitle)}</title>
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="이게뭔겜? 404 아케이드">
   <meta property="og:title" content="${esc(ogTitle)}">
   <meta property="og:description" content="${esc(ogDesc)}">
+  <meta property="og:image" content="${esc(ogImg)}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(ogTitle)}">
   <meta name="twitter:description" content="${esc(ogDesc)}">
+  <meta name="twitter:image" content="${esc(ogImg)}">
   <meta http-equiv="refresh" content="0;url=${esc(targetPath)}">
 </head>
 <body style="background:#14111b;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
