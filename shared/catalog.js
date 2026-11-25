@@ -15,21 +15,7 @@ export const DEFAULT_GAMES = [
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
     featured: true,
-    sort_order: 3,
-  },
-  {
-    id: 'nail',
-    title: '손톱 색칠하기',
-    kicker: '삐져나가면 끝! 타임어택 네일아트',
-    badge: '💅 상·중·하 네일아트 · 타임어택',
-    description: '원컬러부터 세필 붓으로 그리는 하트·데이지꽃·리본 네일아트까지! 숨을 참아 떨림을 멈추고 빠르게 완성해 시간 가산점을 챙겨 보세요.',
-    metric_label: '타임어택 정밀 랭킹',
-    thumb_url: './assets/thumb-nail.jpg',
-    href: './nail/',
-    status: 'public',
-    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    featured: true,
-    sort_order: 5,
+    sort_order: 10,
   },
   {
     id: 'cake',
@@ -42,8 +28,8 @@ export const DEFAULT_GAMES = [
     href: './cake/',
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    featured: false,
-    sort_order: 10,
+    featured: true,
+    sort_order: 20,
   },
   {
     id: 'haircut',
@@ -56,21 +42,7 @@ export const DEFAULT_GAMES = [
     href: './haircut/',
     status: 'public',
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
-    featured: false,
-    sort_order: 20,
-  },
-  {
-    id: 'toilet',
-    title: '무한 두루마리',
-    kicker: '휴… 휴지가 있다!!',
-    badge: '🧻 100km 도전 · 미라 진화',
-    description: '중간 심을 피해서 한 방향으로 돌돌돌돌! 안 끊기고 길게 말수록 10m마다 응원 폭죽과 3D 미라 변신이 펼쳐집니다.',
-    metric_label: '길이 m/km 랭킹',
-    thumb_url: './assets/thumb-toilet.jpg',
-    href: './toilet/',
-    status: 'public',
-    lock_message: '조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!',
-    featured: false,
+    featured: true,
     sort_order: 30,
   },
   {
@@ -86,6 +58,34 @@ export const DEFAULT_GAMES = [
     lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
     featured: false,
     sort_order: 40,
+  },
+  {
+    id: 'nail',
+    title: '손톱 색칠하기',
+    kicker: '삐져나가면 끝! 타임어택 네일아트',
+    badge: '💅 상·중·하 네일아트 · 타임어택',
+    description: '원컬러부터 세필 붓으로 그리는 하트·데이지꽃·리본 네일아트까지! 숨을 참아 떨림을 멈추고 빠르게 완성해 시간 가산점을 챙겨 보세요.',
+    metric_label: '타임어택 정밀 랭킹',
+    thumb_url: './assets/thumb-nail.jpg',
+    href: './nail/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: false,
+    sort_order: 50,
+  },
+  {
+    id: 'toilet',
+    title: '무한 두루마리',
+    kicker: '휴… 휴지가 있다!!',
+    badge: '🧻 100km 도전 · 미라 진화',
+    description: '중간 심을 피해서 한 방향으로 돌돌돌돌! 안 끊기고 길게 말수록 10m마다 응원 폭죽과 3D 미라 변신이 펼쳐집니다.',
+    metric_label: '길이 m/km 랭킹',
+    thumb_url: './assets/thumb-toilet.jpg',
+    href: './toilet/',
+    status: 'public',
+    lock_message: '조회수 10만, 댓글 100개 넘으면 진짜 게임 공개!!',
+    featured: false,
+    sort_order: 60,
   },
 ];
 
@@ -240,4 +240,71 @@ export async function enforceGameAccess(gameId) {
     startGameEngagementTracker(gameId);
     return { allowed: true };
   }
+}
+
+const LAYOUT_CFG_ID = 'cfg_layout';
+let cachedLayout = null;
+
+export async function loadLayoutConfig(forceRefresh = false) {
+  if (cachedLayout && !forceRefresh) return cachedLayout;
+  const sb = await getSupabaseConfig();
+  if (sb) {
+    try {
+      const res = await fetch(`${sb.url}/rest/v1/rpc/g404_get_run`, {
+        method: 'POST',
+        headers: {
+          apikey: sb.key,
+          Authorization: `Bearer ${sb.key}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_id: LAYOUT_CFG_ID }),
+      });
+      if (res.ok) {
+        const row = await res.json();
+        if (row && row.id && row.meta && Array.isArray(row.meta.newIds)) {
+          cachedLayout = { newIds: row.meta.newIds.map(String) };
+          return cachedLayout;
+        }
+      }
+    } catch {
+      // fallback below
+    }
+  }
+  cachedLayout = { newIds: ['boxcut'] };
+  return cachedLayout;
+}
+
+export async function saveLayoutConfig(adminRpcFn, { newIds }) {
+  const sb = await getSupabaseConfig();
+  if (!sb) throw new Error('Supabase 설정이 없습니다.');
+  const cleanIds = Array.from(new Set((newIds || []).map(x => String(x || '').trim()).filter(Boolean)));
+  try {
+    await adminRpcFn('delete_run', { id: LAYOUT_CFG_ID });
+  } catch {
+    // ignore
+  }
+  const res = await fetch(`${sb.url}/rest/v1/rpc/g404_submit_run`, {
+    method: 'POST',
+    headers: {
+      apikey: sb.key,
+      Authorization: `Bearer ${sb.key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      p_id: LAYOUT_CFG_ID,
+      p_room_id: 'LAYCFG',
+      p_game_id: '__config__',
+      p_nickname: 'layout_cfg',
+      p_target_value: cleanIds.length,
+      p_actual_value: 0,
+      p_score: 0,
+      p_error_mm: null,
+      p_rank_title: 'layout',
+      p_seed: 1,
+      p_meta: { newIds: cleanIds, updatedAt: new Date().toISOString() },
+    }),
+  });
+  if (!res.ok) throw new Error('NEW 배지 설정 저장에 실패했습니다.');
+  cachedLayout = { newIds: cleanIds };
+  return cachedLayout;
 }

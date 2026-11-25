@@ -6,6 +6,6 @@ _뺀것
 supabase
 SETUP.md
 README.md
-package.json
 .gitignore
 node_modules
+dev-server.mjs
