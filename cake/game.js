@@ -359,29 +359,13 @@ const creamPipingMat = new THREE.MeshPhysicalMaterial({
   sheen: 0.4,
   sheenColor: new THREE.Color('#fff4e0'),
 });
-const chocoBump = makeCanvasTex(256, 256, (g, w, h) => {
-  const im = g.createImageData(w, h), d = im.data;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const val = 128 + 14 * Math.sin(x * 0.22 + Math.sin(y * 0.15) * 1.4) + 10 * (rnd(x * 0.71 + y * 53.3) - 0.5);
-      const o = (y * w + x) * 4;
-      d[o] = d[o + 1] = d[o + 2] = val;
-      d[o + 3] = 255;
-    }
-  }
-  g.putImageData(im, 0, 0);
-}, false);
-chocoBump.wrapS = chocoBump.wrapT = THREE.RepeatWrapping;
-
 const chocoMat = new THREE.MeshPhysicalMaterial({
-  color: '#351709',
-  roughness: 0.15,
+  color: '#36180a',
+  roughness: 0.14,
   metalness: 0.01,
-  bumpMap: chocoBump,
-  bumpScale: 0.18,
   clearcoat: 1.0,
-  clearcoatRoughness: 0.05,
-  sheen: 0.22,
+  clearcoatRoughness: 0.04,
+  sheen: 0.18,
   sheenColor: new THREE.Color('#6b3419'),
   envMapIntensity: 1.45,
 });
@@ -1516,33 +1500,36 @@ function setupStage(idx) {
   guideCtx.lineJoin = 'round';
   guideCtx.lineCap = 'round';
 
+  const drawEtchedText = (txt, cx, cy, alphaMul = 0.85) => {
+    guideCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    guideCtx.fillText(txt, cx + 2, cy + 2);
+    guideCtx.fillStyle = `rgba(142, 106, 76, ${clamp(stg.guideAlpha * alphaMul, 0.1, 0.26)})`;
+    guideCtx.fillText(txt, cx, cy);
+  };
+
   if (stg.dottedGuide) {
     const desiredPx = Math.round(1024 * stg.fontScale);
-    const { fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 800, safeMaxWidth);
+    const { px, fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 700, safeMaxWidth);
     guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-    // 생크림 위에 이쑤시개로 살짝 눌러 그어 놓은 음각 밑그림 느낌 (밝은 테두리 + 은은한 그림자 홈)
-    guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-    guideCtx.lineWidth = 6;
-    guideCtx.setLineDash([12, 11]);
-    guideCtx.strokeText(stg.lines[0], 514, 514);
-    guideCtx.strokeStyle = `rgba(148, 112, 82, ${stg.guideAlpha})`;
-    guideCtx.lineWidth = 4.5;
-    guideCtx.strokeText(stg.lines[0], 512, 512);
+    const textW = Math.min(safeMaxWidth, guideCtx.measureText(stg.lines[0]).width + 44);
+    const lineY = 512 + Math.round(px * 0.62);
+    guideCtx.strokeStyle = 'rgba(165, 128, 94, 0.26)';
+    guideCtx.lineWidth = 3;
+    guideCtx.setLineDash([10, 12]);
+    guideCtx.beginPath();
+    guideCtx.moveTo(512 - textW / 2, lineY);
+    guideCtx.lineTo(512 + textW / 2, lineY);
+    guideCtx.stroke();
+    guideCtx.setLineDash([]);
+    drawEtchedText(stg.lines[0], 512, 512, 0.92);
   } else {
     const desiredPx = Math.round(1024 * stg.fontScale * 0.88);
     const { px, fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 700, safeMaxWidth);
     guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-
-    const drawEtchedText = (txt, cx, cy) => {
-      guideCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      guideCtx.fillText(txt, cx + 2, cy + 2);
-      guideCtx.fillStyle = `rgba(142, 106, 76, ${clamp(stg.guideAlpha * 0.85, 0.1, 0.22)})`;
-      guideCtx.fillText(txt, cx, cy);
-    };
 
     if (!isTwoLines) {
       const textW = Math.min(safeMaxWidth, guideCtx.measureText(stg.lines[0]).width + 44);
