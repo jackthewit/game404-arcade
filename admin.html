@@ -389,6 +389,8 @@
 
       <nav class="tabs">
         <button type="button" class="tab-btn active" data-tab="games">🎮 게임 목록 관리</button>
+        <button type="button" class="tab-btn" data-tab="pop">📊 인기 지표(릴스·쇼츠)</button>
+        <button type="button" class="tab-btn" data-tab="donate">💛 후원(카카오 QR·링크)</button>
         <button type="button" class="tab-btn" data-tab="runs">🏆 랭킹 기록 관리</button>
         <button type="button" class="tab-btn" data-tab="settings">🔐 설정</button>
       </nav>
@@ -436,6 +438,83 @@
               <tr><td colspan="8" style="text-align:center;color:#9f96be;">불러오는 중...</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- 탭: 인기 지표 (3대 잣대 확인 & 릴스·쇼츠 조회수 갱신) -->
+      <section id="tab-pop" class="card-box hidden" style="display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <strong style="font-size:16px;">📊 3대 잣대 종합 인기 점수 & 릴스·쇼츠 반응 관리</strong>
+          <div style="font-size:12px;color:#9f96be;margin-top:3px;line-height:1.5;">
+            포털 상단 노출 순서는 <b>① 접속(35%) + ② 누적 플레이 시간(35%) + ③ 릴스·쇼츠 반응(30%)</b>으로 자동 계산됩니다.<br>
+            유튜브 쇼츠·인스타 릴스 최신 조회수를 입력해 저장하면 인기 순위에 즉시 반영됩니다.
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>인기 순위</th>
+                <th>게임</th>
+                <th>종합 점수</th>
+                <th>접속 · 플레이 시간</th>
+                <th>유튜브 쇼츠 조회</th>
+                <th>인스타 릴스 조회</th>
+                <th>저장</th>
+              </tr>
+            </thead>
+            <tbody id="pop-tbody">
+              <tr><td colspan="7" style="text-align:center;color:#9f96be;">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 탭: 카카오페이 후원(QR · 송금 링크 · API 안내) 설정 -->
+      <section id="tab-donate" class="card-box hidden" style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <strong style="font-size:16px;">💛 카카오페이 후원 버튼 설정 (QR 이미지 · 송금 링크 · 결제 API)</strong>
+          <div style="font-size:12px;color:#9f96be;margin-top:3px;line-height:1.55;">
+            포털의 <b>[💛 카카오페이 응원 후원]</b> 버튼을 눌렀을 때 표시되는 카카오 송금 QR과 송금 링크를 설정합니다.<br>
+            카카오페이 온라인 단건 결제 API를 함께 쓰려면 Vercel 환경변수에 <code>KAKAOPAY_SECRET_KEY</code> (및 실운영 <code>KAKAOPAY_CID</code>, 미입력 시 테스트 <code>TC0ONETIME</code>)를 등록해 주세요.
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="field">
+              <label for="don-link">카카오페이 송금 링크 URL (예: https://qr.kakaopay.com/...)</label>
+              <input id="don-link" class="input" placeholder="https://qr.kakaopay.com/...">
+            </div>
+            <div class="field">
+              <label for="don-qr-file">카카오페이 QR 이미지 파일 올리기 (권장 — 자동 최적화 저장)</label>
+              <input id="don-qr-file" class="input" type="file" accept="image/*" style="padding:8px;">
+            </div>
+            <div class="field">
+              <label for="don-qr-url">또는 QR 이미지 경로 / Data URL 직접 입력</label>
+              <input id="don-qr-url" class="input" placeholder="비워두면 송금 링크로 QR을 자동 생성합니다">
+            </div>
+            <div class="field">
+              <label for="don-headline">후원 모달 제목</label>
+              <input id="don-headline" class="input" placeholder="재밌게 즐기셨나요? 제작자에게 커피 한 잔 응원하기 ☕">
+            </div>
+            <div class="field">
+              <label for="don-subtext">후원 안내 문구</label>
+              <textarea id="don-subtext" class="textarea" placeholder="보내주신 후원은 새로운 미니게임 개발에 쓰입니다!"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn primary" id="btn-save-donate">💾 후원 설정 저장하기</button>
+              <button type="button" class="btn" id="btn-preview-donate">👀 후원 모달 미리보기</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#130f20;border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:18px;">
+            <span style="font-size:12px;font-weight:800;color:#fde68a;">QR 미리보기</span>
+            <div style="width:180px;height:180px;background:#fff;border-radius:16px;padding:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;" id="don-admin-qr-preview">
+              <span style="color:#64748b;font-size:12px;font-weight:700;text-align:center;">등록된 QR 없음</span>
+            </div>
+            <button type="button" class="btn sm danger" id="btn-clear-qr">QR 이미지 지우기</button>
+          </div>
         </div>
       </section>
 
@@ -537,6 +616,8 @@
   <script type="module">
     import { rpcCall } from './shared/catalog.js';
     import { showToast } from './shared/challenge.js';
+    import { computeGamesPopularity, saveSocialStatsOverride } from './shared/popularity.js';
+    import { loadDonateConfig, saveDonateConfig, openDonateModal } from './shared/donate.js';
 
     let adminPw = '';
     let games = [];
@@ -677,7 +758,8 @@
       try {
         const gameId = document.getElementById('runs-filter').value;
         const res = await adminRpc('list_runs', { game_id: gameId });
-        const runs = Array.isArray(res.runs) ? res.runs : [];
+        const rawRuns = Array.isArray(res.runs) ? res.runs : [];
+        const runs = rawRuns.filter(r => !/^(v_|m_|__)/.test(String(r.game_id || '')));
         if (runs.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#9f96be;">아직 등록된 기록이 없습니다.</td></tr>';
           return;
@@ -778,6 +860,134 @@
       }
     };
 
+    // 인기 지표 탭 로드 & 릴스·쇼츠 수치 저장
+    async function loadPopularityAdmin() {
+      const tbody = document.getElementById('pop-tbody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9f96be;">집계 중...</td></tr>';
+      try {
+        const popMap = await computeGamesPopularity(games);
+        const sorted = [...games].sort((a, b) => {
+          const pa = popMap[a.id] ? popMap[a.id].popularityScore : 0;
+          const pb = popMap[b.id] ? popMap[b.id].popularityScore : 0;
+          return pb - pa;
+        });
+
+        tbody.innerHTML = sorted.map((g, i) => {
+          const p = popMap[g.id] || { popularityScore: 0, visitsLabel: '-', playTimeLabel: '-', ytViews: 0, igViews: 0 };
+          return `
+            <tr data-pop-game="${esc(g.id)}">
+              <td><b style="color:#ffd84a;">#${i + 1}</b></td>
+              <td><b>${esc(g.title)}</b> <span class="pill-id">${esc(g.id)}</span></td>
+              <td><b style="color:#4ade80;">${p.popularityScore.toFixed(1)}점</b></td>
+              <td style="font-size:12px;color:#cac2e2;">${esc(p.visitsLabel)} · ${esc(p.playTimeLabel)}</td>
+              <td><input type="number" class="input inp-yt" min="0" step="10" value="${Math.round(p.ytViews || 0)}" style="width:105px;padding:7px 9px;"></td>
+              <td><input type="number" class="input inp-ig" min="0" step="10" value="${Math.round(p.igViews || 0)}" style="width:105px;padding:7px 9px;"></td>
+              <td><button type="button" class="btn sm primary btn-save-soc" data-id="${esc(g.id)}">저장</button></td>
+            </tr>
+          `;
+        }).join('');
+
+        tbody.querySelectorAll('.btn-save-soc').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const gid = btn.dataset.id;
+            const tr = btn.closest('tr');
+            const ytViews = Number(tr.querySelector('.inp-yt').value || 0);
+            const igViews = Number(tr.querySelector('.inp-ig').value || 0);
+            btn.disabled = true;
+            try {
+              try { await adminRpc('delete_run', { id: `soc_${gid}`.slice(0, 16) }); } catch {}
+              await saveSocialStatsOverride({ gameId: gid, ytViews, igViews });
+              showToast(`📊 [${gid}] 쇼츠·릴스 반응 지표를 저장했어요!`);
+              await loadPopularityAdmin();
+            } catch (err) {
+              showToast(`⚠️ ${err.message}`);
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        });
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#fca5a5;">${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    // 후원(카카오페이 QR · 링크) 탭 로드 & 파일 업로드 변환
+    function renderAdminQrPreview() {
+      const box = document.getElementById('don-admin-qr-preview');
+      const qrUrl = document.getElementById('don-qr-url').value.trim();
+      const linkUrl = document.getElementById('don-link').value.trim();
+      const src = qrUrl || (linkUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encodeURIComponent(linkUrl)}` : '');
+      if (src) {
+        box.innerHTML = `<img src="${esc(src)}" alt="QR 미리보기" style="width:100%;height:100%;object-fit:contain;">`;
+      } else {
+        box.innerHTML = `<span style="color:#64748b;font-size:12px;font-weight:700;text-align:center;">등록된 QR 없음</span>`;
+      }
+    }
+
+    async function loadDonateAdmin() {
+      const cfg = await loadDonateConfig(true);
+      document.getElementById('don-link').value = cfg.kakaoLink || '';
+      document.getElementById('don-qr-url').value = cfg.qrImageUrl || '';
+      document.getElementById('don-headline').value = cfg.headline || '';
+      document.getElementById('don-subtext').value = cfg.subtext || '';
+      renderAdminQrPreview();
+    }
+
+    document.getElementById('don-link').addEventListener('input', renderAdminQrPreview);
+    document.getElementById('don-qr-url').addEventListener('input', renderAdminQrPreview);
+    document.getElementById('btn-clear-qr').onclick = () => {
+      document.getElementById('don-qr-url').value = '';
+      document.getElementById('don-qr-file').value = '';
+      renderAdminQrPreview();
+    };
+
+    document.getElementById('don-qr-file').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const maxSide = 360;
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const cw = Math.max(1, Math.round(img.width * scale));
+          const ch = Math.max(1, Math.round(img.height * scale));
+          const cv = document.createElement('canvas');
+          cv.width = cw;
+          cv.height = ch;
+          const ctx = cv.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          document.getElementById('don-qr-url').value = cv.toDataURL('image/jpeg', 0.88);
+          renderAdminQrPreview();
+          showToast('📸 QR 이미지가 불러와졌어요! [저장하기]를 눌러 반영하세요.');
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('btn-save-donate').onclick = async () => {
+      const btn = document.getElementById('btn-save-donate');
+      btn.disabled = true;
+      try {
+        await saveDonateConfig(adminRpc, {
+          kakaoLink: document.getElementById('don-link').value,
+          qrImageUrl: document.getElementById('don-qr-url').value,
+          headline: document.getElementById('don-headline').value,
+          subtext: document.getElementById('don-subtext').value,
+        });
+        showToast('💛 카카오페이 후원 QR·링크 설정이 저장되었어요!');
+      } catch (err) {
+        showToast(`⚠️ ${err.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById('btn-preview-donate').onclick = () => openDonateModal();
+
     // 탭 전환
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -785,9 +995,13 @@
         btn.classList.add('active');
         const tab = btn.dataset.tab;
         document.getElementById('tab-games').classList.toggle('hidden', tab !== 'games');
+        document.getElementById('tab-pop').classList.toggle('hidden', tab !== 'pop');
+        document.getElementById('tab-donate').classList.toggle('hidden', tab !== 'donate');
         document.getElementById('tab-runs').classList.toggle('hidden', tab !== 'runs');
         document.getElementById('tab-settings').classList.toggle('hidden', tab !== 'settings');
         if (tab === 'runs') loadRuns();
+        if (tab === 'pop') loadPopularityAdmin();
+        if (tab === 'donate') loadDonateAdmin();
       });
     });
 

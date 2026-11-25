@@ -1,5 +1,6 @@
 // 이게뭔겜? 404 아케이드 — 동적 게임 카탈로그 & 공개 상태(공개/공개예정/숨김) 접근 제어
 import { getSupabaseConfig, getBestRecord } from './challenge.js';
+import { startGameEngagementTracker } from './popularity.js';
 
 export const DEFAULT_GAMES = [
   {
@@ -189,6 +190,7 @@ export async function enforceGameAccess(gameId) {
   try {
     const info = await rpcCall('g404_get_game', { p_id: gameId }, 1);
     if (!info || !info.found || info.status === 'public') {
+      startGameEngagementTracker(gameId);
       return { allowed: true, info };
     }
 
@@ -235,6 +237,7 @@ export async function enforceGameAccess(gameId) {
     return { allowed: false, info };
   } catch {
     // 네트워크 오류 시 기본 플레이 허용
+    startGameEngagementTracker(gameId);
     return { allowed: true };
   }
 }

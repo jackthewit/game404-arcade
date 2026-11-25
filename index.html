@@ -92,6 +92,146 @@
       margin-top: 2px;
     }
 
+    /* 인기 게임 정렬 헤더 & 3대 잣대 컨트롤 바 */
+    .pop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 4px 2px 0;
+    }
+    .pop-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .pop-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pop-criteria-sub {
+      font-size: 12px;
+      color: #a9a0c4;
+      font-weight: 700;
+    }
+    .sort-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .sort-chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      background: rgba(27, 22, 41, 0.85);
+      color: #cfc8e6;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    .sort-chip:hover {
+      border-color: rgba(255, 216, 74, 0.45);
+    }
+    .sort-chip.active {
+      background: #ffd84a;
+      color: #161122;
+      border-color: #ffd84a;
+      box-shadow: 0 4px 14px rgba(255, 216, 74, 0.28);
+    }
+
+    /* 인기 TOP 1~3 카드 랭크 배지 & 골드 강조 */
+    .thumb-card.rank-1 {
+      border-color: rgba(255, 216, 74, 0.82);
+      box-shadow: 0 14px 34px rgba(255, 216, 74, 0.16), 0 12px 28px rgba(0, 0, 0, 0.36);
+    }
+    .thumb-card.rank-2 {
+      border-color: rgba(226, 232, 240, 0.52);
+    }
+    .thumb-card.rank-3 {
+      border-color: rgba(251, 146, 60, 0.50);
+    }
+    .pop-rank-ribbon {
+      position: absolute;
+      top: 11px;
+      right: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
+    }
+    .pop-rank-ribbon.r1 {
+      background: linear-gradient(135deg, #fde047, #f59e0b);
+      color: #1c1300;
+      border: 1px solid #fef9c3;
+    }
+    .pop-rank-ribbon.r2 {
+      background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+      color: #0f172a;
+      border: 1px solid #ffffff;
+    }
+    .pop-rank-ribbon.r3 {
+      background: linear-gradient(135deg, #fdba74, #ea580c);
+      color: #ffffff;
+      border: 1px solid #fed7aa;
+    }
+
+    /* 카드 내부 3대 인기 지표 미니 배지 줄 */
+    .pop-metrics-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .pop-metric-pill {
+      padding: 3px 8px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      font-size: 11px;
+      font-weight: 800;
+      color: #d8d0ee;
+      font-variant-numeric: tabular-nums;
+    }
+    .pop-metric-pill.hot {
+      background: rgba(255, 216, 74, 0.11);
+      border-color: rgba(255, 216, 74, 0.28);
+      color: #fde68a;
+    }
+
+    /* 하단 카카오페이 응원 배너 */
+    .donate-banner {
+      background: linear-gradient(135deg, rgba(254, 229, 0, 0.14), rgba(124, 92, 255, 0.14));
+      border: 1.5px solid rgba(254, 229, 0, 0.36);
+      border-radius: 22px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .donate-banner-txt {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .donate-banner-txt strong {
+      font-size: 15px;
+      font-weight: 900;
+      color: #fffef2;
+    }
+    .donate-banner-txt span {
+      font-size: 12.5px;
+      color: #cac2e2;
+    }
+
     /* 썸네일 게임 버튼 그리드 */
     .grid {
       display: grid;
@@ -344,13 +484,36 @@
       </div>
 
       <div class="util-row">
+        <button type="button" class="kakao-donate-btn" id="hub-donate-top">💛 카카오페이 응원 후원 (QR·링크)</button>
         <button type="button" class="pill-btn highlight" id="hub-cal">📏 화면 실제 1cm 보정하기</button>
         <button type="button" class="pill-btn" id="hub-bgm">🔊 BGM 켜짐</button>
       </div>
     </section>
 
+    <section class="pop-header" aria-label="인기 게임 정렬">
+      <div class="pop-title-group">
+        <div class="pop-title">🔥 실시간 인기 & 추천 아케이드</div>
+        <div class="pop-criteria-sub">접속 · 플레이 시간 · 릴스&쇼츠 반응 3가지 잣대로 상위 노출됩니다</div>
+      </div>
+      <div class="sort-tabs" id="sort-tabs">
+        <button type="button" class="sort-chip active" data-sort="popular">🔥 종합 인기순</button>
+        <button type="button" class="sort-chip" data-sort="social">📱 릴스·쇼츠 화제순</button>
+        <button type="button" class="sort-chip" data-sort="playtime">⏱ 플레이 시간순</button>
+        <button type="button" class="sort-chip" data-sort="visits">👁 접속순</button>
+        <button type="button" class="sort-chip" data-sort="latest">🆕 기본순</button>
+      </div>
+    </section>
+
     <section class="grid" id="game-grid" aria-live="polite">
-      <!-- Supabase 공개 게임 목록이 로드되기 전에도 즉시 보이도록 기본 3종 렌더 후 동적 교체 -->
+      <!-- 게임 카드 동적 렌더링 -->
+    </section>
+
+    <section class="donate-banner">
+      <div class="donate-banner-txt">
+        <strong>☕ 404 아케이드 미니게임이 즐거우셨나요?</strong>
+        <span>카카오페이 결제·QR·송금 링크로 다음 AI 미니게임 제작을 응원해 주세요!</span>
+      </div>
+      <button type="button" class="kakao-donate-btn" id="hub-donate-bottom">💛 카카오페이 후원하기</button>
     </section>
 
     <footer class="footer">
@@ -367,6 +530,19 @@
     import { openCalibrationModal } from './shared/calibration.js';
     import { showToast } from './shared/challenge.js';
     import { DEFAULT_GAMES, fetchPublicCatalog, formatBestText } from './shared/catalog.js';
+    import { computeGamesPopularity } from './shared/popularity.js';
+    import { openDonateModal, handleDonateReturnQuery } from './shared/donate.js';
+
+    handleDonateReturnQuery();
+
+    const btnDonateTop = document.getElementById('hub-donate-top');
+    const btnDonateBot = document.getElementById('hub-donate-bottom');
+    // donate.js 스타일을 첫 화면 버튼에도 즉시 입히기 위해 동적 클래스 보강
+    [btnDonateTop, btnDonateBot].forEach(btn => {
+      if (!btn) return;
+      btn.style.cssText = 'display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:#FEE500;color:#191919;border:1.5px solid #facc15;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 6px 16px rgba(254,229,0,0.24);';
+      btn.onclick = () => openDonateModal();
+    });
 
     const hubBgm = document.getElementById('hub-bgm');
     function syncHubBgm() {
@@ -396,23 +572,70 @@
         .replace(/"/g, '&quot;');
     }
 
-    function renderGames(games) {
+    let currentGames = [...DEFAULT_GAMES];
+    let popMap = {};
+    let currentSort = 'popular';
+
+    function getSortedGames(games) {
+      const visible = (games || []).filter(g => g.status !== 'hidden');
+      // 공개된(플레이 가능한) 게임이 잠금(공개예정) 게임보다 우선 오되, 선택한 인기 잣대로 정렬
+      return [...visible].sort((a, b) => {
+        const lockA = a.status === 'coming_soon' ? 1 : 0;
+        const lockB = b.status === 'coming_soon' ? 1 : 0;
+        if (lockA !== lockB) return lockA - lockB;
+
+        const pa = popMap[a.id] || { popularityScore: 0, socialTotal: 0, playSecTotal: 0, visitsTotal: 0 };
+        const pb = popMap[b.id] || { popularityScore: 0, socialTotal: 0, playSecTotal: 0, visitsTotal: 0 };
+
+        if (currentSort === 'popular') {
+          if (pb.popularityScore !== pa.popularityScore) return pb.popularityScore - pa.popularityScore;
+        } else if (currentSort === 'social') {
+          if (pb.socialTotal !== pa.socialTotal) return pb.socialTotal - pa.socialTotal;
+        } else if (currentSort === 'playtime') {
+          if (pb.playSecTotal !== pa.playSecTotal) return pb.playSecTotal - pa.playSecTotal;
+        } else if (currentSort === 'visits') {
+          if (pb.visitsTotal !== pa.visitsTotal) return pb.visitsTotal - pa.visitsTotal;
+        }
+        return (a.sort_order ?? 100) - (b.sort_order ?? 100);
+      });
+    }
+
+    function renderGames() {
       const grid = document.getElementById('game-grid');
       if (!grid) return;
-      const visible = (games || []).filter(g => g.status !== 'hidden');
-      if (visible.length === 0) {
+      const sorted = getSortedGames(currentGames);
+      if (sorted.length === 0) {
         grid.innerHTML = `<div class="grid-empty">🕹️ 지금 새로운 게임을 준비하고 있어요! 곧 공개됩니다.</div>`;
         return;
       }
 
-      grid.innerHTML = visible.map(g => {
+      grid.innerHTML = sorted.map((g, idx) => {
         const isLocked = g.status === 'coming_soon';
+        const rank = !isLocked && currentSort !== 'latest' ? idx + 1 : 0;
         const classes = ['thumb-card'];
-        if (g.featured && !isLocked) classes.push('featured');
+        if (rank === 1) classes.push('rank-1');
+        else if (rank === 2) classes.push('rank-2');
+        else if (rank === 3) classes.push('rank-3');
+        else if (g.featured && !isLocked) classes.push('featured');
         if (isLocked) classes.push('is-locked');
+
         const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id);
         const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
         const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
+        const p = popMap[g.id];
+
+        let ribbonHtml = '';
+        if (rank === 1) ribbonHtml = `<span class="pop-rank-ribbon r1">👑 인기 1위</span>`;
+        else if (rank === 2) ribbonHtml = `<span class="pop-rank-ribbon r2">🥈 인기 2위</span>`;
+        else if (rank === 3) ribbonHtml = `<span class="pop-rank-ribbon r3">🥉 인기 3위</span>`;
+
+        const metricsHtml = p ? `
+          <div class="pop-metrics-row">
+            <span class="pop-metric-pill hot">📱 ${esc(p.socialLabel)}</span>
+            <span class="pop-metric-pill">⏱ ${esc(p.playTimeLabel)}</span>
+            <span class="pop-metric-pill">👁 ${esc(p.visitsLabel)}</span>
+          </div>
+        ` : '';
 
         return `
           <a class="${classes.join(' ')}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
@@ -420,6 +643,7 @@
               <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)} 주요 장면">
               <div class="thumb-scrim"></div>
               <span class="thumb-badge">${esc(g.badge || '🎮 미니게임')}</span>
+              ${ribbonHtml}
               ${isLocked ? `
                 <div class="thumb-lock-banner">
                   <span class="thumb-lock-pill">🔒 공개 예정</span>
@@ -435,6 +659,7 @@
               </div>
             </div>
             <div class="thumb-body">
+              ${metricsHtml}
               <div class="thumb-desc">${esc(g.description || '')}</div>
               <div class="thumb-foot">
                 <span class="card-best" ${isLocked ? 'style="color:#fde68a"' : ''}>${esc(bestText)}</span>
@@ -453,11 +678,26 @@
       });
     }
 
-    // 즉시 기본 목록을 그린 뒤 Supabase 최신 목록으로 실시간 반영
-    renderGames(DEFAULT_GAMES);
-    fetchPublicCatalog().then(({ games }) => {
-      renderGames(games);
+    document.querySelectorAll('#sort-tabs .sort-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#sort-tabs .sort-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort || 'popular';
+        renderGames();
+      });
     });
+
+    async function refreshHub() {
+      popMap = await computeGamesPopularity(currentGames);
+      renderGames();
+      const { games } = await fetchPublicCatalog();
+      currentGames = games;
+      popMap = await computeGamesPopularity(currentGames);
+      renderGames();
+    }
+
+    renderGames();
+    refreshHub();
   </script>
 </body>
 </html>

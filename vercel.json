@@ -3,7 +3,9 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/s/:game", "destination": "/api/share?game=:game" },
-    { "source": "/api/config", "destination": "/api/config.js" }
+    { "source": "/api/config", "destination": "/api/config.js" },
+    { "source": "/api/kakaopay/ready", "destination": "/api/kakaopay/ready.js" },
+    { "source": "/api/kakaopay/approve", "destination": "/api/kakaopay/approve.js" }
   ],
   "headers": [
     {
