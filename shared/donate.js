@@ -368,14 +368,14 @@ export async function openDonateModal() {
   backdrop.innerHTML = `
     <div class="don-card" role="dialog" aria-modal="true" aria-label="카카오페이 후원하기">
       <button type="button" class="don-close" id="don-close-btn" aria-label="닫기">✕</button>
-      <span class="don-kicker">💛 카카오페이 공식 응원 후원</span>
+      <span class="don-kicker">💛 응원과 후원</span>
       <div class="don-title">${esc(cfg.headline)}</div>
       <p class="don-sub">${esc(cfg.subtext)}</p>
 
-      <!-- 1. 카카오페이 온라인 단건 결제 API -->
+      <!-- 1. 카카오페이 온라인 단건 결제 -->
       <div class="don-section">
         <div class="don-sec-label">
-          <span>⚡ 금액 선택 후 바로 결제 (카카오페이 API)</span>
+          <span>⚡ 금액 선택 후 바로 결제</span>
           <span id="don-api-badge" style="font-size:10.5px;color:#a9a0c2;">간편 결제</span>
         </div>
         <div class="don-amounts" id="don-amt-group">
