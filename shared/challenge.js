@@ -1,9 +1,48 @@
 // 전체 플레이어 글로벌 랭킹 경쟁 + 지인 위치 핀("내가 아는 ○○님의 위치는 여기예요!") + URL 공유 & 결과 카드 PNG 생성기
 import { SUPABASE_FALLBACK } from './config.js';
+import { pickRandomRetroNickname } from './nicknames.js';
 
 const NICK_KEY = 'fgs.player.nickname';
 const BEST_PREFIX = 'fgs.best.';
 const LOCAL_BOARD_PREFIX = 'fgs.localboard.v1.';
+
+function isAnonFallback(s) {
+  const t = String(s || '').trim();
+  return !t || /^익명(\s*(도전자|흰티족|언박서|네일리스트|스냅작가))?$/.test(t);
+}
+
+function attachNickRandomizerBtn() {
+  if (typeof document === 'undefined') return;
+  const input = document.getElementById('res-nick');
+  if (!input || !input.parentElement || input.parentElement.querySelector('.nick-rand-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nick-rand-btn';
+  btn.title = '80~2000년대 추억의 만화 주인공 이름 랜덤 뽑기';
+  btn.textContent = '🎲 랜덤';
+  btn.style.cssText = [
+    'flex-shrink:0;padding:0 13px;border-radius:12px;',
+    'border:1px solid rgba(255,216,74,0.45);background:rgba(255,216,74,0.14);',
+    'color:#ffd84a;font-size:13px;font-weight:900;font-family:inherit;',
+    'cursor:pointer;white-space:nowrap;transition:transform 0.1s ease,background 0.14s ease;',
+  ].join('');
+  btn.addEventListener('click', () => {
+    const next = rollRandomNickname(input.value);
+    input.value = next;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    showToast(`🎲 새 이름: ${next}`);
+  });
+  input.parentElement.appendChild(btn);
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachNickRandomizerBtn, { once: true });
+  } else {
+    setTimeout(attachNickRandomizerBtn, 0);
+  }
+}
 
 let sbConfigPromise = null;
 
@@ -41,14 +80,32 @@ export function getSupabaseConfig() {
   return sbConfigPromise;
 }
 
+export function rollRandomNickname(currentName = '') {
+  const picked = pickRandomRetroNickname(String(currentName || '').trim());
+  try { localStorage.setItem(NICK_KEY, picked); } catch {}
+  return picked;
+}
+
 export function getSavedNickname() {
-  return localStorage.getItem(NICK_KEY) || '';
+  attachNickRandomizerBtn();
+  let cur = '';
+  try { cur = localStorage.getItem(NICK_KEY) || ''; } catch {}
+  if (isAnonFallback(cur)) {
+    cur = rollRandomNickname('');
+  }
+  return cur;
 }
 
 export function saveNickname(name) {
   const clean = String(name || '').trim().slice(0, 16);
-  if (clean) localStorage.setItem(NICK_KEY, clean);
-  return clean || '익명 도전자';
+  if (isAnonFallback(clean)) {
+    const existing = (() => {
+      try { return localStorage.getItem(NICK_KEY) || ''; } catch { return ''; }
+    })();
+    return isAnonFallback(existing) ? rollRandomNickname('') : existing;
+  }
+  try { localStorage.setItem(NICK_KEY, clean); } catch {}
+  return clean;
 }
 
 export function getBestRecord(gameId) {
