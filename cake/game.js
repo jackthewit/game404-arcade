@@ -79,72 +79,72 @@ const ease = k => { const c = clamp(k, 0, 1); return c * c * (3 - 2 * c); };
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const rnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
-// ── 5단계 난이도 스테이지 설정 ──
+// ── 5단계 실제 수제 케이크 공방 주문 설정 ──
 const STAGES = [
   {
     no: 1,
-    chip: '1. ♥',
-    kicker: 'STAGE 1 · 첫 손님 서비스 (쉬움)',
-    phrase: '♥',
-    lines: ['♥'],
+    chip: '1. 사랑해♥',
+    kicker: '주문 1 · 기념일 케이크',
+    phrase: '사랑해 ♥',
+    lines: ['사랑해 ♥'],
     cakeScale: 1.0,
-    guideAlpha: 0.32,
-    fontScale: 0.48,
-    charSlots: 1,
+    guideAlpha: 0.3,
+    fontScale: 0.25,
+    charSlots: 4,
     dottedGuide: true,
-    tip: '가운데 예쁜 하트 1개! 누르고 머물면 초코가 통통해지고, 떼면 실이 늘어나요!',
+    tip: '이쑤시개 점선을 따라 천천히! 누른 채 머물면 초코가 통통해지고, 떼면 실이 늘어나요.',
   },
   {
     no: 2,
-    chip: '2. 축하♥',
-    kicker: 'STAGE 2 · 단골 손님 주문',
-    phrase: '축하 ♥',
-    lines: ['축하 ♥'],
-    cakeScale: 1.0,
-    guideAlpha: 0.25,
-    fontScale: 0.27,
-    charSlots: 3,
-    dottedGuide: true,
-    tip: '두 글자와 하트! 획 끝에서 살짝 떼어 깔끔하게 마무리해 보세요.',
-  },
-  {
-    no: 3,
-    chip: '3. 생일축하해',
-    kicker: 'STAGE 3 · 쇼츠 레전드 구간!',
+    chip: '2. 생일축하해',
+    kicker: '주문 2 · 생일 기본 레터링',
     phrase: '생일 축하해',
     lines: ['생일 축하해'],
     cakeScale: 1.0,
-    guideAlpha: 0.12,
+    guideAlpha: 0.16,
     fontScale: 0.22,
     charSlots: 5,
     dottedGuide: false,
-    tip: '앞의 「생일」을 너무 크게 쓰면 오른쪽 자리가 모자라요! 여백 배분 주의!',
+    tip: '앞의 「생일」을 너무 크게 쓰면 오른쪽 자리가 모자라요! 여백 배분에 주의하세요.',
+  },
+  {
+    no: 3,
+    chip: '3. 꽃길만걷자',
+    kicker: '주문 3 · 새출발 응원 케이크',
+    phrase: '꽃길만 걷자 ♥',
+    lines: ['꽃길만 걷자 ♥'],
+    cakeScale: 0.94,
+    guideAlpha: 0.14,
+    fontScale: 0.2,
+    charSlots: 6,
+    dottedGuide: false,
+    tip: '받침이 있는 글자는 빠르게 스윽 그어야 초코 줄이 얇고 깔끔하게 나와요!',
   },
   {
     no: 4,
     chip: '4. 행복하자',
-    kicker: 'STAGE 4 · 미니 홀케이크',
-    phrase: '우리 행복하자 ♥',
-    lines: ['우리 행복하자 ♥'],
+    kicker: '주문 4 · 미니 홀케이크',
+    phrase: '우리 오래 행복하자',
+    lines: ['우리 오래 행복하자'],
     cakeScale: 0.88,
-    guideAlpha: 0.1,
-    fontScale: 0.185,
-    charSlots: 7,
+    guideAlpha: 0.12,
+    fontScale: 0.18,
+    charSlots: 8,
     dottedGuide: false,
-    tip: '케이크가 작아졌어요! 빠르게 스윽 그어야 초코 줄이 얇고 날렵하게 나와요!',
+    tip: '케이크가 작아졌어요! 생크림 테두리에 닿지 않게 글씨 크기를 일정하게 맞춰 보세요.',
   },
   {
     no: 5,
-    chip: '5. 도시락보스',
-    kicker: 'STAGE 5 · 초소형 도시락 케이크',
-    phrase: '사랑해 ♥ / 오래오래 함께해',
-    lines: ['사랑해 ♥', '오래오래 함께해'],
-    cakeScale: 0.78,
-    guideAlpha: 0.09,
-    fontScale: 0.175,
-    charSlots: 8,
+    chip: '5. 도시락케이크',
+    kicker: '주문 5 · 미니 도시락 케이크 (두 줄)',
+    phrase: '태어나줘서 고마워 / 생일 축하해 ♥',
+    lines: ['태어나줘서 고마워', '생일 축하해 ♥'],
+    cakeScale: 0.8,
+    guideAlpha: 0.11,
+    fontScale: 0.17,
+    charSlots: 12,
     dottedGuide: false,
-    tip: '작은 도시락 케이크에 두 줄로 삐져나가지 않게 정성껏 써 보세요!',
+    tip: '작은 도시락 케이크에 두 줄 레터링! 위·아래 줄 간격을 맞춰 정성껏 완성해 보세요.',
   },
 ];
 
@@ -359,13 +359,31 @@ const creamPipingMat = new THREE.MeshPhysicalMaterial({
   sheen: 0.4,
   sheenColor: new THREE.Color('#fff4e0'),
 });
+const chocoBump = makeCanvasTex(256, 256, (g, w, h) => {
+  const im = g.createImageData(w, h), d = im.data;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const val = 128 + 14 * Math.sin(x * 0.22 + Math.sin(y * 0.15) * 1.4) + 10 * (rnd(x * 0.71 + y * 53.3) - 0.5);
+      const o = (y * w + x) * 4;
+      d[o] = d[o + 1] = d[o + 2] = val;
+      d[o + 3] = 255;
+    }
+  }
+  g.putImageData(im, 0, 0);
+}, false);
+chocoBump.wrapS = chocoBump.wrapT = THREE.RepeatWrapping;
+
 const chocoMat = new THREE.MeshPhysicalMaterial({
-  color: '#3f1c0b',
-  roughness: 0.18,
-  metalness: 0.02,
+  color: '#351709',
+  roughness: 0.15,
+  metalness: 0.01,
+  bumpMap: chocoBump,
+  bumpScale: 0.18,
   clearcoat: 1.0,
-  clearcoatRoughness: 0.06,
-  envMapIntensity: 1.35,
+  clearcoatRoughness: 0.05,
+  sheen: 0.22,
+  sheenColor: new THREE.Color('#6b3419'),
+  envMapIntensity: 1.45,
 });
 
 // 케이크 몸통
@@ -1385,8 +1403,8 @@ function splitCakeLines(rawText) {
 }
 
 function fitCakeFontPx(ctx, lines, desiredPx, fontWeight, maxWidthPx) {
-  const family = '"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif';
-  let px = Math.min(desiredPx, lines.length > 1 ? 168 : 420);
+  const family = '"Apple SD Gothic Neo","MaruBuri","Pretendard","Noto Sans KR",sans-serif';
+  let px = Math.min(desiredPx, lines.length > 1 ? 164 : 380);
   ctx.font = `${fontWeight} ${px}px ${family}`;
 
   let maxW = 0;
@@ -1394,7 +1412,7 @@ function fitCakeFontPx(ctx, lines, desiredPx, fontWeight, maxWidthPx) {
     maxW = Math.max(maxW, ctx.measureText(ln).width);
   }
   if (maxW > maxWidthPx && maxW > 0) {
-    px = Math.max(44, Math.floor(px * (maxWidthPx / maxW) * 0.96));
+    px = Math.max(44, Math.floor(px * (maxWidthPx / maxW) * 0.95));
     ctx.font = `${fontWeight} ${px}px ${family}`;
   }
   return { px, fontStr: `${fontWeight} ${px}px ${family}` };
@@ -1495,46 +1513,58 @@ function setupStage(idx) {
 
   const isTwoLines = stg.lines.length > 1;
   const safeMaxWidth = isTwoLines ? 690 : 760;
+  guideCtx.lineJoin = 'round';
+  guideCtx.lineCap = 'round';
 
   if (stg.dottedGuide) {
     const desiredPx = Math.round(1024 * stg.fontScale);
-    const { fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 900, safeMaxWidth);
+    const { fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 800, safeMaxWidth);
     guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
-    guideCtx.strokeStyle = `rgba(138, 96, 62, ${stg.guideAlpha})`;
+    // 생크림 위에 이쑤시개로 살짝 눌러 그어 놓은 음각 밑그림 느낌 (밝은 테두리 + 은은한 그림자 홈)
+    guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
     guideCtx.lineWidth = 6;
-    guideCtx.setLineDash([14, 12]);
+    guideCtx.setLineDash([12, 11]);
+    guideCtx.strokeText(stg.lines[0], 514, 514);
+    guideCtx.strokeStyle = `rgba(148, 112, 82, ${stg.guideAlpha})`;
+    guideCtx.lineWidth = 4.5;
     guideCtx.strokeText(stg.lines[0], 512, 512);
   } else {
     const desiredPx = Math.round(1024 * stg.fontScale * 0.88);
-    const { px, fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 800, safeMaxWidth);
+    const { px, fontStr } = fitCakeFontPx(guideCtx, stg.lines, desiredPx, 700, safeMaxWidth);
     guideCtx.font = fontStr;
     guideCtx.textAlign = 'center';
     guideCtx.textBaseline = 'middle';
+
+    const drawEtchedText = (txt, cx, cy) => {
+      guideCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      guideCtx.fillText(txt, cx + 2, cy + 2);
+      guideCtx.fillStyle = `rgba(142, 106, 76, ${clamp(stg.guideAlpha * 0.85, 0.1, 0.22)})`;
+      guideCtx.fillText(txt, cx, cy);
+    };
 
     if (!isTwoLines) {
       const textW = Math.min(safeMaxWidth, guideCtx.measureText(stg.lines[0]).width + 44);
       const lineY = 512 + Math.round(px * 0.62);
-      guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.24)';
-      guideCtx.lineWidth = 3;
-      guideCtx.setLineDash([12, 14]);
+      guideCtx.strokeStyle = 'rgba(165, 128, 94, 0.22)';
+      guideCtx.lineWidth = 2.8;
+      guideCtx.setLineDash([10, 12]);
       guideCtx.beginPath();
       guideCtx.moveTo(512 - textW / 2, lineY);
       guideCtx.lineTo(512 + textW / 2, lineY);
       guideCtx.stroke();
 
       guideCtx.setLineDash([]);
-      guideCtx.fillStyle = `rgba(138, 96, 62, ${clamp(stg.guideAlpha * 0.72, 0.09, 0.2)})`;
-      guideCtx.fillText(stg.lines[0], 512, 512);
+      drawEtchedText(stg.lines[0], 512, 512);
     } else {
       const gap = Math.max(px * 1.38, 128);
       const y0 = 512 - gap * 0.5;
       const y1 = 512 + gap * 0.5;
 
-      guideCtx.strokeStyle = 'rgba(165, 124, 88, 0.22)';
-      guideCtx.lineWidth = 3;
-      guideCtx.setLineDash([12, 14]);
+      guideCtx.strokeStyle = 'rgba(165, 128, 94, 0.2)';
+      guideCtx.lineWidth = 2.6;
+      guideCtx.setLineDash([10, 12]);
       [ [stg.lines[0], y0], [stg.lines[1], y1] ].forEach(([ln, cy]) => {
         const tw = Math.min(safeMaxWidth, guideCtx.measureText(ln).width + 40);
         const ly = cy + Math.round(px * 0.6);
@@ -1545,9 +1575,8 @@ function setupStage(idx) {
       });
 
       guideCtx.setLineDash([]);
-      guideCtx.fillStyle = `rgba(138, 96, 62, ${clamp(stg.guideAlpha * 0.72, 0.09, 0.2)})`;
-      guideCtx.fillText(stg.lines[0], 512, y0);
-      guideCtx.fillText(stg.lines[1], 512, y1);
+      drawEtchedText(stg.lines[0], 512, y0);
+      drawEtchedText(stg.lines[1], 512, y1);
     }
   }
   guideCtx.restore();
@@ -1624,7 +1653,7 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
     ];
     const R = [p0.r * 0.55, p0.r, p0.r * 0.55];
     if (stroke.mesh.geometry) stroke.mesh.geometry.dispose();
-    stroke.mesh.geometry = buildTubeGeo(P, R, 12, UP_Y, 0.88, 0.45);
+    stroke.mesh.geometry = buildTubeGeo(P, R, 16, UP_Y, 0.84, 0.44);
     return;
   }
 
@@ -1680,7 +1709,7 @@ function rebuildStrokeMesh(stroke, closedTail = false) {
   }
 
   if (stroke.mesh.geometry) stroke.mesh.geometry.dispose();
-  stroke.mesh.geometry = buildTubeGeo(P, R, 12, UP_Y, 0.86, 0.46);
+  stroke.mesh.geometry = buildTubeGeo(P, R, 16, UP_Y, 0.84, 0.44);
 }
 
 // 획이 끝날 때(손을 떼거나 케이크 밖으로 넘어갔을 때) 아직 높이맵에 안 구워진 꼬리 구간까지 전부 적층 반영!
@@ -2170,7 +2199,7 @@ function analyzeViralVerdict() {
   if (leftCnt >= 1 && rightCnt >= 1 && leftH > rightH * 1.65 && maxX > RIN * 0.65) {
     return {
       tag: '👨‍🍳 감정 결과: 전형적인 앞글자 과투자형',
-      text: '“앞은 대문짝만하고 뒤로 갈수록 개미 목소리! 쇼츠 명장면 그 자체ㅋㅋ”',
+      text: '“앞은 큼직하고 뒤로 갈수록 콩알만 해졌네요! 수제 레터링 단골 실수 그대로예요ㅎㅎ”',
     };
   }
   if (blobCount >= 2 || maxR > 0.48) {
