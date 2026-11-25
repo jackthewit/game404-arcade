@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>열려라 택배! — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="밀려드는 택배 폭탄! 테이프 선을 따라 칼각 직선으로 쫙 그어 뜯으세요! 정확도가 높으면 상자 속에서 깜짝 선물이 튀어오릅니다!">
+  <link rel="stylesheet" href="/shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl { touch-action: none; cursor: crosshair; }
+    #ov { pointer-events: none; z-index: 26; }
+
+    /* 상단 타임어택 & 택배 적재 계기판 */
+    .box-hud {
+      position: fixed;
+      top: calc(max(10px, env(safe-area-inset-top)) + 46px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: min(94vw, 450px);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: none;
+    }
+    .box-hud.with-rival {
+      top: calc(max(10px, env(safe-area-inset-top)) + 106px);
+    }
+    .box-hud.hidden {
+      display: none;
+    }
+
+    .hud-main-card {
+      background: rgba(23, 18, 32, 0.90);
+      border: 2px solid rgba(255, 216, 74, 0.55);
+      border-radius: 18px;
+      padding: 9px 13px 10px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hud-main-card.danger-pulse {
+      border-color: #f87171;
+      box-shadow: 0 0 24px rgba(248, 113, 113, 0.48), 0 10px 26px rgba(0, 0, 0, 0.5);
+      animation: hudShake 0.36s ease-in-out infinite alternate;
+    }
+    @keyframes hudShake {
+      from { transform: translateY(0); }
+      to { transform: translateY(-1.5px); }
+    }
+
+    .hud-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .score-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .hud-score {
+      font-size: clamp(20px, 5.2vw, 27px);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #ffe252;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.65);
+      white-space: nowrap;
+    }
+    .hud-opened {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #d8d0ec;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .wave-pill {
+      padding: 3px 7px;
+      border-radius: 7px;
+      font-size: 10.5px;
+      font-weight: 900;
+      background: rgba(56, 189, 248, 0.18);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.42);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .wave-pill.lv2 { background: rgba(74, 222, 128, 0.18); color: #86efac; border-color: rgba(74, 222, 128, 0.45); }
+    .wave-pill.lv3 { background: rgba(250, 204, 21, 0.20); color: #fde047; border-color: rgba(250, 204, 21, 0.50); }
+    .wave-pill.lv4 { background: rgba(251, 146, 60, 0.24); color: #fdba74; border-color: rgba(251, 146, 60, 0.55); }
+    .wave-pill.lv5 { background: rgba(244, 63, 94, 0.28); color: #fda4af; border-color: rgba(244, 63, 94, 0.65); }
+    .wave-pill.lv6 { background: linear-gradient(135deg, #e11d48, #9333ea); color: #ffffff; border-color: #fde047; }
+    .combo-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.14s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .combo-pill.idle {
+      background: rgba(255, 255, 255, 0.08);
+      color: #a9a0c2;
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: none;
+    }
+
+    .hud-bars-row {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* 남은 시간 게이지 */
+    .meter-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .meter-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #dcd4f0;
+      font-variant-numeric: tabular-nums;
+    }
+    .time-track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.11);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .time-fill {
+      height: 100%;
+      width: 75%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      transition: width 0.08s linear, background 0.2s ease;
+    }
+    .time-fill.warn {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    .time-fill.crit {
+      background: linear-gradient(90deg, #ef4444, #fb7185);
+    }
+
+    /* 쌓인 택배 8칸 슬롯 */
+    .stack-slots {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 3px;
+      height: 10px;
+    }
+    .stack-cell {
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: background 0.12s ease, transform 0.12s ease;
+    }
+    .stack-cell.filled {
+      background: #f59e0b;
+      border-color: #fde68a;
+    }
+    .stack-cell.filled.high {
+      background: #ef4444;
+      border-color: #fecaca;
+      transform: scaleY(1.14);
+    }
+
+    /* 뽑은 선물 미니 선반 */
+    .gift-shelf {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+      min-height: 0;
+    }
+    .gift-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(28, 21, 42, 0.86);
+      border: 1px solid rgba(255, 216, 74, 0.48);
+      font-size: 11px;
+      font-weight: 800;
+      color: #fef08a;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      animation: chipPop 0.24s cubic-bezier(0.2, 1.4, 0.4, 1);
+    }
+    @keyframes chipPop {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* 하단 실시간 안내 알약 */
+    .bottom-bar {
+      position: fixed;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 32;
+      width: min(92vw, 420px);
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .bottom-bar.hidden {
+      display: none;
+    }
+    .slice-pill {
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(22, 17, 34, 0.88);
+      border: 1.5px solid rgba(255, 216, 74, 0.48);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #fef3c7;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+    .slice-pill.perfect {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.94), rgba(234, 88, 12, 0.94));
+      border-color: #fef08a;
+      color: #ffffff;
+    }
+    .slice-pill.danger {
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.94), rgba(185, 28, 28, 0.94));
+      border-color: #fecdd3;
+      color: #ffffff;
+    }
+
+    /* 화면 가장자리 위험 경고 비네트 */
+    .danger-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 24;
+      opacity: 0;
+      box-shadow: inset 0 0 85px rgba(239, 68, 68, 0.72);
+      transition: opacity 0.2s ease;
+    }
+    .danger-vignette.active {
+      opacity: 1;
+      animation: vigPulse 0.45s ease-in-out infinite alternate;
+    }
+    @keyframes vigPulse {
+      from { opacity: 0.45; }
+      to { opacity: 0.95; }
+    }
+
+    /* 시작/결과 모달 특화 스타일 */
+    .tape-badge {
+      align-self: center;
+      padding: 5px 14px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: #fffbeb;
+      border: 2px solid #fde68a;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .parcel-title {
+      font-size: 30px !important;
+      font-weight: 900 !important;
+      color: #ffd84a;
+      text-shadow: 0 3px 0 #92400e, 0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+    .modal-sub {
+      word-break: keep-all;
+    }
+    .rule-tips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 15px;
+      padding: 11px 13px;
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: #e9e3f8;
+      word-break: keep-all;
+    }
+    .rule-tips b {
+      color: #fde047;
+    }
+
+    .gifts-result-box {
+      background: rgba(255, 216, 74, 0.07);
+      border: 1px solid rgba(255, 216, 74, 0.26);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .gifts-result-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #fde68a;
+      text-align: center;
+    }
+    .gifts-result-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+    }
+    .gift-res-item {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+  <div class="danger-vignette" id="danger-vignette"></div>
+
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <a href="/" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="best-pill" style="color:#ffd84a">🏆 최고 0점</span>
+    </div>
+  </div>
+
+  <!-- 지인 기록 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <!-- 타임어택 & 택배 적재 계기판 -->
+  <div class="box-hud hidden" id="box-hud">
+    <div class="hud-main-card" id="hud-card">
+      <div class="hud-top-row">
+        <div class="score-cluster">
+          <span class="hud-score" id="hud-score">0점</span>
+          <span class="hud-opened" id="hud-opened">📦 0개</span>
+          <span class="wave-pill" id="hud-wave">LV.1 시작</span>
+        </div>
+        <span class="combo-pill idle" id="hud-combo">콤보 대기</span>
+      </div>
+      <div class="hud-bars-row">
+        <div class="meter-col">
+          <div class="meter-label-row">
+            <span>⏱ 남은 시간</span>
+            <span id="hud-time-txt" style="color:#4ade80">11.0초</span>
+          </div>
+          <div class="time-track">
+            <div class="time-fill" id="hud-time-fill"></div>
+          </div>
+        </div>
+        <div class="meter-col">
+          <div class="meter-label-row">
+            <span>📦 쌓인 택배</span>
+            <span id="hud-stack-txt">3 / 8</span>
+          </div>
+          <div class="stack-slots" id="hud-stack-slots">
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+            <div class="stack-cell"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="gift-shelf" id="gift-shelf"></div>
+  </div>
+
+  <!-- 하단 상태 알약 -->
+  <div class="bottom-bar hidden" id="bottom-bar">
+    <div class="slice-pill" id="slice-pill">테이프 선을 따라 끝까지 직선으로 쫙! 그으세요!</div>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="tape-badge">📦 쾌속 직선 슬라이스 타임어택 📦</div>
+      <div class="modal-title parcel-title">열려라 택배!</div>
+      <p class="modal-sub">
+        현관 앞에 택배가 끝없이 몰려옵니다!<br>
+        박스테이프 위를 <b>빠르고 반듯한 직선</b>으로 쫙 그어 뜯으세요!
+      </p>
+      <div class="rule-tips">
+        <div>⚡ <b>폭주 타임어택</b> — 갈수록 택배 유입이 빨라지고 <b>십자(+)·평행(‖)·중량(H)</b> 다중 테이프가 몰려와요!</div>
+        <div>🚨 <b>과부하 주의</b> — 택배가 <b>8개 가득 쌓이거나 시간 초과</b> 시 게임 오버! (뜯어야 시간이 조금씩 충전!)</div>
+        <div>🎁 <b>칼각 보너스</b> — 테이프 정중앙을 반듯하게 베면(<b>정확도 94%+</b>) <b>랜덤 선물</b>이 튀어오르며 추가 시간·점수 폭발!</div>
+      </div>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">내 최고 점수</div>
+          <div class="stat-val" style="color:var(--accent)" id="start-best">도전 전</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">최다 개봉 기록</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best-boxes">0상자</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start" style="font-size:17px">🔪 커터칼 잡고 언박싱 시작!</button>
+    </div>
+  </div>
+
+  <!-- 결과 모달 -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card">
+      <div class="rank-chip" id="res-rank">📦 빛의 언박싱 마스터</div>
+      <div class="modal-title" id="res-headline" style="color:#ffe24a">0점</div>
+      <p class="modal-sub" id="res-comment">손놀림이 번개 같아요!</p>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">개봉한 택배</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-boxes">0상자</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">평균 정확도</div>
+          <div class="stat-val" id="res-acc">0.0%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">뽑은 선물</div>
+          <div class="stat-val" style="color:var(--green)" id="res-gifts-cnt">0개</div>
+        </div>
+      </div>
+
+      <div class="gifts-result-box" id="res-gifts-box">
+        <div class="gifts-result-title">🎁 이번 판에 튀어나온 깜짝 선물들</div>
+        <div class="gifts-result-list" id="res-gifts-list"></div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 닉네임 (랭킹에 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 언박싱 기록 URL 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 다시 뜯기!</button>
+      </div>
+      <a href="/" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="/boxcut/game.js"></script>
+</body>
+</html>

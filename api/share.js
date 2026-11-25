@@ -1,6 +1,11 @@
 // 카카오톡·인스타·디스코드 공유 시 지인의 전체 랭킹 기록이 미리보기(OG 태그)로 뜨게 하는 동적 공유 엔드포인트
 // 사용 예: /s/haircut?ref=7K9M2P  (구버전 ?c=, ?d= 도 모두 호환)
 const GAME_META = {
+  boxcut: {
+    name: '열려라 택배!',
+    emoji: '📦',
+    desc: '밀려드는 택배 폭탄! 테이프 선을 따라 칼각 직선으로 쫙 그어 뜯고 상자 속 깜짝 선물을 획득하세요!',
+  },
   nail: {
     name: '손톱 색칠하기',
     emoji: '💅',
@@ -119,6 +124,11 @@ export default async function handler(req, res) {
       const secTxt = sec > 5 ? ` · ${sec.toFixed(1)}초` : '';
       ogTitle = `💅 ${who}님의 [손톱 색칠하기${dStr ? ` · ${dStr}` : ''}] 총점 ${Number(run.score || 0).toFixed(1)}점${secTxt}`;
       ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 타임어택 네일아트 기록을 깨 보세요! (${run.rank_title || '네일리스트'})`;
+    } else if (game === 'boxcut') {
+      const bx = Math.round(Number(run.actual_value || 0));
+      const gf = Math.round(Number(run.target_value || 0));
+      ogTitle = `📦 ${who}님의 [열려라 택배!] 기록: ${Math.round(Number(run.score || 0)).toLocaleString()}점 (${bx}상자 개봉 · 선물 ${gf}개)`;
+      ogDesc = `전체 랭킹에서 ${who}님의 위치를 확인하고 칼각 언박싱 기록을 깨 보세요! (${run.rank_title || '언박싱 도전자'})`;
     }
   }
 

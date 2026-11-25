@@ -3,6 +3,20 @@ import { getSupabaseConfig, getBestRecord } from './challenge.js';
 
 export const DEFAULT_GAMES = [
   {
+    id: 'boxcut',
+    title: '열려라 택배!',
+    kicker: '밀려드는 택배 · 칼각 직선 슬라이스!',
+    badge: '📦 타임어택 · 깜짝 선물 보너스',
+    description: '쌓이기 전에 테이프 선을 따라 빠르고 반듯하게 쫙 그어 뜯으세요! 칼각 정확도로 자르면 상자 속에서 희귀 선물이 튀어오릅니다.',
+    metric_label: '언박싱 점수 랭킹',
+    thumb_url: './assets/thumb-boxcut.jpg',
+    href: './boxcut/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: true,
+    sort_order: 3,
+  },
+  {
     id: 'nail',
     title: '손톱 색칠하기',
     kicker: '삐져나가면 끝! 타임어택 네일아트',
@@ -104,10 +118,22 @@ export async function fetchPublicCatalog() {
   try {
     const rows = await rpcCall('g404_public_games', {}, 2);
     if (Array.isArray(rows)) {
+      const existingIds = new Set(rows.map(r => r.id));
+      const missingDefaults = DEFAULT_GAMES.filter(d => !existingIds.has(d.id));
+      if (missingDefaults.length > 0) {
+        const checks = await Promise.all(
+          missingDefaults.map(d => rpcCall('g404_get_game', { p_id: d.id }, 1).catch(() => null))
+        );
+        const trulyNew = missingDefaults.filter((_, idx) => !checks[idx] || !checks[idx].found);
+        if (trulyNew.length > 0) {
+          const merged = [...trulyNew, ...rows].sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100));
+          return { games: merged, live: true };
+        }
+      }
       return { games: rows, live: true };
     }
   } catch {
-    // 오프라인 또는 스키마 미적용 시 기본 3종 폴백
+    // 오프라인 또는 스키마 미적용 시 기본 목록 폴백
   }
   return { games: DEFAULT_GAMES, live: false };
 }
@@ -116,6 +142,10 @@ export function formatBestText(gameId) {
   if (gameId === 'cake') return '📸 360° 돌려보고 공유';
   const b = getBestRecord(gameId);
   if (!b) return '기록 없음';
+  if (gameId === 'boxcut' && b.score != null) {
+    const bx = b.actualValue ? ` (${Math.round(Number(b.actualValue))}상자)` : '';
+    return `최고 ${Math.round(Number(b.score)).toLocaleString()}점${bx}`;
+  }
   if (gameId === 'haircut' && b.errorMm != null) {
     return `최고 오차 ${Number(b.errorMm).toFixed(1)}mm`;
   }

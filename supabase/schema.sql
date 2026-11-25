@@ -64,10 +64,24 @@ insert into public.g404_config (k, v)
 values ('admin_hash', '663e0dda09e8018b5cb6e4e65c3c1f7def1317e7654b4ef74283b187a25b5a84')
 on conflict (k) do nothing;
 
--- 6) 초기 게임 5종 시드 (이미 있으면 관리자 편집값 유지)
+-- 6) 초기 게임 시드 (이미 있으면 관리자 편집값 유지)
 insert into public.g404_games
   (id, title, kicker, badge, description, metric_label, thumb_url, href, status, lock_message, featured, sort_order)
 values
+  (
+    'boxcut',
+    '열려라 택배!',
+    '밀려드는 택배 · 칼각 직선 슬라이스!',
+    '📦 타임어택 · 깜짝 선물 보너스',
+    '쌓이기 전에 테이프 선을 따라 빠르고 반듯하게 쫙 그어 뜯으세요! 칼각 정확도로 자르면 상자 속에서 희귀 선물이 튀어오릅니다.',
+    '언박싱 점수 랭킹',
+    './assets/thumb-boxcut.jpg',
+    './boxcut/',
+    'public',
+    '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    true,
+    3
+  ),
   (
     'nail',
     '손톱 색칠하기',
