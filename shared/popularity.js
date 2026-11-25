@@ -66,11 +66,11 @@ export const DEFAULT_SOCIAL_STATS = {
   boxcut: {
       "ytId": "XuuolbLucZs",
       "igCode": "DgJpsXPiFva",
-      "ytViews": 542,
+      "ytViews": 692,
       "igViews": 0,
-      "ytLikes": 1,
+      "ytLikes": 3,
       "igLikes": 11,
-      "likes": 12,
+      "likes": 14,
       "comments": 0,
       "shares": 0
   },
@@ -83,6 +83,17 @@ export const DEFAULT_SOCIAL_STATS = {
       "igLikes": 0,
       "likes": 2,
       "comments": 1,
+      "shares": 0
+  },
+  snap: {
+      "ytId": "ExQY9NqSb-M",
+      "igCode": "",
+      "ytViews": 2222,
+      "igViews": 0,
+      "ytLikes": 9,
+      "igLikes": 0,
+      "likes": 9,
+      "comments": 0,
       "shares": 0
   },
 };

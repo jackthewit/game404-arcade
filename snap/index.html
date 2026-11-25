@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>웨딩·여행 스냅 알바 — 이게뭔겜? 404 아케이드</title>
+  <meta name="description" content="결혼식장과 여행지 감성 스냅 알바! 커플이 제시한 예시 사진과 똑같은 타이밍에 셔터를 누르세요! 매번 완전히 달라지는 엉뚱한 난입 소동을 피해 10스테이지를 정복하세요!">
+  <link rel="stylesheet" href="/shared/styles.css">
+  <style>
+    #gl, #ov {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #gl { touch-action: none; cursor: grab; }
+    #gl:active { cursor: grabbing; }
+    #ov { pointer-events: none; z-index: 25; }
+
+    /* 셔터 플래시 */
+    .shutter-flash {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 45;
+      transition: opacity 0.18s ease-out;
+    }
+    .shutter-flash.bang {
+      opacity: 0.92;
+      transition: none;
+    }
+
+    /* ─── 상단 스마트폰 스냅 알바 계기판 ─── */
+    .cam-hud {
+      position: fixed;
+      top: calc(max(8px, env(safe-area-inset-top)) + 44px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(95vw, 480px);
+      z-index: 30;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .cam-hud.with-rival {
+      top: calc(max(8px, env(safe-area-inset-top)) + 102px);
+    }
+    .cam-hud.hidden { display: none; }
+
+    .cam-status-bar {
+      background: rgba(14, 15, 22, 0.84);
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 8px 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .cam-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .stage-tag {
+      font-size: 12px;
+      font-weight: 900;
+      color: #fde047;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pay-tag {
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #4ade80;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .cam-row-bot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+    .mood-hearts {
+      letter-spacing: 2px;
+      font-size: 13px;
+    }
+    .timer-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.10);
+      color: #ffffff;
+      font-weight: 900;
+    }
+    .timer-badge.urgent {
+      background: rgba(239, 68, 68, 0.85);
+      color: #ffffff;
+      animation: pulseUrg 0.4s infinite alternate;
+    }
+    @keyframes pulseUrg {
+      from { transform: scale(1); }
+      to { transform: scale(1.06); }
+    }
+
+    /* ─── 왼쪽 위 목표 예시 폴라로이드 카드 ─── */
+    .ref-floating {
+      align-self: flex-start;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      pointer-events: none;
+    }
+    .polaroid-card {
+      width: clamp(112px, 29vw, 138px);
+      background: #fffdf9;
+      border-radius: 10px;
+      padding: 6px 6px 8px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.52);
+      border: 2px solid #facc15;
+      transform: rotate(-2deg);
+    }
+    .polaroid-card.ready {
+      border-color: #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.65), 0 10px 24px rgba(0, 0, 0, 0.5);
+    }
+    .polaroid-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .zoom-req-pill {
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #fde047;
+      font-size: 9.5px;
+      font-weight: 900;
+    }
+    .polaroid-img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 5px;
+      background: #cbd5e1;
+      display: block;
+    }
+    .polaroid-cap {
+      margin-top: 5px;
+      font-size: 10.5px;
+      font-weight: 900;
+      color: #1e293b;
+      text-align: center;
+      line-height: 1.2;
+      word-break: keep-all;
+    }
+
+    .match-pill {
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.90);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      color: #f8fafc;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+    .match-pill.good {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border-color: #bbf7d0;
+      color: #ffffff;
+    }
+    .match-pill.bomb {
+      background: linear-gradient(135deg, #dc2626, #e11d48);
+      border-color: #fecdd3;
+      color: #ffffff;
+    }
+
+    /* ─── 중앙 스마트폰 카메라 뷰파인더 프레임 & 초점 사각형 ─── */
+    .viewfinder-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 22;
+    }
+    .viewfinder-overlay.hidden { display: none; }
+
+    .vf-grid {
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      transform: translate(-50%, -50%);
+      width: min(88vw, 520px);
+      height: min(50vh, 410px);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 14px;
+    }
+    .vf-grid::before, .vf-grid::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .vf-grid::before {
+      border-left: 1px dashed rgba(255, 255, 255, 0.14);
+      border-right: 1px dashed rgba(255, 255, 255, 0.14);
+      left: 33.33%;
+      right: 33.33%;
+    }
+    .vf-grid::after {
+      border-top: 1px dashed rgba(255, 255, 255, 0.14);
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.14);
+      top: 33.33%;
+      bottom: 33.33%;
+    }
+
+    .af-reticle {
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      transform: translate(-50%, -50%);
+      width: 108px;
+      height: 108px;
+      border: 2px solid rgba(250, 204, 21, 0.85);
+      border-radius: 12px;
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .af-reticle.locked {
+      border-color: #4ade80;
+      box-shadow: 0 0 22px rgba(74, 222, 128, 0.55);
+      transform: translate(-50%, -50%) scale(0.93);
+    }
+    .af-reticle.blocked {
+      border-color: #fb7185;
+      box-shadow: 0 0 22px rgba(244, 63, 94, 0.65);
+    }
+    .af-label {
+      position: absolute;
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 900;
+      background: rgba(15, 23, 42, 0.82);
+      color: #fde047;
+    }
+    .af-reticle.locked .af-label {
+      background: #16a34a;
+      color: #ffffff;
+    }
+    .af-reticle.blocked .af-label {
+      background: #e11d48;
+      color: #ffffff;
+    }
+
+    /* ─── 하단 스마트폰 카메라 컨트롤 독 (배율 · 셔터 · 촬영본 미리보기) ─── */
+    .cam-dock {
+      position: fixed;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94vw, 440px);
+      z-index: 32;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      pointer-events: none;
+    }
+    .cam-dock.hidden { display: none; }
+
+    /* 포즈 리듬 게이지 */
+    .pose-sync-wrap {
+      width: min(82vw, 310px);
+      background: rgba(12, 14, 22, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(6px);
+    }
+    .pose-sync-lbl {
+      font-size: 10.5px;
+      font-weight: 900;
+      color: #fde68a;
+      white-space: nowrap;
+    }
+    .pose-track {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      overflow: hidden;
+      position: relative;
+    }
+    .pose-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f59e0b, #4ade80);
+      transition: width 0.05s linear;
+    }
+
+    /* 배율 선택 링 (0.5x / 1x / 2x) */
+    .zoom-selector {
+      pointer-events: auto;
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: 999px;
+      background: rgba(12, 14, 22, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(8px);
+    }
+    .zoom-btn {
+      width: 38px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 11.5px;
+      font-weight: 900;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.14s ease;
+    }
+    .zoom-btn.active {
+      background: rgba(250, 204, 21, 0.22);
+      border-color: #facc15;
+      color: #fde047;
+      transform: scale(1.06);
+    }
+    .zoom-btn.hint::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    .shutter-bar {
+      pointer-events: auto;
+      width: 100%;
+      background: rgba(12, 14, 22, 0.88);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 26px;
+      padding: 9px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .last-shot-slot {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .last-shot-slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .shutter-btn {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      background: transparent;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.08s ease;
+    }
+    .shutter-btn:active { transform: scale(0.91); }
+    .shutter-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.4);
+      transition: background 0.14s ease;
+    }
+    .shutter-btn.ready-glow {
+      border-color: #4ade80;
+      box-shadow: 0 0 22px rgba(74, 222, 128, 0.65);
+    }
+    .shutter-btn.ready-glow .shutter-inner {
+      background: #dcfce7;
+    }
+
+    .recenter-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+    }
+    .recenter-btn:active { transform: scale(0.94); }
+
+    /* 방금 찍은 사진 현상 팝업 */
+    .developed-popup {
+      position: fixed;
+      top: 47%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.75) rotate(-3deg);
+      z-index: 42;
+      width: min(68vw, 240px);
+      background: #fffdf9;
+      border-radius: 14px;
+      padding: 10px 10px 13px;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.68);
+      border: 3px solid #22c55e;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.16s ease, transform 0.22s cubic-bezier(0.2, 1.35, 0.4, 1);
+    }
+    .developed-popup.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1) rotate(-2deg);
+    }
+    .developed-popup.bad {
+      border-color: #ef4444;
+      transform: translate(-50%, -50%) scale(1) rotate(4deg);
+    }
+    .developed-popup img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+    .developed-stamp {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+      color: #15803d;
+      word-break: keep-all;
+    }
+    .developed-popup.bad .developed-stamp {
+      color: #dc2626;
+    }
+
+    /* ─── 스테이지 브리핑 (예시 사진 5~10장 제시 보드) & 클리어 갤러리 ─── */
+    .wide-modal-card {
+      width: min(94vw, 520px) !important;
+      max-height: 88vh;
+      overflow-y: auto;
+    }
+    .brief-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .brief-item {
+      background: #fffdf9;
+      border-radius: 9px;
+      padding: 5px 5px 7px;
+      color: #0f172a;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .brief-item img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 5px;
+      background: #e2e8f0;
+    }
+    .brief-item-txt {
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.2;
+      color: #1e293b;
+      word-break: keep-all;
+    }
+    .snap-badge {
+      align-self: center;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .snap-title {
+      font-size: 28px !important;
+      font-weight: 900 !important;
+      color: #fef08a;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+    }
+    .rule-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 11px 13px;
+      font-size: 12.5px;
+      line-height: 1.46;
+      color: #f1f5f9;
+      word-break: keep-all;
+    }
+    .rule-list b { color: #fde047; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+  <div class="shutter-flash" id="shutter-flash"></div>
+
+  <!-- 상단 바 -->
+  <div class="topbar" id="topbar">
+    <a href="/" class="pill-btn">← 404 아케이드</a>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="pill-btn" id="btn-bgm">🔊 BGM</button>
+      <span class="pill-btn" id="best-pill" style="color:#fde047">🏆 최고 0원</span>
+    </div>
+  </div>
+
+  <!-- 지인 기록 배너 -->
+  <div class="rival-banner" id="rival-banner" style="display:none">
+    <div id="rival-banner-text"></div>
+    <span class="rival-badge">지인 기록</span>
+  </div>
+
+  <!-- 촬영 중 상단 계기판 & 왼쪽 위 예시 폴라로이드 -->
+  <div class="cam-hud hidden" id="cam-hud">
+    <div class="cam-status-bar">
+      <div class="cam-row-top">
+        <span class="stage-tag" id="hud-stage-title">STAGE 1/10 · 호숫가 가든 웨딩</span>
+        <span class="pay-tag" id="hud-pay">💰 0원</span>
+      </div>
+      <div class="cam-row-bot">
+        <span id="hud-shot-progress">📸 사진 1 / 5</span>
+        <span class="mood-hearts" id="hud-hearts">❤️❤️❤️</span>
+        <span class="timer-badge" id="hud-timer">⏱ 45초</span>
+      </div>
+    </div>
+
+    <div class="ref-floating">
+      <div class="polaroid-card" id="ref-card">
+        <div class="polaroid-head">
+          <span id="ref-num">#1 예시</span>
+          <span class="zoom-req-pill" id="ref-zoom">1x</span>
+        </div>
+        <img class="polaroid-img" id="ref-img" alt="예시 사진">
+        <div class="polaroid-cap" id="ref-cap">손잡고 다정 뒷모습</div>
+      </div>
+      <div class="match-pill" id="match-pill">일치도 0%</div>
+    </div>
+  </div>
+
+  <!-- 중앙 스마트폰 카메라 격자 & 초점 프레임 -->
+  <div class="viewfinder-overlay hidden" id="vf-overlay">
+    <div class="vf-grid"></div>
+    <div class="af-reticle" id="af-reticle">
+      <span class="af-label" id="af-label">포즈 대기 중</span>
+    </div>
+  </div>
+
+  <!-- 방금 찍은 폴라로이드 현상 팝업 -->
+  <div class="developed-popup" id="dev-popup">
+    <img id="dev-img" alt="촬영된 사진">
+    <div class="developed-stamp" id="dev-stamp">✨ 일치 96% 성공!</div>
+  </div>
+
+  <!-- 하단 스마트폰 배율 & 셔터 독 -->
+  <div class="cam-dock hidden" id="cam-dock">
+    <div class="pose-sync-wrap">
+      <span class="pose-sync-lbl" id="pose-lbl">💃 커플 포즈 타이밍</span>
+      <div class="pose-track">
+        <div class="pose-fill" id="pose-fill"></div>
+      </div>
+    </div>
+
+    <div class="zoom-selector">
+      <button type="button" class="zoom-btn" data-zoom="0.5">0.5x</button>
+      <button type="button" class="zoom-btn active" data-zoom="1">1x</button>
+      <button type="button" class="zoom-btn" data-zoom="2">2x</button>
+    </div>
+
+    <div class="shutter-bar">
+      <div class="last-shot-slot" id="last-shot-slot" title="방금 찍은 사진">🖼️</div>
+      <button type="button" class="shutter-btn" id="btn-shutter" aria-label="사진 찍기">
+        <div class="shutter-inner"></div>
+      </button>
+      <button type="button" class="recenter-btn" id="btn-recenter">
+        <span>🎯</span>
+        <span>정중앙</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 시작 모달 -->
+  <div class="modal-backdrop" id="start-modal">
+    <div class="modal-card">
+      <div class="snap-badge">📸 결혼식 · 여행지 감성 스냅 알바 📸</div>
+      <div class="modal-title snap-title">웨딩·여행 스냅 알바</div>
+      <p class="modal-sub">
+        커플이 원하는 <b>예시 사진(첫 판 5장 → 최대 10장)</b>과<br>
+        똑같은 구도·배율·타이밍에 셔터를 누르세요!
+      </p>
+      <div class="rule-list">
+        <div>🖼️ <b>예시 사진 재현</b> — 드래그로 구도를 맞추고 <b>0.5x·1x·2x 배율</b>과 <b>커플 포즈 정점</b>이 겹칠 때 찰칵!</div>
+        <div>🦆 <b>100% 리얼 랜덤 돌발 소동</b> — 오리·전 애인·스프링클러부터 <b>공룡탈·서빙로봇·UFO 납치·선글라스 알파카</b>까지 매 판 완전히 다른 기행이 터집니다!</div>
+        <div>👑 <b>총 10스테이지 정복</b> — 5대 명소에서 점점 까다로운 커플들이 등장하며 미션 수와 엉뚱함이 계속 배가됩니다!</div>
+      </div>
+      <div id="start-rival-box" style="display:none" class="vs-card"></div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-box">
+          <div class="stat-label">최고 누적 알바비</div>
+          <div class="stat-val" style="color:var(--accent)" id="start-best">도전 전</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">최고 도달 스테이지</div>
+          <div class="stat-val" style="color:var(--green)" id="start-best-stage">0 / 10</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-start" style="font-size:16.5px">📱 스냅 카메라 들고 첫 출근하기!</button>
+    </div>
+  </div>
+
+  <!-- 스테이지 미션 예시 사진 브리핑 모달 -->
+  <div class="modal-backdrop hidden" id="brief-modal">
+    <div class="modal-card wide-modal-card">
+      <div class="snap-badge" id="brief-badge">STAGE 1 / 10 · 호숫가 가든 결혼식장</div>
+      <div class="modal-title" id="brief-couple" style="font-size:22px;color:#fde047">신입 순백 웨딩 커플</div>
+      <p class="modal-sub" id="brief-quote">“작가님! 아래 예시 사진 5장이랑 똑같은 순간에 찍어 주세요!”</p>
+      <div class="brief-grid" id="brief-grid"></div>
+      <button type="button" class="btn btn-primary" id="btn-begin-stage" style="font-size:16px">📸 예시 확인 완료! 촬영 시작!</button>
+    </div>
+  </div>
+
+  <!-- 스테이지 클리어 검수 모달 -->
+  <div class="modal-backdrop hidden" id="stage-clear-modal">
+    <div class="modal-card wide-modal-card">
+      <div class="rank-chip" id="sc-chip">🎉 STAGE 1 클리어! 커플 대만족!</div>
+      <div class="modal-title" id="sc-title" style="font-size:24px;color:#4ade80">알바비 +62,000원 정산!</div>
+      <p class="modal-sub" id="sc-sub">평균 일치도 94.2% · 다음 커플이 같은 명소에서 기다리고 있어요!</p>
+      <div class="brief-grid" id="sc-gallery"></div>
+      <button type="button" class="btn btn-primary" id="btn-next-stage" style="font-size:16px">👉 다음 커플 미션 받기!</button>
+    </div>
+  </div>
+
+  <!-- 최종 결과 모달 (10스테이지 완주 또는 중도 해고) -->
+  <div class="modal-backdrop hidden" id="result-modal">
+    <div class="modal-card wide-modal-card">
+      <div class="rank-chip" id="res-rank">📸 전설의 1타 스냅 작가</div>
+      <div class="modal-title" id="res-headline" style="color:#fde047">0원</div>
+      <p class="modal-sub" id="res-comment">오리와 외계인이 날뛰어도 흔들리지 않는 셔터 장인!</p>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">도달 스테이지</div>
+          <div class="stat-val" style="color:var(--accent)" id="res-stage">1 / 10</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">성공한 스냅</div>
+          <div class="stat-val" id="res-shots">0장</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">평균 일치도</div>
+          <div class="stat-val" style="color:var(--green)" id="res-acc">0.0%</div>
+        </div>
+      </div>
+
+      <div id="res-vs-wrap" style="display:none"></div>
+      <div id="res-lb-wrap" style="display:none"></div>
+
+      <div class="nick-row">
+        <input type="text" id="res-nick" class="nick-input" maxlength="14" placeholder="내 작가명 (랭킹 표시)">
+      </div>
+      <button type="button" class="btn btn-share" id="btn-share">🔗 내 스냅 알바 수입 & 기록 공유하기</button>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="btn-save-img" style="padding:12px;font-size:13px">📸 결과 카드 저장</button>
+        <button type="button" class="btn btn-primary" id="btn-retry" style="padding:12px;font-size:13px">🔄 새 랜덤 소동으로 재출근!</button>
+      </div>
+      <a href="/" class="btn btn-home">🏠 404 아케이드 메인으로</a>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/environments/RoomEnvironment.js":"/vendor/three/RoomEnvironment.js"}}
+  </script>
+  <script type="module" src="/snap/game.js"></script>
+</body>
+</html>

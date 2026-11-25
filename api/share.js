@@ -1,6 +1,11 @@
 // 카카오톡·인스타·디스코드 공유 시 지인의 전체 랭킹 기록이 미리보기(OG 태그)로 뜨게 하는 동적 공유 엔드포인트
 // 사용 예: /s/haircut?ref=7K9M2P  (구버전 ?c=, ?d= 도 모두 호환)
 const GAME_META = {
+  snap: {
+    name: '웨딩·여행 스냅 알바',
+    emoji: '📸',
+    desc: '오리·전 애인부터 UFO·선글라스 알파카까지 매번 다른 랜덤 소동 속에서 예시 사진과 똑같이 찍는 10스테이지 스냅 알바!',
+  },
   jjamppong: {
     name: '짬뽕 탄막',
     emoji: '🍜',
@@ -139,6 +144,12 @@ export default async function handler(req, res) {
       const wv = Math.round(Number(run.actual_value || 0));
       ogTitle = `🍜 ${who}님의 [짬뽕 탄막] 흰 티 생존 기록: ${sec}초 (${wv}젓가락 방어)`;
       ogDesc = `사악한 짬뽕 국물 지옥에서 ${who}님보다 오래 살아남아 보세요! (${run.rank_title || '순백 수호자'})`;
+    } else if (game === 'snap') {
+      const pay = Math.round(Number(run.score || 0)).toLocaleString();
+      const st = Math.round(Number(run.actual_value || 1));
+      const sh = Math.round(Number(run.target_value || 0));
+      ogTitle = `📸 ${who}님의 [웨딩·여행 스냅 알바] 수입: ${pay}원 (STAGE ${st}/10 · 인생샷 ${sh}장)`;
+      ogDesc = `오리와 외계인이 난입하는 스냅 알바에서 ${who}님의 기록을 깨 보세요! (${run.rank_title || '스냅 작가'})`;
     }
   }
 

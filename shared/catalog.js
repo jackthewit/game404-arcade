@@ -4,6 +4,20 @@ import { startGameEngagementTracker } from './popularity.js';
 
 export const DEFAULT_GAMES = [
   {
+    id: 'snap',
+    title: '웨딩·여행 스냅 알바',
+    kicker: '엉뚱 난입 돌파 · 10스테이지 스냅!',
+    badge: '📸 100% 랜덤 기행 · 예시 사진 재현',
+    description: '결혼식장과 여행지 명소에서 커플이 준 예시 사진과 똑같은 타이밍에 찰칵! 오리·전 애인부터 UFO·선글라스 알파카까지 매번 다른 랜덤 소동을 뚫고 10스테이지를 정복하세요.',
+    metric_label: '누적 알바비 랭킹',
+    thumb_url: './assets/thumb-snap.jpg',
+    href: './snap/',
+    status: 'public',
+    lock_message: '곧 공개 예정입니다! 조금만 기다려 주세요.',
+    featured: true,
+    sort_order: 2,
+  },
+  {
     id: 'jjamppong',
     title: '짬뽕 탄막',
     kicker: '흰 티 입은 날 · 사악한 국물 회피!',
@@ -157,6 +171,10 @@ export function formatBestText(gameId) {
   if (gameId === 'cake') return '📸 360° 돌려보고 공유';
   const b = getBestRecord(gameId);
   if (!b) return '기록 없음';
+  if (gameId === 'snap' && b.score != null) {
+    const st = b.actualValue ? ` (STAGE ${Math.round(Number(b.actualValue))})` : '';
+    return `최고 ${Math.round(Number(b.score)).toLocaleString()}원${st}`;
+  }
   if (gameId === 'jjamppong' && b.score != null) {
     const wv = b.actualValue ? ` (${Math.round(Number(b.actualValue))}젓가락)` : '';
     return `최고 ${Number(b.score).toFixed(2)}초${wv}`;
@@ -281,7 +299,9 @@ export async function loadLayoutConfig(forceRefresh = false) {
         const row = await res.json();
         if (row && row.id && row.meta && Array.isArray(row.meta.newIds)) {
           const savedIds = row.meta.newIds.map(String);
-          if (!savedIds.includes('jjamppong')) savedIds.unshift('jjamppong');
+          for (const nid of ['jjamppong', 'snap']) {
+            if (!savedIds.includes(nid)) savedIds.unshift(nid);
+          }
           cachedLayout = { newIds: savedIds };
           return cachedLayout;
         }
@@ -290,7 +310,7 @@ export async function loadLayoutConfig(forceRefresh = false) {
       // fallback below
     }
   }
-  cachedLayout = { newIds: ['jjamppong', 'boxcut'] };
+  cachedLayout = { newIds: ['snap', 'jjamppong', 'boxcut'] };
   return cachedLayout;
 }
 
