@@ -4,15 +4,76 @@ import { getSupabaseConfig } from './challenge.js';
 const LOCAL_POP_KEY = 'fgs.popularity.local.v1';
 const SESSION_VISIT_PREFIX = 'fgs.visited.session.';
 
-// 콘텐츠 허브(요약.md · 성과정리.md)에 집계된 실제 유튜브 쇼츠 & 인스타 릴스 반응 기준치
-// 관리자 모드(/admin.html)에서 최신 조회수로 덮어쓰기(오버라이드) 가능
+// 콘텐츠 허브 공식 API(YouTube Data API v3 + Instagram Graph API) 실시간 조회 실측치 (2026-11-25 갱신)
+// ※ 인스타 토큰에 instagram_manage_insights 권한이 없을 때는 허위/추정 조회수를 적지 않고 공식 API 실측(좋아요·댓글 + 쇼츠 조회수)만 표시합니다.
+// ※ 관리자 모드(/admin.html)에서 인스타 실제 재생수(igViews)를 입력하면 '릴스·쇼츠 ○.○만회' 합산 조회수로 자동 전환됩니다.
 export const DEFAULT_SOCIAL_STATS = {
-  haircut: { ytViews: 3515, igViews: 41000, likes: 119, shares: 82, label: '릴스·쇼츠 4.5만회' },
-  cake: { ytViews: 1426, igViews: 9600, likes: 64, shares: 38, label: '릴스·쇼츠 1.1만회' },
-  film: { ytViews: 1219, igViews: 8800, likes: 58, shares: 34, label: '릴스·쇼츠 1.0만회' },
-  nail: { ytViews: 1183, igViews: 3400, likes: 29, shares: 14, label: '릴스·쇼츠 4.6천회' },
-  toilet: { ytViews: 983, igViews: 2600, likes: 22, shares: 15, label: '릴스·쇼츠 3.6천회' },
-  boxcut: { ytViews: 350, igViews: 900, likes: 15, shares: 8, label: '🔥 신작 발행' },
+  cake: {
+      "ytId": "hUlDgApbvng",
+      "igCode": "DfzL-jBBslN",
+      "ytViews": 1431,
+      "igViews": 0,
+      "ytLikes": 8,
+      "igLikes": 565,
+      "likes": 573,
+      "comments": 6,
+      "shares": 0
+  },
+  film: {
+      "ytId": "ADY8WhZWY8c",
+      "igCode": "DfzLUtRAfgu",
+      "ytViews": 1219,
+      "igViews": 0,
+      "ytLikes": 8,
+      "igLikes": 197,
+      "likes": 205,
+      "comments": 6,
+      "shares": 0
+  },
+  haircut: {
+      "ytId": "QaCzc4uhdGg",
+      "igCode": "DfoqYjvhRfp",
+      "ytViews": 3516,
+      "igViews": 0,
+      "ytLikes": 8,
+      "igLikes": 189,
+      "likes": 197,
+      "comments": 12,
+      "shares": 82
+  },
+  nail: {
+      "ytId": "_zDkFh3ie78",
+      "igCode": "Df8UlPuvmfo",
+      "ytViews": 1183,
+      "igViews": 0,
+      "ytLikes": 6,
+      "igLikes": 13,
+      "likes": 19,
+      "comments": 3,
+      "shares": 0
+  },
+  toilet: {
+      "ytId": "HzgtlFKDyGU",
+      "igCode": "Df-7bsPgpVB",
+      "ytViews": 1005,
+      "igViews": 0,
+      "ytLikes": 1,
+      "igLikes": 6,
+      "likes": 7,
+      "comments": 0,
+      "shares": 0
+  },
+  boxcut: {
+      "ytId": "XuuolbLucZs",
+      "igCode": "DgJpsXPiFva",
+      "ytViews": 384,
+      "igViews": 0,
+      "ytLikes": 1,
+      "igLikes": 8,
+      "likes": 9,
+      "comments": 0,
+      "shares": 0
+  },
 };
 
 function readLocalPop() {
@@ -154,6 +215,31 @@ async function fetchCount(sb, statGameId) {
   return 0;
 }
 
+function formatShortNum(n) {
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}천`;
+  return Math.round(n).toLocaleString();
+}
+
+export function formatSocialStatsLabel(soc = {}) {
+  const ytViews = Math.max(0, Number(soc.ytViews || 0));
+  const igViews = Math.max(0, Number(soc.igViews || 0));
+  const likes = Math.max(0, Number(soc.likes || 0));
+  if (igViews > 0) {
+    return formatSocialViewsLabel(ytViews + igViews);
+  }
+  if (likes > 0 && ytViews > 0) {
+    return `♥${likes.toLocaleString()} · 쇼츠 ${formatShortNum(ytViews)}회`;
+  }
+  if (ytViews > 0) {
+    return `쇼츠 ${formatShortNum(ytViews)}회`;
+  }
+  if (likes > 0) {
+    return `반응 ♥${likes.toLocaleString()}`;
+  }
+  return '신작 공개';
+}
+
 async function fetchSocialOverride(sb, gameId) {
   if (!sb) return null;
   try {
@@ -169,15 +255,16 @@ async function fetchSocialOverride(sb, gameId) {
     if (!res.ok) return null;
     const row = await res.json();
     if (row && row.id) {
+      const def = DEFAULT_SOCIAL_STATS[gameId] || {};
       const ytViews = Math.max(0, Number(row.target_value || 0));
       const igViews = Math.max(0, Number(row.actual_value || 0));
-      const totalV = ytViews + igViews;
+      const likes = Number((row.meta && row.meta.likes) ?? def.likes ?? 0);
+      const comments = Number((row.meta && row.meta.comments) ?? def.comments ?? 0);
+      const shares = Number((row.meta && row.meta.shares) ?? def.shares ?? 0);
+      const merged = { ...def, ytViews, igViews, likes, comments, shares };
       return {
-        ytViews,
-        igViews,
-        likes: Number((row.meta && row.meta.likes) || 0),
-        shares: Number((row.meta && row.meta.shares) || 0),
-        label: row.rank_title || formatSocialViewsLabel(totalV),
+        ...merged,
+        label: row.rank_title || formatSocialStatsLabel(merged),
       };
     }
   } catch {
@@ -203,11 +290,17 @@ export function formatPlayTimeLabel(totalSec) {
 }
 
 // 관리자 모드에서 특정 게임의 릴스·쇼츠 조회수를 저장/갱신할 때 사용 (단일 고정 ID 'soc_<id>' 업데이트용)
-export async function saveSocialStatsOverride({ gameId, ytViews, igViews, customLabel = '' }) {
+export async function saveSocialStatsOverride({ gameId, ytViews, igViews, likes, customLabel = '' }) {
   const sb = await getSupabaseConfig();
   if (!sb) throw new Error('Supabase 설정이 없습니다.');
-  const total = Math.max(0, Number(ytViews || 0)) + Math.max(0, Number(igViews || 0));
-  const label = customLabel.trim() || formatSocialViewsLabel(total);
+  const def = DEFAULT_SOCIAL_STATS[gameId] || {};
+  const finalYt = Math.max(0, Number(ytViews || 0));
+  const finalIg = Math.max(0, Number(igViews || 0));
+  const finalLikes = likes != null ? Math.max(0, Number(likes)) : Number(def.likes || 0);
+  const finalComments = Number(def.comments || 0);
+  const finalShares = Number(def.shares || 0);
+  const total = finalYt + finalIg;
+  const label = customLabel.trim() || formatSocialStatsLabel({ ytViews: finalYt, igViews: finalIg, likes: finalLikes });
   const runId = `soc_${gameId}`.slice(0, 16);
 
   // 기존 soc_<id> 행이 있으면 관리자 삭제 후 재삽입할 수 있도록 호출측에서 처리하거나 새 값을 기록
@@ -223,13 +316,19 @@ export async function saveSocialStatsOverride({ gameId, ytViews, igViews, custom
       p_room_id: 'SOCMETA',
       p_game_id: '__social__',
       p_nickname: gameId.slice(0, 16),
-      p_target_value: Math.max(0, Number(ytViews || 0)),
-      p_actual_value: Math.max(0, Number(igViews || 0)),
+      p_target_value: finalYt,
+      p_actual_value: finalIg,
       p_score: total,
       p_error_mm: null,
       p_rank_title: label.slice(0, 40),
       p_seed: 1,
-      p_meta: { ytViews: Number(ytViews || 0), igViews: Number(igViews || 0) },
+      p_meta: {
+        ytViews: finalYt,
+        igViews: finalIg,
+        likes: finalLikes,
+        comments: finalComments,
+        shares: finalShares,
+      },
     }),
   });
   if (!res.ok) throw new Error('릴스·쇼츠 지표 저장에 실패했습니다.');
@@ -256,8 +355,8 @@ export async function computeGamesPopularity(games) {
         ytViews: 0,
         igViews: 0,
         likes: 0,
+        comments: 0,
         shares: 0,
-        label: '신작 공개',
       };
 
       // ① 접속 지수 원시값: 방문 세션 + 완주 판수 가중 + 로컬 방문 보정
@@ -266,11 +365,12 @@ export async function computeGamesPopularity(games) {
       // ② 플레이 시간 원시값(초): 20초 버킷 합산 + 완주 1판당 평균 42초 체류 반영 + 로컬 체류시간
       const playSecTotal = Math.max(loc.playSec || 0, timeBuckets * 20 + runCnt * 42 + visitCnt * 18);
 
-      // ③ 릴스 & 쇼츠 반응 원시값: 유튜브 쇼츠 조회 + 인스타 릴스 조회 + 공유·좋아요 반응 가중
+      // ③ 릴스 & 쇼츠 반응 원시값: 유튜브·인스타 실제 조회수 + 공식 API 좋아요·댓글·공유 반응 가중
       const socialTotal =
         (baseSoc.ytViews || 0) +
         (baseSoc.igViews || 0) +
-        (baseSoc.likes || 0) * 15 +
+        (baseSoc.likes || 0) * 65 +
+        (baseSoc.comments || 0) * 120 +
         (baseSoc.shares || 0) * 35;
 
       return {
@@ -281,7 +381,10 @@ export async function computeGamesPopularity(games) {
         socialTotal,
         ytViews: baseSoc.ytViews || 0,
         igViews: baseSoc.igViews || 0,
-        socialLabel: baseSoc.label || formatSocialViewsLabel((baseSoc.ytViews || 0) + (baseSoc.igViews || 0)),
+        likes: baseSoc.likes || 0,
+        igLikes: baseSoc.igLikes || 0,
+        comments: baseSoc.comments || 0,
+        socialLabel: baseSoc.label || formatSocialStatsLabel(baseSoc),
       };
     })
   );

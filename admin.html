@@ -873,15 +873,15 @@
         });
 
         tbody.innerHTML = sorted.map((g, i) => {
-          const p = popMap[g.id] || { popularityScore: 0, visitsLabel: '-', playTimeLabel: '-', ytViews: 0, igViews: 0 };
+          const p = popMap[g.id] || { popularityScore: 0, visitsLabel: '-', playTimeLabel: '-', ytViews: 0, igViews: 0, likes: 0, comments: 0 };
           return `
             <tr data-pop-game="${esc(g.id)}">
               <td><b style="color:#ffd84a;">#${i + 1}</b></td>
-              <td><b>${esc(g.title)}</b> <span class="pill-id">${esc(g.id)}</span></td>
+              <td><b>${esc(g.title)}</b> <span class="pill-id">${esc(g.id)}</span><div style="font-size:11px;color:#fda4af;margin-top:2px;">API 실측: ♥${Number(p.likes || 0).toLocaleString()} · 💬${Number(p.comments || 0).toLocaleString()}</div></td>
               <td><b style="color:#4ade80;">${p.popularityScore.toFixed(1)}점</b></td>
               <td style="font-size:12px;color:#cac2e2;">${esc(p.visitsLabel)} · ${esc(p.playTimeLabel)}</td>
               <td><input type="number" class="input inp-yt" min="0" step="10" value="${Math.round(p.ytViews || 0)}" style="width:105px;padding:7px 9px;"></td>
-              <td><input type="number" class="input inp-ig" min="0" step="10" value="${Math.round(p.igViews || 0)}" style="width:105px;padding:7px 9px;"></td>
+              <td><input type="number" class="input inp-ig" min="0" step="10" value="${Math.round(p.igViews || 0)}" placeholder="미입력(♥기준)" style="width:115px;padding:7px 9px;"></td>
               <td><button type="button" class="btn sm primary btn-save-soc" data-id="${esc(g.id)}">저장</button></td>
             </tr>
           `;
