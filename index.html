@@ -145,42 +145,91 @@
       box-shadow: 0 4px 14px rgba(255, 216, 74, 0.28);
     }
 
-    /* 인기 TOP 1~3 카드 랭크 배지 & 골드 강조 */
+    /* 인기 TOP 1~3 카드 — 알약 배지와 완전히 구분되는 상단 수직 방패 메달 리본 */
     .thumb-card.rank-1 {
-      border-color: rgba(255, 216, 74, 0.82);
-      box-shadow: 0 14px 34px rgba(255, 216, 74, 0.16), 0 12px 28px rgba(0, 0, 0, 0.36);
+      border: 2px solid rgba(255, 216, 74, 0.88);
+      box-shadow: 0 14px 36px rgba(255, 216, 74, 0.20), 0 12px 28px rgba(0, 0, 0, 0.40);
     }
     .thumb-card.rank-2 {
-      border-color: rgba(226, 232, 240, 0.52);
+      border: 2px solid rgba(226, 232, 240, 0.62);
     }
     .thumb-card.rank-3 {
-      border-color: rgba(251, 146, 60, 0.50);
+      border: 2px solid rgba(251, 146, 60, 0.62);
     }
-    .pop-rank-ribbon {
+    .pop-medal-wrap {
       position: absolute;
-      top: 11px;
-      right: 11px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 900;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.42);
+      top: 0;
+      right: 14px;
+      z-index: 4;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.68));
+      pointer-events: none;
     }
-    .pop-rank-ribbon.r1 {
-      background: linear-gradient(135deg, #fde047, #f59e0b);
-      color: #1c1300;
-      border: 1px solid #fef9c3;
+    .pop-medal-flag {
+      width: 48px;
+      padding: 6px 4px 13px;
+      clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1px;
+      text-align: center;
+      position: relative;
     }
-    .pop-rank-ribbon.r2 {
-      background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+    .pop-medal-flag::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 42%);
+      pointer-events: none;
+    }
+    .pop-medal-flag.r1 {
+      background: linear-gradient(180deg, #fff08a 0%, #f59e0b 58%, #b45309 100%);
+      color: #231200;
+    }
+    .pop-medal-flag.r2 {
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 58%, #64748b 100%);
       color: #0f172a;
-      border: 1px solid #ffffff;
     }
-    .pop-rank-ribbon.r3 {
-      background: linear-gradient(135deg, #fdba74, #ea580c);
+    .pop-medal-flag.r3 {
+      background: linear-gradient(180deg, #fb923c 0%, #c2410c 55%, #7c2d12 100%);
       color: #ffffff;
-      border: 1px solid #fed7aa;
+    }
+    .pop-medal-crown {
+      width: 15px;
+      height: 12px;
+      display: block;
+      flex-shrink: 0;
+    }
+    .pop-medal-kicker {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      opacity: 0.88;
+    }
+    .pop-medal-num {
+      font-size: 22px;
+      font-weight: 900;
+      font-style: italic;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .pop-medal-flag.r1 .pop-medal-num {
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+    }
+    .pop-medal-flag.r2 .pop-medal-num {
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+    .pop-medal-flag.r3 .pop-medal-num {
+      text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.55);
+    }
+    .pop-medal-unit {
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 900;
+      margin-left: 1px;
     }
 
     /* 카드 내부 3대 인기 지표 미니 배지 줄 */
@@ -625,9 +674,19 @@
         const p = popMap[g.id];
 
         let ribbonHtml = '';
-        if (rank === 1) ribbonHtml = `<span class="pop-rank-ribbon r1">👑 인기 1위</span>`;
-        else if (rank === 2) ribbonHtml = `<span class="pop-rank-ribbon r2">🥈 인기 2위</span>`;
-        else if (rank === 3) ribbonHtml = `<span class="pop-rank-ribbon r3">🥉 인기 3위</span>`;
+        if (rank >= 1 && rank <= 3) {
+          const crownSvg = rank === 1
+            ? `<svg class="pop-medal-crown" viewBox="0 0 24 18" fill="currentColor" aria-hidden="true"><path d="M2 15L0 4l6.5 4.5L12 1l5.5 7.5L24 4l-2 11H2zm1 2h18v1.5H3V17z"/></svg>`
+            : `<span class="pop-medal-kicker">인기</span>`;
+          ribbonHtml = `
+            <div class="pop-medal-wrap" aria-label="인기 ${rank}위">
+              <div class="pop-medal-flag r${rank}">
+                ${crownSvg}
+                <div class="pop-medal-num">${rank}<span class="pop-medal-unit">위</span></div>
+              </div>
+            </div>
+          `;
+        }
 
         const metricsHtml = p ? `
           <div class="pop-metrics-row">
