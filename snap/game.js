@@ -1,4 +1,4 @@
-// 웨딩·여행 스냅 알바 — 10스테이지 리얼 랜덤 돌발 소동 3D 스냅 게임 (이게뭔겜? 404 아케이드)
+// 웨딩·여행 스냅 알바 — 10대 월드 명소 멀티 포토존 × 12종 다이내믹 구도 × 100% 리얼 랜덤 기행 3D 웹게임
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { SFX, BGM, unlockAudio } from '/shared/audio.js';
@@ -29,7 +29,7 @@ if (!IS_REC) {
   enforceGameAccess(GAME_ID);
 }
 
-// ─── 100% 순수 암호학적 난수 도우미 (재시작할 때마다 매번 완전히 다른 상황 보장!) ───
+// ─── 100% 순수 암호학적 난수 도우미 (재시작마다 매번 완전히 새로운 미션·스팟·구도·돌발 기행!) ───
 const _randBuf = new Uint32Array(1);
 function trueRand() {
   if (window.crypto && window.crypto.getRandomValues) {
@@ -40,9 +40,6 @@ function trueRand() {
 }
 function randRange(min, max) {
   return min + trueRand() * (max - min);
-}
-function randInt(min, maxIncl) {
-  return Math.floor(min + trueRand() * (maxIncl - min + 1));
 }
 function randPick(arr) {
   return arr[Math.floor(trueRand() * arr.length)];
@@ -77,30 +74,29 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#87ceeb');
-scene.fog = new THREE.Fog('#87ceeb', 34, 88);
+scene.fog = new THREE.Fog('#87ceeb', 38, 98);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-const camera = new THREE.PerspectiveCamera(42, window.innerWidth / Math.max(1, window.innerHeight), 0.3, 140);
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / Math.max(1, window.innerHeight), 0.3, 160);
 
-const hemiLight = new THREE.HemisphereLight('#fffdf7', '#5a6e58', 1.05);
+const hemiLight = new THREE.HemisphereLight('#fffdf7', '#5a6e58', 1.08);
 scene.add(hemiLight);
 
 const sunLight = new THREE.DirectionalLight('#fff6e0', 1.95);
-sunLight.position.set(-12, 26, 18);
+sunLight.position.set(-14, 28, 20);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.set(1024, 1024);
 sunLight.shadow.camera.near = 4;
-sunLight.shadow.camera.far = 75;
-sunLight.shadow.camera.left = -18;
-sunLight.shadow.camera.right = 18;
-sunLight.shadow.camera.top = 18;
-sunLight.shadow.camera.bottom = -14;
+sunLight.shadow.camera.far = 85;
+sunLight.shadow.camera.left = -22;
+sunLight.shadow.camera.right = 22;
+sunLight.shadow.camera.top = 20;
+sunLight.shadow.camera.bottom = -16;
 sunLight.shadow.bias = -0.0005;
 scene.add(sunLight);
 
-// 캔버스 텍스처 유틸
 function makeCanvasTexture(w, h, drawFn) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -112,7 +108,6 @@ function makeCanvasTexture(w, h, drawFn) {
   return tex;
 }
 
-// 3D 말풍선 스프라이트 생성기 (전 남친·관광객·로봇·UFO 등의 엉뚱한 대사!)
 function createSpeechSprite(text, bg = '#ffffff', fg = '#0f172a', border = '#ef4444') {
   const tex = makeCanvasTexture(512, 144, (g, w, h) => {
     g.clearRect(0, 0, w, h);
@@ -124,7 +119,6 @@ function createSpeechSprite(text, bg = '#ffffff', fg = '#0f172a', border = '#ef4
     g.fill();
     g.stroke();
 
-    // 아래 꼬리
     g.beginPath();
     g.moveTo(w / 2 - 18, h - 30);
     g.lineTo(w / 2, h - 6);
@@ -145,295 +139,788 @@ function createSpeechSprite(text, bg = '#ffffff', fg = '#0f172a', border = '#ef4
   return sp;
 }
 
-// ─── 10개 스테이지 구성표 (5개 배경 × 각 배경당 서로 다른 2커플!) ───
-// 처음엔 정확히 5장 미션에서 시작해 10스테이지(10장, 최고 난이도 & 뇌절 기행 대폭발)까지 진화!
+// ─── 12종 다이내믹 스냅 촬영 구도 카탈로그 (`COMPOSITION_PRESETS`) ───
+// dragU (-1.4 ~ +1.4: 카메라 좌우 궤도 및 여백), dragV (-1.4 ~ +1.4: 로우앵글 ↔ 하이앵글 & 클로즈업 높이)
+const COMPOSITION_PRESETS = [
+  {
+    id: 'low_hero',
+    name: '📐 다리 2m 로우앵글',
+    targetU: 0.0, targetV: -0.95, zoom: 1, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'side_left',
+    name: '📐 왼쪽 40° 입체 측면',
+    targetU: -0.92, targetV: 0.05, zoom: 1, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'side_right',
+    name: '📐 오른쪽 40° 입체 측면',
+    targetU: 0.92, targetV: 0.05, zoom: 1, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'high_mz',
+    name: '📐 MZ 항공 하이앵글',
+    targetU: 0.25, targetV: 1.02, zoom: 1, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'wide_thirds_l',
+    name: '📐 삼분할 풍경 여백(좌)',
+    targetU: 0.78, targetV: -0.25, zoom: 0.5, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'wide_thirds_r',
+    name: '📐 삼분할 풍경 여백(우)',
+    targetU: -0.78, targetV: -0.25, zoom: 0.5, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'upper_close',
+    name: '📐 상반신·소품 클로즈업',
+    targetU: -0.28, targetV: 0.42, zoom: 2, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'shoes_hem',
+    name: '📐 발끝·드레스 감성컷',
+    targetU: 0.35, targetV: -0.82, zoom: 2, tilt: 0,
+    focusFeet: true,
+    minStage: 2,
+  },
+  {
+    id: 'dutch_left',
+    name: '📐 힙한 왼쪽 사선(↖)',
+    targetU: -0.55, targetV: -0.45, zoom: 1, tilt: -1,
+    minStage: 2,
+  },
+  {
+    id: 'dutch_right',
+    name: '📐 힙한 오른쪽 사선(↗)',
+    targetU: 0.55, targetV: -0.45, zoom: 1, tilt: 1,
+    minStage: 2,
+  },
+  {
+    id: 'sky_panorama',
+    name: '📐 웅장한 하늘 파노라마',
+    targetU: 0.0, targetV: -1.08, zoom: 0.5, tilt: 0,
+    minStage: 1,
+  },
+  {
+    id: 'diagonal_bird',
+    name: '📐 대각선 하이 사선컷',
+    targetU: -0.82, targetV: 0.88, zoom: 0.5, tilt: 1,
+    minStage: 3,
+  },
+];
+
+// ─── 10대 월드 웨딩·여행지 명소 & 10쌍의 커플 구성표 ───
+// 스테이지마다 완전히 새로운 명소 씬이 열리고, 각 명소 안에서도 3개의 서로 다른 포토존 스팟을 오가며 촬영합니다!
 const STAGE_CONFIGS = [
   {
-    stage: 1, venue: 'lake_wedding', venueName: '💍 호숫가 가든 결혼식장',
+    stage: 1, venue: 'lake_wedding', venueName: '💍 호숫가 화이트 가든 웨딩',
     coupleName: '순백 클래식 신랑·신부',
-    quote: '“작가님! 첫 결혼식 스냅이에요! 아래 예시 사진 5장이랑 똑같이 찍어 주세요!”',
-    shotsReq: 5, minMatch: 74, timeLimit: 58, basePay: 12000,
-    chaosMaxTier: 1, chaosInterval: [2.8, 4.2], maxConcurrentChaos: 1,
+    quote: '“꽃 아치·웨딩 오픈카·백조 호수 선착장을 돌며 다양한 각도로 5장 찍어 주세요!”',
+    shotsReq: 5, minMatch: 74, timeLimit: 65, basePay: 12000,
+    chaosMaxTier: 1, chaosInterval: [2.9, 4.3], maxConcurrentChaos: 1,
     groomColor: '#1e293b', brideColor: '#ffffff', accentColor: '#f472b6', hatType: 'veil', propType: 'bouquet',
   },
   {
-    stage: 2, venue: 'lake_wedding', venueName: '💍 호숫가 가든 결혼식장',
-    coupleName: '로즈골드 피로연 커플',
-    quote: '“방금 앞 커플 찍으셨죠? 저희는 핑크 드레스 컷 5장 부탁드려요! 오리 조심하세요!”',
-    shotsReq: 5, minMatch: 77, timeLimit: 55, basePay: 14000,
-    chaosMaxTier: 1, chaosInterval: [2.3, 3.6], maxConcurrentChaos: 1,
-    groomColor: '#d6c7b2', brideColor: '#fbcfe8', accentColor: '#fb7185', hatType: 'flower_crown', propType: 'balloon',
+    stage: 2, venue: 'euro_cafe', venueName: '☕ 유럽풍 분수 광장 & 노천카페',
+    coupleName: '파리지앵 로맨틱 커플',
+    quote: '“분수대·빨간 차양 노천카페·시계탑 앞에서 로우앵글이랑 힙한 사선 컷으로 5장 부탁해요!”',
+    shotsReq: 5, minMatch: 76, timeLimit: 62, basePay: 14000,
+    chaosMaxTier: 1, chaosInterval: [2.4, 3.7], maxConcurrentChaos: 1,
+    groomColor: '#334155', brideColor: '#fbcfe8', accentColor: '#e11d48', hatType: 'beret', propType: 'balloon',
   },
   {
-    stage: 3, venue: 'emerald_beach', venueName: '🏖️ 에메랄드 제주 해변',
+    stage: 3, venue: 'emerald_beach', venueName: '🏖️ 제주 무지개 해안도로 & 해변',
     coupleName: '청량 시밀러룩 바캉스 커플',
-    quote: '“바다 여행 스냅 6장이에요! 배율(0.5x·1x·2x)도 예시 카드랑 꼭 맞춰 주세요!”',
-    shotsReq: 6, minMatch: 79, timeLimit: 60, basePay: 16000,
-    chaosMaxTier: 2, chaosInterval: [2.1, 3.3], maxConcurrentChaos: 1,
-    groomColor: '#38bdf8', brideColor: '#f0f9ff', accentColor: '#fde047', hatType: 'straw_hat', propType: 'tube',
+    quote: '“무지개 방호벽·서핑보드 바·야자수 해변을 오가며 시원한 여백 구도로 6장 찍어 주세요!”',
+    shotsReq: 6, minMatch: 78, timeLimit: 66, basePay: 16000,
+    chaosMaxTier: 2, chaosInterval: [2.2, 3.4], maxConcurrentChaos: 1,
+    groomColor: '#0284c7', brideColor: '#f0f9ff', accentColor: '#fde047', hatType: 'straw_hat', propType: 'bouquet',
   },
   {
-    stage: 4, venue: 'emerald_beach', venueName: '🏖️ 에메랄드 제주 해변',
-    coupleName: '트로피컬 선샤인 서퍼 커플',
-    quote: '“해변에 꽃게랑 이상한 공룡 알바가 돌아다녀요! 빈틈 노려서 6장 칼같이 부탁해요!”',
-    shotsReq: 6, minMatch: 81, timeLimit: 58, basePay: 18000,
-    chaosMaxTier: 2, chaosInterval: [1.8, 2.9], maxConcurrentChaos: 2,
-    groomColor: '#f59e0b', brideColor: '#fef08a', accentColor: '#06b6d4', hatType: 'cap', propType: 'bouquet',
+    stage: 4, venue: 'amusement_park', venueName: '🎠 대관람차 & 회전목마 유원지',
+    coupleName: '교복·머리띠 놀이공원 커플',
+    quote: '“돌아가는 대관람차랑 회전목마가 한눈에 걸리게 각도를 잘 돌려서 6장 찍어 주세요!”',
+    shotsReq: 6, minMatch: 80, timeLimit: 64, basePay: 19000,
+    chaosMaxTier: 2, chaosInterval: [1.9, 3.0], maxConcurrentChaos: 2,
+    groomColor: '#1d4ed8', brideColor: '#fef08a', accentColor: '#fb7185', hatType: 'ribbon', propType: 'balloon',
   },
   {
-    stage: 5, venue: 'sunset_cliff', venueName: '🌅 노을빛 등대 전망대',
+    stage: 5, venue: 'sunset_cliff', venueName: '🌅 노을빛 등대 & 빨간 전화부스 절벽',
     coupleName: '선셋 감성 트렌치 커플',
-    quote: '“노을이 지기 전에 7장 찍어야 해요! 관광객들이랑 서빙 로봇이 왜 여기까지 오는지…!”',
-    shotsReq: 7, minMatch: 82, timeLimit: 62, basePay: 21000,
-    chaosMaxTier: 2, chaosInterval: [1.6, 2.7], maxConcurrentChaos: 2,
-    groomColor: '#78350f', brideColor: '#fed7aa', accentColor: '#fb923c', hatType: 'beret', propType: 'camera',
+    quote: '“석양 등대·빨간 공중전화 부스·전망 난간에서 역광 감성 7장! 이상한 난입꾼들 피해서요!”',
+    shotsReq: 7, minMatch: 81, timeLimit: 68, basePay: 22000,
+    chaosMaxTier: 2, chaosInterval: [1.7, 2.8], maxConcurrentChaos: 2,
+    groomColor: '#78350f', brideColor: '#fed7aa', accentColor: '#f97316', hatType: 'beret', propType: 'bouquet',
   },
   {
-    stage: 6, venue: 'sunset_cliff', venueName: '🌅 노을빛 등대 전망대',
-    coupleName: '드라마틱 프로포즈 커플',
-    quote: '“오늘 프로포즈 기념 7장이에요! 하늘에 뭔가 이상한 게 떠다녀도 저희만 예쁘게 찍어주세요!”',
-    shotsReq: 7, minMatch: 84, timeLimit: 60, basePay: 24000,
-    chaosMaxTier: 3, chaosInterval: [1.5, 2.5], maxConcurrentChaos: 2,
-    groomColor: '#1e3a8a', brideColor: '#e11d48', accentColor: '#fde047', hatType: 'tiara', propType: 'bouquet',
+    stage: 6, venue: 'ginkgo_avenue', venueName: '🍂 열기구 뜨는 황금 은행나무길',
+    coupleName: '가을 캠퍼밴 여행 커플',
+    quote: '“빈티지 캠핑카랑 하늘의 열기구들이 다 나오게 로우 파노라마·측면 구도로 7장 부탁해요!”',
+    shotsReq: 7, minMatch: 83, timeLimit: 66, basePay: 25000,
+    chaosMaxTier: 3, chaosInterval: [1.55, 2.6], maxConcurrentChaos: 2,
+    groomColor: '#92400e', brideColor: '#fef3c7', accentColor: '#dc2626', hatType: 'straw_hat', propType: 'bouquet',
   },
   {
-    stage: 7, venue: 'blossom_garden', venueName: '🌸 벚꽃 만개 고궁 정원',
+    stage: 7, venue: 'blossom_palace', venueName: '🌸 벚꽃 만개 고궁 연못 & 홍예교',
     coupleName: '파스텔 고운 한복 커플',
-    quote: '“벚꽃 정원 스냅 8장이에요! 알파카랑 UFO가 지나가도 당황하지 말고 찍어 주세요!”',
-    shotsReq: 8, minMatch: 85, timeLimit: 66, basePay: 28000,
-    chaosMaxTier: 3, chaosInterval: [1.35, 2.3], maxConcurrentChaos: 2,
-    groomColor: '#818cf8', brideColor: '#f9a8d4', accentColor: '#fef08a', hatType: 'ribbon', propType: 'fan',
+    quote: '“붉은 아치 다리·기와 정자·벚꽃 돌담길에서 8장! 알파카랑 UFO가 와도 흔들리지 마세요!”',
+    shotsReq: 8, minMatch: 84, timeLimit: 72, basePay: 29000,
+    chaosMaxTier: 3, chaosInterval: [1.4, 2.35], maxConcurrentChaos: 2,
+    groomColor: '#6366f1', brideColor: '#f9a8d4', accentColor: '#fde047', hatType: 'ribbon', propType: 'bouquet',
   },
   {
-    stage: 8, venue: 'blossom_garden', venueName: '🌸 벚꽃 만개 고궁 정원',
-    coupleName: '레트로 모던 경성 커플',
-    quote: '“정원이 점점 아수라장이 되고 있어요ㅋㅋㅋ 흔들리지 말고 8장 예술로 남겨 주세요!”',
-    shotsReq: 8, minMatch: 86, timeLimit: 64, basePay: 32000,
-    chaosMaxTier: 3, chaosInterval: [1.2, 2.1], maxConcurrentChaos: 2,
-    groomColor: '#4c0519', brideColor: '#fef3c7', accentColor: '#f43f5e', hatType: 'straw_hat', propType: 'parasol',
+    stage: 8, venue: 'snow_chapel', venueName: '❄️ 순백 설원 통나무 채플 & 트리숲',
+    coupleName: '윈터 화이트 코트 커플',
+    quote: '“눈 내리는 통나무 채플·대형 크리스마스트리·자작나무 썰매 스팟에서 겨울 화보 8장이에요!”',
+    shotsReq: 8, minMatch: 85, timeLimit: 70, basePay: 34000,
+    chaosMaxTier: 3, chaosInterval: [1.25, 2.15], maxConcurrentChaos: 2,
+    groomColor: '#0f172a', brideColor: '#f8fafc', accentColor: '#ef4444', hatType: 'tiara', propType: 'balloon',
   },
   {
-    stage: 9, venue: 'starlight_rooftop', venueName: '🌃 별빛 루프탑 야경 웨딩',
-    coupleName: '스파클링 시티나이트 커플',
-    quote: '“루프탑 나이트 웨딩 9장! 사방에서 외계인이랑 돌고래가 날아다녀도 작가님만 믿어요!”',
-    shotsReq: 9, minMatch: 87, timeLimit: 68, basePay: 38000,
-    chaosMaxTier: 3, chaosInterval: [1.05, 1.9], maxConcurrentChaos: 3,
-    groomColor: '#f8fafc', brideColor: '#fbbf24', accentColor: '#38bdf8', hatType: 'veil', propType: 'balloon',
+    stage: 9, venue: 'lavender_windmill', venueName: '💜 보랏빛 라벤더 언덕 & 대형 풍차',
+    coupleName: '프로방스 가든 웨딩 커플',
+    quote: '“돌아가는 풍차·라벤더 밭 하얀 그랜드피아노 앞에서 역동적인 앵글로 9장 남겨 주세요!”',
+    shotsReq: 9, minMatch: 86, timeLimit: 74, basePay: 40000,
+    chaosMaxTier: 3, chaosInterval: [1.1, 1.95], maxConcurrentChaos: 3,
+    groomColor: '#4c1d95', brideColor: '#f5f3ff', accentColor: '#c084fc', hatType: 'veil', propType: 'bouquet',
   },
   {
-    stage: 10, venue: 'starlight_rooftop', venueName: '🌃 별빛 루프탑 야경 웨딩',
+    stage: 10, venue: 'starlight_rooftop', venueName: '🌃 별빛 루프탑 인피니티풀 & 불꽃놀이',
     coupleName: '👑 전설의 VVIP 월드스타 커플',
-    quote: '“마지막 10스테이지! 총 10장! 우주 대혼란 속에서 전부 찍어내면 전설의 스냅 작가 등극입니다!!”',
-    shotsReq: 10, minMatch: 88, timeLimit: 74, basePay: 50000,
-    chaosMaxTier: 3, chaosInterval: [0.92, 1.7], maxConcurrentChaos: 3,
-    groomColor: '#581c87', brideColor: '#f3e8ff', accentColor: '#fde047', hatType: 'tiara', propType: 'bouquet',
+    quote: '“불꽃놀이가 터지는 마천루 루프탑! 인피니티풀·샴페인 타워·네온 아치를 돌며 대망의 10장!!”',
+    shotsReq: 10, minMatch: 87, timeLimit: 80, basePay: 55000,
+    chaosMaxTier: 3, chaosInterval: [0.95, 1.75], maxConcurrentChaos: 3,
+    groomColor: '#3b0764', brideColor: '#fde047', accentColor: '#38bdf8', hatType: 'tiara', propType: 'bouquet',
   },
 ];
 
-// ─── 8종 커플 감성 스냅 포즈 정의 ───
+// ─── 8종 커플 스냅 포즈 ───
 const POSE_POOL = [
-  { id: 'hand_hold', label: '손잡고 다정 뒷모습', cycleSpeed: 1.55 },
-  { id: 'jump_high', label: '하나 둘 셋 점프샷!', cycleSpeed: 1.85 },
-  { id: 'bouquet_up', label: '소품 번쩍 만세!', cycleSpeed: 1.65 },
-  { id: 'big_heart', label: '머리 위 큰 하트!', cycleSpeed: 1.60 },
-  { id: 'lean_in', label: '마주 보고 로맨틱 기울기', cycleSpeed: 1.50 },
-  { id: 'kick_leg', label: '한쪽 발 톡! 발랄 포즈', cycleSpeed: 1.75 },
-  { id: 'veil_wind', label: '바람에 날리는 베일·스카프', cycleSpeed: 1.70 },
-  { id: 'wide_free', label: '양팔 활짝 자유 만끽!', cycleSpeed: 1.60 },
+  { id: 'hand_hold', label: '손잡고 다정 뒷모습', cycleSpeed: 1.50 },
+  { id: 'jump_high', label: '하나 둘 셋 점프샷!', cycleSpeed: 1.80 },
+  { id: 'bouquet_up', label: '소품 번쩍 만세!', cycleSpeed: 1.60 },
+  { id: 'big_heart', label: '머리 위 큰 하트!', cycleSpeed: 1.55 },
+  { id: 'lean_in', label: '마주 보고 로맨틱 기울기', cycleSpeed: 1.48 },
+  { id: 'kick_leg', label: '한쪽 발 톡! 발랄 포즈', cycleSpeed: 1.70 },
+  { id: 'veil_wind', label: '바람에 날리는 실루엣', cycleSpeed: 1.62 },
+  { id: 'wide_free', label: '양팔 활짝 자유 만끽!', cycleSpeed: 1.55 },
 ];
 
-// ─── 5대 명소 3D 무대 생성기 (`venueGroup`) ───
+// ─── 10대 월드 명소 3D 디오라마 & 멀티 포토존 스팟 빌더 ───
 const venueGroup = new THREE.Group();
 scene.add(venueGroup);
 
+// 움직이는 배경 오브젝트들 (대관람차, 풍차 날개, 열기구, 꽃잎·눈송이·불꽃놀이 파티클!)
+const envAnimState = {
+  ferrisWheel: null,
+  carousel: null,
+  windmillBlades: null,
+  balloons: [],
+  ambientParticles: [], // 벚꽃잎 / 눈송이 / 은행잎 / 불꽃
+  particleKind: 'none',
+};
+
 function clearGroup(grp) {
   while (grp.children.length > 0) {
-    const ch = grp.children[0];
-    grp.remove(ch);
+    grp.remove(grp.children[0]);
   }
 }
 
 function buildVenueScene(venueKey) {
   clearGroup(venueGroup);
+  envAnimState.ferrisWheel = null;
+  envAnimState.carousel = null;
+  envAnimState.windmillBlades = null;
+  envAnimState.balloons = [];
+  envAnimState.ambientParticles = [];
+  envAnimState.particleKind = 'none';
+
+  // 각 씬마다 3개의 서로 다른 포토존 스팟 반환!
+  let spots = [
+    { name: '중앙 메인 스팟', x: 0, z: 0, rotY: 0 },
+    { name: '왼쪽 서브 스팟', x: -4.8, z: -1.0, rotY: 0.22 },
+    { name: '오른쪽 서브 스팟', x: 4.8, z: -1.0, rotY: -0.22 },
+  ];
+
+  const whiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.35 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.45 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#fbbf24', roughness: 0.25, metalness: 0.65 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: '#854d0e', roughness: 0.7 });
 
   if (venueKey === 'lake_wedding') {
     scene.background = new THREE.Color('#7dd3fc');
-    scene.fog = new THREE.Fog('#bae6fd', 36, 90);
-    hemiLight.color.set('#ffffff');
-    hemiLight.groundColor.set('#4d7c0f');
+    scene.fog = new THREE.Fog('#bae6fd', 42, 105);
     sunLight.color.set('#fffbeb');
     sunLight.intensity = 2.0;
 
-    // 잔디밭 + 호수 + 하얀 버진로드 꽃길 + 웨딩 장미 아치 + 하객 뒷모습 의자
-    const grass = new THREE.Mesh(new THREE.BoxGeometry(80, 1, 26), new THREE.MeshStandardMaterial({ color: '#65a30d', roughness: 0.85 }));
-    grass.position.set(0, -0.5, 2);
+    const grass = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 32), new THREE.MeshStandardMaterial({ color: '#65a30d', roughness: 0.85 }));
+    grass.position.set(0, -0.5, 3);
     grass.receiveShadow = true;
-    const lake = new THREE.Mesh(new THREE.BoxGeometry(90, 0.8, 45), new THREE.MeshPhysicalMaterial({ color: '#0ea5e9', roughness: 0.15, clearcoat: 0.8 }));
-    lake.position.set(0, -0.6, -31);
-    const aisle = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.08, 22), new THREE.MeshStandardMaterial({ color: '#fffbeb', roughness: 0.5 }));
+    const lake = new THREE.Mesh(new THREE.BoxGeometry(100, 0.8, 52), new THREE.MeshPhysicalMaterial({ color: '#0ea5e9', roughness: 0.14, clearcoat: 0.85 }));
+    lake.position.set(0, -0.62, -33);
+    const aisle = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.08, 22), new THREE.MeshStandardMaterial({ color: '#fffbeb', roughness: 0.5 }));
     aisle.position.set(0, 0.04, 2);
-    aisle.receiveShadow = true;
     venueGroup.add(grass, lake, aisle);
 
-    // 꽃 아치
-    const archMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.35 });
-    const archRing = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.22, 12, 32, Math.PI), archMat);
-    archRing.position.set(0, 2.2, -1.8);
-    const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.22, 2.3, 12), archMat);
-    postL.position.set(-3.5, 1.15, -1.8);
-    const postR = postL.clone();
-    postR.position.x = 3.5;
+    // [스팟 1: 중앙 장미 웨딩 아치]
+    const archRing = new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.22, 12, 32, Math.PI), whiteMat);
+    archRing.position.set(0, 2.2, -2.0);
+    const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.22, 2.3, 12), whiteMat);
+    postL.position.set(-3.3, 1.15, -2.0);
+    const postR = postL.clone(); postR.position.x = 3.3;
     venueGroup.add(archRing, postL, postR);
-
-    const flowerColors = ['#fb7185', '#f472b6', '#fde047', '#ffffff'];
+    const flCols = ['#fb7185', '#f472b6', '#fde047', '#ffffff'];
     for (let i = 0; i <= 12; i++) {
       const a = (i / 12) * Math.PI;
-      const fl = new THREE.Mesh(
-        new THREE.SphereGeometry(0.42, 10, 8),
-        new THREE.MeshStandardMaterial({ color: flowerColors[i % flowerColors.length], roughness: 0.45 })
-      );
-      fl.position.set(Math.cos(a) * 3.5, 2.2 + Math.sin(a) * 3.5, -1.7);
+      const fl = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), new THREE.MeshStandardMaterial({ color: flCols[i % 4] }));
+      fl.position.set(Math.cos(a) * 3.3, 2.2 + Math.sin(a) * 3.3, -1.9);
       venueGroup.add(fl);
     }
 
-    // 양옆 하객 의자와 모자 쓴 하객 뒷모습 (얼굴 없음!)
-    const chairMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.4 });
-    for (const sx of [-4.6, -6.4, 4.6, 6.4]) {
-      for (const sz of [1.2, 3.8]) {
-        const ch = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.2, 0.9), chairMat);
-        ch.position.set(sx, 0.6, sz);
-        ch.castShadow = true;
-        const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.65, 0.35, 14), new THREE.MeshStandardMaterial({ color: sx > 0 ? '#fde68a' : '#fda4af' }));
-        hat.position.set(sx, 1.65, sz);
-        venueGroup.add(ch, hat);
-      }
+    // [스팟 2: 왼쪽 민트 클래식 오픈 웨딩카 + 풍선!]
+    const carGrp = new THREE.Group();
+    carGrp.position.set(-6.2, 0, -2.8);
+    carGrp.rotation.y = 0.35;
+    const carBody = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.1, 2.1), new THREE.MeshStandardMaterial({ color: '#5eead4', roughness: 0.25, metalness: 0.2 }));
+    carBody.position.y = 0.85;
+    carBody.castShadow = true;
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.75, 1.9), new THREE.MeshPhysicalMaterial({ color: '#e0f2fe', transmission: 0.6, transparent: true, opacity: 0.8 }));
+    windshield.position.set(0.6, 1.65, 0);
+    windshield.rotation.z = -0.25;
+    carGrp.add(carBody, windshield);
+    for (const [wx, wz] of [[-1.3, -1.05], [1.3, -1.05], [-1.3, 1.05], [1.3, 1.05]]) {
+      const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.3, 14), darkMat);
+      wh.rotation.x = Math.PI / 2;
+      wh.position.set(wx, 0.48, wz);
+      carGrp.add(wh);
     }
+    venueGroup.add(carGrp);
+
+    // [스팟 3: 오른쪽 호수 원목 선착장 & 하얀 백조 보트 + 3단 웨딩케이크!]
+    const pier = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.25, 10), woodMat);
+    pier.position.set(6.0, 0.08, -4.5);
+    const swanBody = new THREE.Mesh(new THREE.SphereGeometry(1.4, 14, 12), whiteMat);
+    swanBody.scale.set(1.3, 0.75, 0.9);
+    swanBody.position.set(7.2, 0.4, -12.0);
+    const swanNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 2.0, 10), whiteMat);
+    swanNeck.position.set(6.1, 1.6, -12.0);
+    venueGroup.add(pier, swanBody, swanNeck);
+
+    spots = [
+      { name: '장미 아치 꽃길', x: 0, z: 0, rotY: 0 },
+      { name: '민트 웨딩 오픈카 옆', x: -4.6, z: -0.6, rotY: 0.25 },
+      { name: '호수 백조 선착장', x: 5.2, z: -1.0, rotY: -0.22 },
+    ];
+  } else if (venueKey === 'euro_cafe') {
+    scene.background = new THREE.Color('#93c5fd');
+    scene.fog = new THREE.Fog('#dbeafe', 42, 105);
+    sunLight.color.set('#fff7ed');
+    sunLight.intensity = 1.95;
+
+    const cobble = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#d6d3d1', roughness: 0.78 }));
+    cobble.position.set(0, -0.5, -4);
+    cobble.receiveShadow = true;
+    venueGroup.add(cobble);
+
+    // [스팟 1: 중앙 3단 유럽 대리석 분수대]
+    const marbleMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3 });
+    const waterMat = new THREE.MeshPhysicalMaterial({ color: '#38bdf8', roughness: 0.1, clearcoat: 1 });
+    const pool = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.4, 0.65, 24), marbleMat);
+    pool.position.set(0, 0.32, -4.2);
+    const poolW = new THREE.Mesh(new THREE.CylinderGeometry(2.95, 2.95, 0.68, 24), waterMat);
+    poolW.position.set(0, 0.33, -4.2);
+    const tier2 = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.9, 0.45, 20), marbleMat);
+    tier2.position.set(0, 1.8, -4.2);
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.6, 3.2, 14), marbleMat);
+    pillar.position.set(0, 1.6, -4.2);
+    venueGroup.add(pool, poolW, tier2, pillar);
+
+    // [스팟 2: 왼쪽 빨간 차양 노천카페 건물 & 야외 테이블]
+    const cafeWall = new THREE.Mesh(new THREE.BoxGeometry(7.5, 8.5, 4.0), new THREE.MeshStandardMaterial({ color: '#fef3c7', roughness: 0.65 }));
+    cafeWall.position.set(-6.8, 4.25, -5.5);
+    const awning = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.8, 2.4), new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.5 }));
+    awning.rotation.x = 0.32;
+    awning.position.set(-6.8, 3.6, -2.8);
+    const cafeTbl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.12, 16), whiteMat);
+    cafeTbl.position.set(-5.8, 1.1, -1.8);
+    const cafeLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, 1.1, 10), darkMat);
+    cafeLeg.position.set(-5.8, 0.55, -1.8);
+    venueGroup.add(cafeWall, awning, cafeTbl, cafeLeg);
+
+    // [스팟 3: 오른쪽 유럽 시계탑 & 클래식 가로등]
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(3.4, 11.5, 3.4), new THREE.MeshStandardMaterial({ color: '#e7e5e4', roughness: 0.6 }));
+    tower.position.set(6.8, 5.75, -6.2);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.6, 3.2, 4), new THREE.MeshStandardMaterial({ color: '#1e3a8a' }));
+    roof.rotation.y = Math.PI / 4;
+    roof.position.set(6.8, 13.1, -6.2);
+    const clockFace = new THREE.Mesh(new THREE.CircleGeometry(1.05, 20), whiteMat);
+    clockFace.position.set(6.8, 8.8, -4.45);
+    const lampPost = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 4.8, 10), darkMat);
+    lampPost.position.set(3.8, 2.4, -2.5);
+    const lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    lampBulb.position.set(3.8, 4.9, -2.5);
+    venueGroup.add(tower, roof, clockFace, lampPost, lampBulb);
+
+    spots = [
+      { name: '대리석 분수 광장', x: 0, z: 0, rotY: 0 },
+      { name: '빨간 차양 노천카페 앞', x: -4.2, z: -0.2, rotY: 0.28 },
+      { name: '유럽 시계탑 가로등 거리', x: 4.5, z: -0.5, rotY: -0.25 },
+    ];
   } else if (venueKey === 'emerald_beach') {
     scene.background = new THREE.Color('#38bdf8');
-    scene.fog = new THREE.Fog('#7dd3fc', 38, 92);
+    scene.fog = new THREE.Fog('#7dd3fc', 42, 105);
     sunLight.color.set('#fff9db');
-    sunLight.intensity = 2.15;
+    sunLight.intensity = 2.1;
 
-    const sand = new THREE.Mesh(new THREE.BoxGeometry(84, 1, 24), new THREE.MeshStandardMaterial({ color: '#fde68a', roughness: 0.82 }));
-    sand.position.set(0, -0.5, 3);
+    const sand = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 28), new THREE.MeshStandardMaterial({ color: '#fde68a', roughness: 0.82 }));
+    sand.position.set(0, -0.5, 4);
     sand.receiveShadow = true;
-    const sea = new THREE.Mesh(new THREE.BoxGeometry(92, 0.9, 48), new THREE.MeshPhysicalMaterial({ color: '#06b6d4', roughness: 0.12, clearcoat: 1.0 }));
-    sea.position.set(0, -0.58, -30);
-    const foam = new THREE.Mesh(new THREE.BoxGeometry(84, 0.12, 1.4), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.85 }));
-    foam.position.set(0, 0.02, -7.2);
+    const sea = new THREE.Mesh(new THREE.BoxGeometry(100, 0.9, 52), new THREE.MeshPhysicalMaterial({ color: '#06b6d4', roughness: 0.12, clearcoat: 1.0 }));
+    sea.position.set(0, -0.58, -32);
+    const foam = new THREE.Mesh(new THREE.BoxGeometry(96, 0.12, 1.5), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.85 }));
+    foam.position.set(0, 0.02, -6.5);
     venueGroup.add(sand, sea, foam);
 
-    // 야자수 2그루 & 비치 파라솔
-    const trunkMat = new THREE.MeshStandardMaterial({ color: '#92400e', roughness: 0.75 });
+    // [스팟 2: 왼쪽 제주 무지개 해안 방호벽!]
+    const rainbowCols = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#8b5cf6'];
+    for (let i = 0; i < 6; i++) {
+      const blk = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.95, 0.85), new THREE.MeshStandardMaterial({ color: rainbowCols[i], roughness: 0.45 }));
+      blk.position.set(-8.8 + i * 1.45, 0.48, -3.6);
+      blk.castShadow = true;
+      venueGroup.add(blk);
+    }
+
+    // [스팟 1 & 3: 야자수 + 서핑보드 3개 & 비치 파라솔!]
     const palmLeafMat = new THREE.MeshStandardMaterial({ color: '#16a34a', roughness: 0.45 });
-    for (const px of [-6.2, 6.5]) {
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.44, 5.6, 10), trunkMat);
-      trunk.position.set(px, 2.8, -2.5);
-      trunk.rotation.z = px < 0 ? -0.12 : 0.12;
+    for (const px of [-2.8, 7.6]) {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.44, 5.8, 10), woodMat);
+      trunk.position.set(px, 2.9, -3.5);
+      trunk.rotation.z = px < 0 ? -0.12 : 0.14;
       venueGroup.add(trunk);
       for (let k = 0; k < 6; k++) {
         const ang = (k / 6) * TAU;
-        const lf = new THREE.Mesh(new THREE.SphereGeometry(1.1, 8, 6), palmLeafMat);
-        lf.scale.set(1.8, 0.18, 0.55);
+        const lf = new THREE.Mesh(new THREE.SphereGeometry(1.15, 8, 6), palmLeafMat);
+        lf.scale.set(1.85, 0.18, 0.55);
         lf.rotation.y = ang;
         lf.rotation.z = 0.35;
-        lf.position.set(px + Math.cos(ang) * 1.2, 5.5, -2.5 + Math.sin(ang) * 1.2);
+        lf.position.set(px + Math.cos(ang) * 1.25, 5.7, -3.5 + Math.sin(ang) * 1.25);
         venueGroup.add(lf);
       }
     }
+    const surfCols = ['#fb7185', '#38bdf8', '#facc15'];
+    for (let i = 0; i < 3; i++) {
+      const sb = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 2.6, 8, 12), new THREE.MeshStandardMaterial({ color: surfCols[i], roughness: 0.25 }));
+      sb.scale.set(1, 1, 0.22);
+      sb.position.set(4.5 + i * 1.05, 1.7, -3.0);
+      sb.rotation.z = -0.12 + i * 0.08;
+      venueGroup.add(sb);
+    }
+
+    spots = [
+      { name: '에메랄드 파도 해변 중앙', x: 0.4, z: 0, rotY: 0 },
+      { name: '제주 무지개 방호벽 포토존', x: -5.0, z: -0.8, rotY: 0.20 },
+      { name: '서핑보드 & 야자수 비치', x: 5.0, z: -0.6, rotY: -0.24 },
+    ];
+  } else if (venueKey === 'amusement_park') {
+    scene.background = new THREE.Color('#a5b4fc');
+    scene.fog = new THREE.Fog('#e0e7ff', 42, 105);
+    sunLight.color.set('#fff1f2');
+    sunLight.intensity = 1.95;
+
+    const plaza = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#fce7f3', roughness: 0.72 }));
+    plaza.position.set(0, -0.5, -4);
+    plaza.receiveShadow = true;
+    venueGroup.add(plaza);
+
+    // [스팟 1: 실제로 회전하는 대형 파스텔 대관람차!]
+    const wheelCenterY = 8.4;
+    const wheelZ = -9.5;
+    const legA = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 9.8, 10), whiteMat);
+    legA.position.set(-2.2, 4.4, wheelZ);
+    legA.rotation.z = -0.22;
+    const legB = legA.clone();
+    legB.position.x = 2.2;
+    legB.rotation.z = 0.22;
+    venueGroup.add(legA, legB);
+
+    const wheelGroup = new THREE.Group();
+    wheelGroup.position.set(0, wheelCenterY, wheelZ);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.18, 12, 36), new THREE.MeshStandardMaterial({ color: '#f472b6' }));
+    wheelGroup.add(rim);
+    const cabinCols = ['#38bdf8', '#facc15', '#fb7185', '#4ade80', '#c084fc', '#fb923c'];
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU;
+      const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 6.2, 6), whiteMat);
+      spoke.rotation.z = a - Math.PI / 2;
+      spoke.position.set(Math.cos(a) * 3.1, Math.sin(a) * 3.1, 0);
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.05, 0.95), new THREE.MeshStandardMaterial({ color: cabinCols[i % 6] }));
+      cabin.position.set(Math.cos(a) * 6.2, Math.sin(a) * 6.2, 0.3);
+      wheelGroup.add(spoke, cabin);
+    }
+    venueGroup.add(wheelGroup);
+    envAnimState.ferrisWheel = wheelGroup;
+
+    // [스팟 2: 왼쪽 회전목마 파빌리온]
+    const carouselGrp = new THREE.Group();
+    carouselGrp.position.set(-6.4, 0, -4.2);
+    const cBase = new THREE.Mesh(new THREE.CylinderGeometry(2.8, 3.0, 0.4, 20), goldMat);
+    cBase.position.y = 0.2;
+    const cRoof = new THREE.Mesh(new THREE.ConeGeometry(3.1, 2.2, 16), new THREE.MeshStandardMaterial({ color: '#fb7185' }));
+    cRoof.position.y = 4.5;
+    const cPole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.6, 12), goldMat);
+    cPole.position.y = 2.1;
+    carouselGrp.add(cBase, cRoof, cPole);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * TAU;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.4, 6), goldMat);
+      pole.position.set(Math.cos(a) * 2.0, 2.0, Math.sin(a) * 2.0);
+      const horse = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.4), whiteMat);
+      horse.position.set(Math.cos(a) * 2.0, 1.5, Math.sin(a) * 2.0);
+      carouselGrp.add(pole, horse);
+    }
+    venueGroup.add(carouselGrp);
+    envAnimState.carousel = carouselGrp;
+
+    // [스팟 3: 오른쪽 풍선 아치 & 솜사탕 왜건]
+    const booth = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.4, 2.0), new THREE.MeshStandardMaterial({ color: '#38bdf8' }));
+    booth.position.set(6.4, 1.2, -3.8);
+    const boothTop = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.4, 4), new THREE.MeshStandardMaterial({ color: '#fde047' }));
+    boothTop.rotation.y = Math.PI / 4;
+    boothTop.position.set(6.4, 3.1, -3.8);
+    venueGroup.add(booth, boothTop);
+
+    spots = [
+      { name: '대관람차 정면 광장', x: 0, z: 0, rotY: 0 },
+      { name: '황금 회전목마 앞', x: -4.8, z: -0.6, rotY: 0.24 },
+      { name: '유원지 퍼레이드 부스 옆', x: 4.8, z: -0.6, rotY: -0.24 },
+    ];
   } else if (venueKey === 'sunset_cliff') {
     scene.background = new THREE.Color('#fb923c');
-    scene.fog = new THREE.Fog('#f97316', 36, 90);
+    scene.fog = new THREE.Fog('#f97316', 40, 100);
     sunLight.color.set('#fed7aa');
     sunLight.intensity = 1.9;
 
-    const deck = new THREE.Mesh(new THREE.BoxGeometry(80, 1, 24), new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.65 }));
-    deck.position.set(0, -0.5, 3);
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 26), woodMat);
+    deck.position.set(0, -0.5, 4);
     deck.receiveShadow = true;
-    const sunsetSea = new THREE.Mesh(new THREE.BoxGeometry(92, 0.9, 50), new THREE.MeshPhysicalMaterial({ color: '#c2410c', roughness: 0.18, clearcoat: 0.9 }));
-    sunsetSea.position.set(0, -1.2, -31);
-
-    // 커다란 황금 석양 태양
-    const bigSun = new THREE.Mesh(new THREE.CircleGeometry(6.2, 32), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
-    bigSun.position.set(0, 5.2, -34);
+    const sunsetSea = new THREE.Mesh(new THREE.BoxGeometry(100, 0.9, 52), new THREE.MeshPhysicalMaterial({ color: '#c2410c', roughness: 0.18, clearcoat: 0.9 }));
+    sunsetSea.position.set(0, -1.2, -32);
+    const bigSun = new THREE.Mesh(new THREE.CircleGeometry(6.8, 32), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    bigSun.position.set(0, 5.5, -36);
     venueGroup.add(deck, sunsetSea, bigSun);
 
-    // 하얀 전망대 난간 & 빨간 지붕 등대
-    const railMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.35 });
-    const topBar = new THREE.Mesh(new THREE.BoxGeometry(22, 0.22, 0.22), railMat);
-    topBar.position.set(0, 1.35, -3.2);
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(26, 0.22, 0.22), whiteMat);
+    topBar.position.set(0, 1.35, -3.4);
     venueGroup.add(topBar);
-    for (let x = -10; x <= 10; x += 2.5) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), railMat);
-      post.position.set(x, 0.7, -3.2);
+    for (let x = -12; x <= 12; x += 2.4) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4, 0.18), whiteMat);
+      post.position.set(x, 0.7, -3.4);
       venueGroup.add(post);
     }
-    const lhBody = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.25, 6.2, 16), railMat);
-    lhBody.position.set(7.2, 3.1, -8.5);
-    const lhRoof = new THREE.Mesh(new THREE.ConeGeometry(1.15, 1.5, 16), new THREE.MeshStandardMaterial({ color: '#dc2626' }));
-    lhRoof.position.set(7.2, 6.8, -8.5);
+
+    // [스팟 2: 왼쪽 빨간 감성 공중전화 부스!]
+    const booth = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.8, 1.8), new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.35 }));
+    booth.position.set(-6.2, 1.9, -2.2);
+    const boothWin = new THREE.Mesh(new THREE.BoxGeometry(1.86, 2.2, 1.3), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    boothWin.position.set(-6.2, 2.1, -2.2);
+    venueGroup.add(booth, boothWin);
+
+    // [스팟 3: 오른쪽 빨간 지붕 하얀 등대!]
+    const lhBody = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.4, 7.2, 16), whiteMat);
+    lhBody.position.set(6.8, 3.6, -5.8);
+    const lhRoof = new THREE.Mesh(new THREE.ConeGeometry(1.3, 1.7, 16), new THREE.MeshStandardMaterial({ color: '#dc2626' }));
+    lhRoof.position.set(6.8, 7.9, -5.8);
     venueGroup.add(lhBody, lhRoof);
-  } else if (venueKey === 'blossom_garden') {
+
+    spots = [
+      { name: '황금 석양 전망 난간', x: 0, z: 0, rotY: 0 },
+      { name: '빨간 감성 전화부스 옆', x: -4.4, z: -0.4, rotY: 0.26 },
+      { name: '절벽 하얀 등대 아래', x: 4.8, z: -0.8, rotY: -0.26 },
+    ];
+  } else if (venueKey === 'ginkgo_avenue') {
+    scene.background = new THREE.Color('#bae6fd');
+    scene.fog = new THREE.Fog('#fed7aa', 40, 100);
+    sunLight.color.set('#fef08a');
+    sunLight.intensity = 2.0;
+
+    const road = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.82 }));
+    road.position.set(0, -0.5, -4);
+    road.receiveShadow = true;
+    const lane = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.08, 28), new THREE.MeshStandardMaterial({ color: '#fef08a', roughness: 0.7 }));
+    lane.position.set(0, 0.04, 1);
+    venueGroup.add(road, lane);
+
+    // 노란 황금 은행나무 가로수 4그루
+    const ginkgoMat = new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.5 });
+    for (const [tx, tz] of [[-4.2, -3.5], [4.2, -3.5], [-8.2, -6.5], [8.2, -6.5]]) {
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.52, 4.4, 10), woodMat);
+      tr.position.set(tx, 2.2, tz);
+      const cr1 = new THREE.Mesh(new THREE.SphereGeometry(2.0, 12, 10), ginkgoMat);
+      cr1.position.set(tx, 5.0, tz);
+      const cr2 = new THREE.Mesh(new THREE.SphereGeometry(1.4, 10, 8), ginkgoMat);
+      cr2.position.set(tx + 0.8, 6.2, tz);
+      venueGroup.add(tr, cr1, cr2);
+    }
+
+    // [스팟 2: 왼쪽 버터옐로 빈티지 캠핑카!]
+    const van = new THREE.Group();
+    van.position.set(-6.5, 0, -2.6);
+    van.rotation.y = 0.32;
+    const vBot = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.4, 2.2), new THREE.MeshStandardMaterial({ color: '#f59e0b' }));
+    vBot.position.y = 1.05;
+    const vTop = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.2, 2.1), whiteMat);
+    vTop.position.y = 2.3;
+    van.add(vBot, vTop);
+    venueGroup.add(van);
+
+    // 하늘에 둥실둥실 떠 있는 대형 열기구 4개!
+    const hbCols = ['#ef4444', '#38bdf8', '#a855f7', '#22c55e'];
+    for (let i = 0; i < 4; i++) {
+      const hb = new THREE.Group();
+      const balloon = new THREE.Mesh(new THREE.SphereGeometry(1.75, 16, 14), new THREE.MeshStandardMaterial({ color: hbCols[i] }));
+      balloon.scale.set(1, 1.22, 1);
+      const basket = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.7), woodMat);
+      basket.position.y = -2.4;
+      hb.add(balloon, basket);
+      hb.position.set(-9 + i * 6.2, 8.2 + (i % 2) * 2.2, -16 - (i % 2) * 4);
+      venueGroup.add(hb);
+      envAnimState.balloons.push({ mesh: hb, baseY: hb.position.y, phase: i * 1.4 });
+    }
+
+    spots = [
+      { name: '황금 은행나무 길 중앙', x: 0, z: 0, rotY: 0 },
+      { name: '빈티지 캠퍼밴 감성존', x: -4.5, z: -0.6, rotY: 0.25 },
+      { name: '열기구 언덕 전망 스팟', x: 4.8, z: -0.8, rotY: -0.22 },
+    ];
+  } else if (venueKey === 'blossom_palace') {
     scene.background = new THREE.Color('#fbcfe8');
-    scene.fog = new THREE.Fog('#fce7f3', 34, 88);
+    scene.fog = new THREE.Fog('#fce7f3', 40, 100);
     sunLight.color.set('#fff5f7');
     sunLight.intensity = 1.95;
 
-    const gardenFloor = new THREE.Mesh(new THREE.BoxGeometry(80, 1, 34), new THREE.MeshStandardMaterial({ color: '#bbf7d0', roughness: 0.8 }));
-    gardenFloor.position.set(0, -0.5, -2);
-    gardenFloor.receiveShadow = true;
-    const stonePath = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.08, 24), new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.65 }));
-    stonePath.position.set(0, 0.04, 1);
-    venueGroup.add(gardenFloor, stonePath);
+    const garden = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#bbf7d0', roughness: 0.8 }));
+    garden.position.set(0, -0.5, -4);
+    garden.receiveShadow = true;
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(6.5, 28), new THREE.MeshPhysicalMaterial({ color: '#38bdf8', roughness: 0.12, clearcoat: 1 }));
+    pond.rotation.x = -Math.PI / 2;
+    pond.position.set(-5.2, 0.03, -6.2);
+    venueGroup.add(garden, pond);
 
-    // 풍성한 벚꽃 나무 두 그루
-    const barkMat = new THREE.MeshStandardMaterial({ color: '#5c4033', roughness: 0.8 });
+    // 벚꽃 나무들
     const pinkMat = new THREE.MeshStandardMaterial({ color: '#f9a8d4', roughness: 0.5 });
-    for (const tx of [-5.2, 5.2]) {
-      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.55, 4.2, 12), barkMat);
-      tr.position.set(tx, 2.1, -2.4);
+    for (const [tx, tz] of [[-2.5, -3.2], [2.8, -3.5], [7.8, -4.5]]) {
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 4.0, 10), woodMat);
+      tr.position.set(tx, 2.0, tz);
+      for (const [ox, oy, r] of [[0, 4.4, 1.85], [-1.2, 3.9, 1.35], [1.2, 4.0, 1.4]]) {
+        const cr = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), pinkMat);
+        cr.position.set(tx + ox, oy, tz);
+        venueGroup.add(cr);
+      }
       venueGroup.add(tr);
-      for (const [ox, oy, oz, r] of [[0, 4.6, 0, 1.8], [-1.2, 4.1, 0.5, 1.3], [1.2, 4.2, -0.4, 1.4], [0.5 * (tx < 0 ? 1 : -1), 5.1, 0.3, 1.35]]) {
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), pinkMat);
-        crown.position.set(tx + ox, oy, -2.4 + oz);
-        venueGroup.add(crown);
+    }
+
+    // [스팟 2: 왼쪽 붉은 홍예교 아치 다리]
+    const redWood = new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.45 });
+    const bridgeArch = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.45, 10, 24, Math.PI), redWood);
+    bridgeArch.position.set(-5.2, -0.8, -4.2);
+    venueGroup.add(bridgeArch);
+
+    // [스팟 3: 오른쪽 기와 정자]
+    const pavRoof = new THREE.Mesh(new THREE.ConeGeometry(3.4, 1.8, 6), new THREE.MeshStandardMaterial({ color: '#1e293b' }));
+    pavRoof.position.set(5.8, 4.6, -4.5);
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * TAU + 0.4;
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 3.8, 8), redWood);
+      col.position.set(5.8 + Math.cos(a) * 2.1, 1.9, -4.5 + Math.sin(a) * 2.1);
+      venueGroup.add(col);
+    }
+    venueGroup.add(pavRoof);
+
+    // 흩날리는 벚꽃잎 입자 28개!
+    envAnimState.particleKind = 'petal';
+    const petalGeo = new THREE.PlaneGeometry(0.22, 0.16);
+    const petalMat = new THREE.MeshBasicMaterial({ color: '#fda4af', side: THREE.DoubleSide });
+    for (let i = 0; i < 28; i++) {
+      const p = new THREE.Mesh(petalGeo, petalMat);
+      p.position.set(randRange(-11, 11), randRange(0.5, 8.5), randRange(-6, 4));
+      venueGroup.add(p);
+      envAnimState.ambientParticles.push(p);
+    }
+
+    spots = [
+      { name: '벚꽃 만개 돌담길', x: 0, z: 0, rotY: 0 },
+      { name: '연못 붉은 아치 다리 앞', x: -4.8, z: -0.6, rotY: 0.22 },
+      { name: '고궁 기와 정자 마당', x: 4.8, z: -0.6, rotY: -0.24 },
+    ];
+  } else if (venueKey === 'snow_chapel') {
+    scene.background = new THREE.Color('#cbd5e1');
+    scene.fog = new THREE.Fog('#f1f5f9', 38, 95);
+    sunLight.color.set('#ffffff');
+    sunLight.intensity = 1.85;
+
+    const snowFloor = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 }));
+    snowFloor.position.set(0, -0.5, -4);
+    snowFloor.receiveShadow = true;
+    venueGroup.add(snowFloor);
+
+    // [스팟 1: 중앙 뾰족 지붕 통나무 스노우 채플]
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(5.2, 4.2, 5.2), woodMat);
+    cabin.position.set(0, 2.1, -6.5);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(4.4, 3.8, 4), whiteMat);
+    roof.rotation.y = Math.PI / 4;
+    roof.position.set(0, 6.1, -6.5);
+    const steeple = new THREE.Mesh(new THREE.ConeGeometry(0.9, 3.2, 8), whiteMat);
+    steeple.position.set(0, 8.8, -6.5);
+    const warmWin = new THREE.Mesh(new THREE.CircleGeometry(1.1, 16), new THREE.MeshBasicMaterial({ color: '#fde047' }));
+    warmWin.position.set(0, 2.8, -3.86);
+    venueGroup.add(cabin, roof, steeple, warmWin);
+
+    // [스팟 2 & 3: 눈 덮인 전나무 크리스마스트리 숲]
+    const pineMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.65 });
+    for (const [tx, tz, sc] of [[-5.8, -3.8, 1.25], [-7.8, -5.5, 0.95], [5.8, -3.8, 1.15], [7.8, -5.2, 1.0]]) {
+      for (let lv = 0; lv < 3; lv++) {
+        const cone = new THREE.Mesh(new THREE.ConeGeometry((1.8 - lv * 0.4) * sc, 2.2 * sc, 10), pineMat);
+        cone.position.set(tx, (1.5 + lv * 1.4) * sc, tz);
+        venueGroup.add(cone);
       }
     }
+
+    envAnimState.particleKind = 'snow';
+    const snowGeo = new THREE.SphereGeometry(0.10, 6, 6);
+    const snowMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+    for (let i = 0; i < 34; i++) {
+      const s = new THREE.Mesh(snowGeo, snowMat);
+      s.position.set(randRange(-12, 12), randRange(0.5, 9), randRange(-7, 4));
+      venueGroup.add(s);
+      envAnimState.ambientParticles.push(s);
+    }
+
+    spots = [
+      { name: '설원 통나무 채플 정면', x: 0, z: 0, rotY: 0 },
+      { name: '크리스마스트리 숲길', x: -4.8, z: -0.6, rotY: 0.24 },
+      { name: '자작나무 스노우 언덕', x: 4.8, z: -0.6, rotY: -0.24 },
+    ];
+  } else if (venueKey === 'lavender_windmill') {
+    scene.background = new THREE.Color('#c4b5fd');
+    scene.fog = new THREE.Fog('#ede9fe', 40, 100);
+    sunLight.color.set('#fef9c3');
+    sunLight.intensity = 2.0;
+
+    const field = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 44), new THREE.MeshStandardMaterial({ color: '#8b5cf6', roughness: 0.85 }));
+    field.position.set(0, -0.5, -4);
+    field.receiveShadow = true;
+    venueGroup.add(field);
+
+    // 라벤더 꽃 이랑 줄무늬
+    const lavMat = new THREE.MeshStandardMaterial({ color: '#a855f7', roughness: 0.7 });
+    for (let x = -12; x <= 12; x += 2.2) {
+      if (Math.abs(x) < 1.8) continue;
+      const row = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 14, 6, 10), lavMat);
+      row.rotation.x = Math.PI / 2;
+      row.position.set(x, 0.22, -6);
+      venueGroup.add(row);
+    }
+
+    // [스팟 1: 돌아가는 대형 네덜란드 풍차!]
+    const millBody = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.4, 7.2, 12), new THREE.MeshStandardMaterial({ color: '#fef3c7' }));
+    millBody.position.set(0, 3.6, -7.2);
+    const millCap = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.8, 12), woodMat);
+    millCap.position.set(0, 8.1, -7.2);
+    const bladesGrp = new THREE.Group();
+    bladesGrp.position.set(0, 6.2, -5.5);
+    for (let i = 0; i < 4; i++) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.65, 4.4, 0.12), whiteMat);
+      b.rotation.z = (i / 4) * TAU;
+      b.position.set(Math.cos((i / 4) * TAU + Math.PI / 2) * 2.2, Math.sin((i / 4) * TAU + Math.PI / 2) * 2.2, 0);
+      bladesGrp.add(b);
+    }
+    venueGroup.add(millBody, millCap, bladesGrp);
+    envAnimState.windmillBlades = bladesGrp;
+
+    // [스팟 2: 왼쪽 꽃밭 위 하얀 그랜드 피아노!]
+    const piano = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 2.0), whiteMat);
+    piano.position.set(-6.0, 1.2, -2.5);
+    for (const [lx, lz] of [[-7.0, -3.3], [-5.0, -3.3], [-6.0, -1.7]]) {
+      const pl = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 1.2, 8), whiteMat);
+      pl.position.set(lx, 0.6, lz);
+      venueGroup.add(pl);
+    }
+    venueGroup.add(piano);
+
+    spots = [
+      { name: '대형 네덜란드 풍차 언덕', x: 0, z: 0, rotY: 0 },
+      { name: '라벤더 밭 하얀 피아노 옆', x: -4.4, z: -0.6, rotY: 0.25 },
+      { name: '보랏빛 프로방스 꽃길', x: 4.6, z: -0.6, rotY: -0.25 },
+    ];
   } else {
-    // starlight_rooftop (별빛 루프탑 야경 웨딩·여행!)
+    // starlight_rooftop (별빛 마천루 루프탑 인피니티풀 & 불꽃놀이!)
     scene.background = new THREE.Color('#0f172a');
-    scene.fog = new THREE.Fog('#1e1b4b', 38, 95);
+    scene.fog = new THREE.Fog('#1e1b4b', 42, 105);
     sunLight.color.set('#fde68a');
-    sunLight.intensity = 1.75;
+    sunLight.intensity = 1.8;
 
-    const roofFloor = new THREE.Mesh(new THREE.BoxGeometry(80, 1, 24), new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.45, metalness: 0.15 }));
-    roofFloor.position.set(0, -0.5, 3);
+    const roofFloor = new THREE.Mesh(new THREE.BoxGeometry(96, 1, 28), new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.42, metalness: 0.18 }));
+    roofFloor.position.set(0, -0.5, 4);
     roofFloor.receiveShadow = true;
-    venueGroup.add(roofFloor);
+    const infPool = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 6.5), new THREE.MeshPhysicalMaterial({ color: '#0284c7', roughness: 0.06, clearcoat: 1.0 }));
+    infPool.position.set(-5.2, 0.05, -4.8);
+    venueGroup.add(roofFloor, infPool);
 
-    // 도시 고층 빌딩 야경 스카이라인
+    // 도시 마천루 스카이라인
     const bldgMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5 });
     const winMat = new THREE.MeshBasicMaterial({ color: '#fde047' });
-    for (let i = -6; i <= 6; i++) {
-      const bh = 6 + ((Math.abs(i * 7) + 3) % 9);
+    for (let i = -7; i <= 7; i++) {
+      const bh = 7 + ((Math.abs(i * 7) + 3) % 10);
       const bx = i * 3.8;
       const bz = -18 - (Math.abs(i) % 3) * 4;
-      const b = new THREE.Mesh(new THREE.BoxGeometry(2.8, bh, 2.8), bldgMat);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(2.9, bh, 2.9), bldgMat);
       b.position.set(bx, bh / 2 - 2, bz);
-      const w = new THREE.Mesh(new THREE.BoxGeometry(1.8, bh * 0.65, 2.86), winMat);
+      const w = new THREE.Mesh(new THREE.BoxGeometry(1.9, bh * 0.68, 2.96), winMat);
       w.position.set(bx, bh / 2 - 1.5, bz);
       venueGroup.add(b, w);
     }
 
-    // 황금 네온 루프탑 아치
-    const goldNeon = new THREE.MeshBasicMaterial({ color: '#fde047' });
-    const neonArch = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.14, 10, 32, Math.PI), goldNeon);
-    neonArch.position.set(0, 2.2, -1.8);
+    const neonArch = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.16, 12, 32, Math.PI), new THREE.MeshBasicMaterial({ color: '#fde047' }));
+    neonArch.position.set(0, 2.2, -2.0);
     venueGroup.add(neonArch);
+
+    // 샴페인 골드 타워 (오른쪽 스팟)
+    for (let lv = 0; lv < 4; lv++) {
+      const tier = new THREE.Mesh(new THREE.CylinderGeometry(1.2 - lv * 0.25, 1.2 - lv * 0.25, 0.35, 16), goldMat);
+      tier.position.set(6.0, 0.8 + lv * 0.42, -2.5);
+      venueGroup.add(tier);
+    }
+
+    // 밤하늘에 터지는 불꽃놀이 파티클!
+    envAnimState.particleKind = 'firework';
+    const fwCols = ['#fde047', '#fb7185', '#38bdf8', '#4ade80', '#c084fc'];
+    const fwGeo = new THREE.SphereGeometry(0.18, 6, 6);
+    for (let i = 0; i < 36; i++) {
+      const m = new THREE.Mesh(fwGeo, new THREE.MeshBasicMaterial({ color: fwCols[i % 5] }));
+      m.userData = { cx: (i % 3 - 1) * 7.5, cy: 7.5 + (i % 2) * 2.5, ang: (i / 12) * TAU, spd: 1.5 + (i % 4) * 0.7, phase: (i % 3) * 0.33 };
+      venueGroup.add(m);
+      envAnimState.ambientParticles.push(m);
+    }
+
+    spots = [
+      { name: '마천루 네온 아치 정면', x: 0, z: 0, rotY: 0 },
+      { name: '루프탑 인피니티 풀 데크', x: -4.8, z: -0.5, rotY: 0.24 },
+      { name: '황금 샴페인 타워 테라스', x: 4.8, z: -0.5, rotY: -0.24 },
+    ];
   }
+
+  return spots;
 }
 
-// ─── 커플 3D 캐릭터 생성기 (사람 얼굴 눈·코·입 일절 없음! 감성 뒷모습 & 소품 실루엣!) ───
+// ─── 커플 3D 캐릭터 생성기 (사람 얼굴 눈·코·입 없음! 감성 뒷모습 & 소품 실루엣!) ───
 const coupleRoot = new THREE.Group();
 scene.add(coupleRoot);
 
@@ -447,7 +934,6 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
   const hairMat = new THREE.MeshStandardMaterial({ color: isRightSide ? '#3b2314' : '#1f1610', roughness: 0.6 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accentColor, roughness: 0.35 });
 
-  // 다리 두 짝 (점프·발들기 애니메이션용)
   const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.95, 6, 8), new THREE.MeshStandardMaterial({ color: isSkirt ? '#f5cba7' : '#1e293b' }));
   legL.position.set(-0.28, 0.62, 0);
   legL.castShadow = true;
@@ -455,7 +941,14 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
   legR.position.set(0.28, 0.62, 0);
   root.add(legL, legR);
 
-  // 몸통 (수트 자켓 또는 벨라인 드레스/치마)
+  // 귀여운 구두 디테일 (발끝 클로즈업 샷에서 예쁘게 보임!)
+  const shoeMat = new THREE.MeshStandardMaterial({ color: isSkirt ? accentColor : '#0f172a', roughness: 0.3 });
+  const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.20, 0.52), shoeMat);
+  shoeL.position.set(-0.28, 0.10, -0.06);
+  const shoeR = shoeL.clone();
+  shoeR.position.x = 0.28;
+  root.add(shoeL, shoeR);
+
   const bodyGroup = new THREE.Group();
   bodyGroup.position.y = 1.15;
   root.add(bodyGroup);
@@ -476,7 +969,6 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
     bodyGroup.add(torso);
   }
 
-  // 뒷머리만 보이는 헤드 그룹 (눈·코·입 절대 없음!)
   const headGroup = new THREE.Group();
   headGroup.position.set(0, 1.92, 0);
   const headBack = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 14), hairMat);
@@ -498,7 +990,7 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
       const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.50, 0.38, 16), new THREE.MeshStandardMaterial({ color: '#fcd34d' }));
       crown.position.y = 0.40;
       headGroup.add(brim, crown);
-    } else if (hatType === 'tiara' || hatType === 'flower_crown') {
+    } else if (hatType === 'tiara') {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.09, 8, 18), accentMat);
       ring.rotation.x = Math.PI / 2;
       ring.position.y = 0.36;
@@ -512,7 +1004,6 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
   }
   bodyGroup.add(headGroup);
 
-  // 양쪽 팔 피벗 (어깨 기준 회전으로 손잡기·만세·하트·소품 들기 표현!)
   const armL = new THREE.Group();
   armL.position.set(-0.62, 1.38, 0);
   const armMeshL = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.95, 6, 8), isSkirt ? skinMat : clothMat);
@@ -524,7 +1015,6 @@ function buildPersonBackRig({ bodyColor, isSkirt, accentColor, hatType, propType
   const armMeshR = armMeshL.clone();
   armR.add(armMeshR);
 
-  // 소품 (오른쪽 캐릭터 오른손에 부케 / 하트 풍선 / 양산 등 장착!)
   if (isRightSide) {
     const propHolder = new THREE.Group();
     propHolder.position.set(0, -0.95, 0);
@@ -568,12 +1058,10 @@ function buildCoupleForStage(cfg) {
   coupleRoot.add(groomRig.root, brideRig.root);
 }
 
-// ─── 커플 포즈 적용 함수 (`amount`: 0.0 기본 대기 ↔ 1.0 목표 포즈 정점!) ───
 function applyCouplePose(poseId, amount) {
   if (!groomRig || !brideRig) return;
   const a = clamp(amount, 0, 1);
 
-  // 기본 초기화
   groomRig.root.position.set(-0.92, 0, 0);
   brideRig.root.position.set(0.92, 0, 0);
   groomRig.root.rotation.set(0, 0, 0);
@@ -586,9 +1074,7 @@ function applyCouplePose(poseId, amount) {
   groomRig.legR.rotation.set(0, 0, 0);
   brideRig.legL.rotation.set(0, 0, 0);
   brideRig.legR.rotation.set(0, 0, 0);
-  if (brideRig.veilMesh) {
-    brideRig.veilMesh.rotation.set(0.22, 0, 0);
-  }
+  if (brideRig.veilMesh) brideRig.veilMesh.rotation.set(0.22, 0, 0);
 
   if (poseId === 'hand_hold') {
     groomRig.root.position.x = lerp(-1.15, -0.78, a);
@@ -597,7 +1083,7 @@ function applyCouplePose(poseId, amount) {
     brideRig.armL.rotation.z = lerp(0.15, 0.72, a);
     brideRig.armR.rotation.z = lerp(-0.25, -0.95, a);
   } else if (poseId === 'jump_high') {
-    const jumpY = Math.pow(a, 1.2) * 1.65;
+    const jumpY = Math.pow(a, 1.2) * 1.55;
     groomRig.root.position.y = jumpY;
     brideRig.root.position.y = jumpY;
     groomRig.armL.rotation.z = lerp(0.15, 2.55, a);
@@ -638,7 +1124,6 @@ function applyCouplePose(poseId, amount) {
     groomRig.root.rotation.y = lerp(0, -0.28, a);
     brideRig.root.rotation.y = lerp(0, 0.28, a);
   } else {
-    // wide_free
     groomRig.root.position.x = lerp(-0.92, -1.25, a);
     brideRig.root.position.x = lerp(0.92, 1.25, a);
     groomRig.armL.rotation.z = lerp(0.15, 1.65, a);
@@ -648,23 +1133,18 @@ function applyCouplePose(poseId, amount) {
   }
 }
 
-// ─── 14종 엉뚱한 돌발 방해물 3D 생성기 (`CHAOS_CATALOG` — 스테이지가 오를수록 뇌절 기행 해금!) ───
+// ─── 14종 엉뚱한 돌발 방해물 카탈로그 & 3D 메쉬 ───
 const CHAOS_CATALOG = [
-  // Tier 1 (일상·야외 귀여운 방해)
   { id: 'duck_walk', tier: 1, failLabel: '🦆 통통한 오리가 찍혔어요!!', speech: '꽥꽥?! 비켜!!' },
   { id: 'duck_closeup', tier: 1, failLabel: '🦆 오리 초근접 얼빡샷 찍힘!!', speech: '렌즈 맛있다 꽥!' },
   { id: 'ex_lover', tier: 1, failLabel: '💐 전 애인 난입 현장 찍힘!!', speech: '이 스냅 무효야!!!' },
   { id: 'heart_balloons', tier: 1, failLabel: '🎈 풍선 다발에 커플이 가려짐!', speech: '' },
   { id: 'sprinkler', tier: 1, failLabel: '💦 스프링클러 물벼락 찍힘!!', speech: '치이이익—💦' },
-
-  // Tier 2 (엉뚱함 2배! 황당 코믹 소동 — 초반에도 가끔 깜짝 출현, 중반 주력!)
   { id: 'seagull_dive', tier: 1, failLabel: '🕊️ 새우깡 도둑 갈매기 찍힘!', speech: '끼룩!! 내 과자!' },
   { id: 'crab_parade', tier: 1, failLabel: '🦀 대왕 꽃게 댄스단 찍힘!!', speech: '집게집게 딱딱!' },
   { id: 'hiker_group', tier: 1, failLabel: '🧢 단체 등산객 길막 찍힘!!', speech: '여기가 명당이네~!' },
   { id: 'dino_suit', tier: 2, failLabel: '🦖 공룡 인형탈 알바생 찍힘!!', speech: '전단지 받아가세요 크앙!' },
   { id: 'serving_robot', tier: 2, failLabel: '🤖 길 잃은 짬뽕 서빙로봇 찍힘!', speech: '주문하신 짬뽕 왔습니다~' },
-
-  // Tier 3 (우주급 뇌절 대폭발!!)
   { id: 'ufo_beam', tier: 3, failLabel: '🛸 외계 UFO 납치 광선 찍힘!!', speech: '삐빅! 지구인 커플 포착!' },
   { id: 'cool_alpaca', tier: 3, failLabel: '🦙 선글라스 알파카 얼빡 찍힘!!', speech: '음메~ 나 잘 나왔어?' },
   { id: 'golden_dolphin', tier: 3, failLabel: '🐬 하늘 나는 황금 돌고래 찍힘!', speech: '끼이이익~✨' },
@@ -690,7 +1170,6 @@ function buildChaosMesh(def) {
     eyeL.position.set(0.62 * sc, 1.68 * sc, 0.48 * sc);
     g.add(body, head, beak, eyeL);
   } else if (def.id === 'ex_lover') {
-    // 정장 뒷모습 + 얼굴 가린 대형 빨간 장미 꽃다발 (사람 얼굴 없음!)
     const suit = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.45, 1.75, 14), darkMat);
     suit.position.y = 1.25;
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.45, 14, 12), darkMat);
@@ -734,7 +1213,6 @@ function buildChaosMesh(def) {
     clawR.position.x = 1.1;
     g.add(shell, clawL, clawR);
   } else if (def.id === 'hiker_group') {
-    // 등산복 입은 뒷모습 2명 (선캡 모자 + 얼굴 없음!)
     const vestColors = ['#f97316', '#84cc16'];
     for (let i = 0; i < 2; i++) {
       const ox = (i - 0.5) * 1.35;
@@ -792,7 +1270,6 @@ function buildChaosMesh(def) {
     fin.position.set(0, 2.95, 0);
     g.add(body, fin);
   } else {
-    // disco_snowman
     const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.82, 16, 14), whiteMat);
     b1.position.y = 0.82;
     const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.58, 16, 14), whiteMat);
@@ -819,33 +1296,33 @@ function buildChaosMesh(def) {
 
 // ─── 전체 게임 상태 ───
 const STATE = {
-  phase: 'menu', // 'menu' | 'brief' | 'play' | 'stageclear' | 'gameover'
-  stageIdx: 0,   // 0 ~ 9 (STAGE 1 ~ 10)
+  phase: 'menu',
+  stageIdx: 0,
   totalPay: 0,
   totalShotsSuccess: 0,
   totalAccSum: 0,
   highestStageReached: 1,
 
-  // 현재 스테이지 데이터
-  missions: [],      // [{ poseId, poseLabel, zoom, aimX, aimY, refDataUrl }]
+  venueSpots: [],
+  missions: [],
   missionIdx: 0,
   capturedGallery: [],
   stagePayEarned: 0,
   stageAccSum: 0,
   hearts: 3,
-  timeLeft: 55,
+  timeLeft: 65,
 
-  // 카메라 뷰파인더 조준 & 배율
-  currentZoom: 1,    // 0.5 | 1 | 2
-  smoothZoom: 1,
-  aimX: 0,           // 좌우 드래그 패닝 (-3.2 ~ +3.2)
-  aimY: 0,           // 상하 드래그 패닝 (-1.8 ~ +1.8)
+  // 3D 구도 조작 상태 (드래그 궤도 dragU, dragV + 배율 zoom + 사선 기울기 tilt)
+  currentZoom: 1,      // 0.5 | 1 | 2
+  currentTilt: 0,      // -1 | 0 | 1
+  smoothRoll: 0,
+  dragU: 0,            // 좌우 카메라 궤도·여백 축 (-1.35 ~ +1.35)
+  dragV: 0,            // 상하 로우앵글↔하이앵글 축 (-1.35 ~ +1.35)
   dragging: false,
   pointerId: null,
   lastClientX: 0,
   lastClientY: 0,
 
-  // 커플 실시간 포즈 사이클
   posePhase: 0,
   poseAmount: 0,
   currentMatchPct: 0,
@@ -853,47 +1330,74 @@ const STATE = {
   blockingChaosLabel: '',
   prevReadyLock: false,
 
-  // 100% 랜덤 돌발 상황 인스턴스들
   activeChaos: [],
   chaosTimer: 1.5,
   recentChaosIds: [],
-
-  popTexts: [],
   devPopupTimer: 0,
   incomingRef: null,
   lastFinalRun: null,
   lastShareData: null,
 };
 
-function getResponsiveCamBaseZ() {
+function getResponsiveCamBaseDist() {
   const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  const portraitScale = aspect < 0.85 ? clamp(0.85 / Math.max(0.42, aspect), 1.0, 1.68) : 1.0;
+  const portraitScale = aspect < 0.85 ? clamp(0.85 / Math.max(0.42, aspect), 1.0, 1.65) : 1.0;
   return 11.2 * portraitScale;
 }
 
-// ─── 카메라 적용 (배율 `0.5x / 1x / 2x` + 구도 조준 `aimX, aimY`) ───
-function applyViewfinderCamera(zoomVal, panX, panY, swaySec = 0, stageLv = 1, instant = false) {
+// ─── 다이내믹 3D 카메라 구도 계산 & 적용 (궤도 측면 회전 + 로우/하이앵글 + 삼분할 여백 + 발끝 포커스 + 사선 틸트!) ───
+function applyDynamicCamera({
+  spot, comp, uVal, vVal, zoomVal, tiltVal, swaySec = 0, stageLv = 1, instant = false,
+}) {
   const fov = zoomVal === 0.5 ? 56 : zoomVal === 2 ? 26 : 40;
   if (instant || Math.abs(camera.fov - fov) > 0.05) {
-    camera.fov = instant ? fov : lerp(camera.fov, fov, 0.32);
+    camera.fov = instant ? fov : lerp(camera.fov, fov, 0.35);
     camera.updateProjectionMatrix();
   }
-  const swayAmp = stageLv <= 2 ? 0.025 : Math.min(0.20, 0.035 + stageLv * 0.016);
-  const sx = swaySec > 0 ? Math.sin(swaySec * 1.9) * swayAmp : 0;
-  const sy = swaySec > 0 ? Math.cos(swaySec * 2.5) * (swayAmp * 0.65) : 0;
-  const baseZ = getResponsiveCamBaseZ();
 
-  camera.position.set((panX + sx) * 0.65, 2.35 + (panY + sy) * 0.45, baseZ);
-  camera.lookAt(panX + sx, 1.85 + panY + sy, 0);
+  const dist = getResponsiveCamBaseDist();
+  // uVal: 좌우 궤도 방위각(±42°) + 삼분할 여백 시선 이동을 자연스럽게 결합!
+  const isThirds = comp && (comp.id === 'wide_thirds_l' || comp.id === 'wide_thirds_r');
+  const orbitYaw = spot.rotY + (isThirds ? uVal * 0.18 : uVal * 0.68);
+  const lookSideShift = isThirds ? uVal * 2.35 : uVal * 0.35;
+
+  // vVal: 음수면 바닥 가까이 무릎 꿇은 로우앵글(하늘 올려다봄!), 양수면 위에서 내려다보는 하이앵글!
+  const camHeight = clamp(2.45 + vVal * 2.55, 0.55, 5.8);
+  const baseLookY = (comp && comp.focusFeet) ? 0.85 : 1.90;
+  const lookHeight = baseLookY - vVal * 0.55;
+
+  const swayAmp = (swaySec > 0 && stageLv > 2) ? Math.min(0.16, 0.03 + stageLv * 0.013) : 0;
+  const sx = swaySec > 0 ? Math.sin(swaySec * 1.9) * swayAmp : 0;
+  const sy = swaySec > 0 ? Math.cos(swaySec * 2.4) * (swayAmp * 0.6) : 0;
+
+  const cx = spot.x + Math.sin(orbitYaw) * dist + sx;
+  const cz = spot.z + Math.cos(orbitYaw) * dist;
+
+  camera.up.set(0, 1, 0);
+  camera.position.set(cx, camHeight + sy, cz);
+  camera.lookAt(
+    spot.x + Math.cos(orbitYaw) * lookSideShift + sx * 0.5,
+    lookHeight + sy * 0.5,
+    spot.z - Math.sin(orbitYaw) * lookSideShift
+  );
+
+  // 사선(더치 앵글) 카메라 롤 회전 적용!
+  const targetRoll = tiltVal * (12.5 * DEG);
+  if (instant) {
+    STATE.smoothRoll = targetRoll;
+  } else {
+    STATE.smoothRoll = lerp(STATE.smoothRoll, targetRoll, 0.28);
+  }
+  camera.rotateZ(STATE.smoothRoll);
 }
 
-// ─── 오프스크린으로 이번 스테이지의 미션 예시 사진(5~10장)을 실제 3D 장면으로 즉석 촬영! ───
+// ─── 이번 스테이지 미션(서로 다른 스팟 + 서로 다른 구도 + 서로 다른 포즈!) 즉석 촬영 생성기 ───
 const snapThumbCanvas = document.createElement('canvas');
 snapThumbCanvas.width = 360;
 snapThumbCanvas.height = 270;
 const snapThumbCtx = snapThumbCanvas.getContext('2d');
 
-function captureCurrentCanvasAsDataURL(quality = 0.84) {
+function captureCurrentCanvasAsDataURL(quality = 0.85) {
   renderer.render(scene, camera);
   const sw = glCanvas.width;
   const sh = glCanvas.height;
@@ -910,50 +1414,62 @@ function captureCurrentCanvasAsDataURL(quality = 0.84) {
   return snapThumbCanvas.toDataURL('image/jpeg', quality);
 }
 
-function generateRandomMissionsForStage(cfg) {
-  // 매번 플레이할 때마다 포즈 순서·배율·앵글이 완전히 랜덤으로 조합됨!
-  const zoomChoices = cfg.stage === 1
-    ? [1, 1, 1, 2, 0.5]
-    : cfg.stage <= 3
-      ? [1, 2, 0.5, 1, 2, 0.5]
-      : [0.5, 1, 2];
+function moveCoupleToSpot(spot) {
+  coupleRoot.position.set(spot.x, 0, spot.z);
+  coupleRoot.rotation.y = spot.rotY;
+}
 
+function generateRandomMissionsForStage(cfg, spots) {
+  const availComps = shuffleTrue(COMPOSITION_PRESETS.filter(c => c.minStage <= cfg.stage));
   const shuffledPoses = shuffleTrue(POSE_POOL);
+  const shuffledSpotOrder = shuffleTrue([0, 1, 2, 0, 1, 2, 0, 1, 2, 0]);
   const missions = [];
 
   for (let i = 0; i < cfg.shotsReq; i++) {
+    const comp = availComps[i % availComps.length];
     const pose = shuffledPoses[i % shuffledPoses.length];
-    const zoom = cfg.stage <= 2 ? zoomChoices[i % zoomChoices.length] : randPick(zoomChoices);
-    // 스테이지가 올라갈수록 살짝 감성 오프셋 구도도 섞임
-    const aimX = cfg.stage <= 2 ? 0 : Number((randRange(-0.85, 0.85)).toFixed(2));
-    const aimY = cfg.stage <= 3 ? 0 : Number((randRange(-0.35, 0.45)).toFixed(2));
+    const spot = spots[shuffledSpotOrder[i % shuffledSpotOrder.length] % spots.length];
+
     missions.push({
       idx: i + 1,
+      spot,
+      comp,
       poseId: pose.id,
       poseLabel: pose.label,
-      cycleSpeed: pose.cycleSpeed * (1 + (cfg.stage - 1) * 0.06),
-      zoom,
-      aimX,
-      aimY,
+      cycleSpeed: pose.cycleSpeed * (1 + (cfg.stage - 1) * 0.055),
+      zoom: comp.zoom,
+      tilt: comp.tilt,
+      targetU: comp.targetU,
+      targetV: comp.targetV,
       refDataUrl: '',
     });
   }
 
-  // 방해물이 없는 깨끗한 상태에서 예시 사진을 실제로 찍어 저장!
-  const prevFov = camera.fov;
+  // 각 미션의 실제 포토존 스팟과 목표 3D 구도에서 방해물 없이 진짜 예시 사진 캡처!
   for (const m of missions) {
+    moveCoupleToSpot(m.spot);
     applyCouplePose(m.poseId, 1.0);
-    applyViewfinderCamera(m.zoom, m.aimX, m.aimY, 0, cfg.stage, true);
+    applyDynamicCamera({
+      spot: m.spot,
+      comp: m.comp,
+      uVal: m.targetU,
+      vVal: m.targetV,
+      zoomVal: m.zoom,
+      tiltVal: m.tilt,
+      instant: true,
+    });
     m.refDataUrl = captureCurrentCanvasAsDataURL(0.84);
   }
-  camera.fov = prevFov;
-  camera.updateProjectionMatrix();
+
+  // 첫 미션 스팟으로 복귀
+  moveCoupleToSpot(missions[0].spot);
   applyCouplePose(missions[0].poseId, 0);
+  STATE.smoothRoll = 0;
 
   return missions;
 }
 
-// ─── 100% 리얼 랜덤 돌발 상황 스포너 (세션 간에도 직전 판과 절대 겹치지 않는 완전 무작위!) ───
+// ─── 100% 리얼 랜덤 돌발 상황 스포너 (현재 커플이 서 있는 스팟 앞으로 정확히 난입!) ───
 const RECENT_CHAOS_STORAGE = 'fgs.snap.recentChaosIds';
 
 function loadSessionRecentChaos() {
@@ -964,7 +1480,6 @@ function loadSessionRecentChaos() {
     return [];
   }
 }
-
 function saveSessionRecentChaos(arr) {
   try {
     sessionStorage.setItem(RECENT_CHAOS_STORAGE, JSON.stringify(arr.slice(-5)));
@@ -972,13 +1487,14 @@ function saveSessionRecentChaos(arr) {
 }
 
 function clearActiveChaos() {
-  for (const c of STATE.activeChaos) {
-    scene.remove(c.mesh);
-  }
+  for (const c of STATE.activeChaos) scene.remove(c.mesh);
   STATE.activeChaos = [];
 }
 
 function spawnRandomChaosEvent(cfg) {
+  const m = STATE.missions[STATE.missionIdx];
+  if (!m) return;
+
   const eligible = CHAOS_CATALOG.filter(c => c.tier <= cfg.chaosMaxTier);
   const history = [...loadSessionRecentChaos(), ...STATE.recentChaosIds];
   const recentTail = history.slice(-4);
@@ -991,7 +1507,6 @@ function spawnRandomChaosEvent(cfg) {
 
   const mesh = buildChaosMesh(pickedDef);
 
-  // 진입 패턴도 매번 완전 무작위로 결정!
   let pattern = 'cross';
   if (pickedDef.id === 'duck_closeup' || pickedDef.id === 'cool_alpaca' || pickedDef.id === 'sprinkler') {
     pattern = randPick(['pop_bottom', 'cross']);
@@ -1002,20 +1517,19 @@ function spawnRandomChaosEvent(cfg) {
   }
 
   const dir = trueRand() < 0.5 ? 1 : -1;
-  const zDepth = pattern === 'pop_bottom' ? randRange(3.8, 5.1) : randRange(1.4, 3.2);
-  const dur = clamp(randRange(2.3, 3.6) - cfg.stage * 0.06, 1.55, 3.6);
+  const frontDist = pattern === 'pop_bottom' ? randRange(3.2, 4.4) : randRange(1.5, 2.8);
+  const dur = clamp(randRange(2.3, 3.5) - cfg.stage * 0.05, 1.55, 3.5);
 
-  mesh.rotation.y = dir < 0 ? Math.PI * 0.12 : -Math.PI * 0.12;
   scene.add(mesh);
-
   SFX.quackChaos(randRange(0.85, 1.25));
 
   STATE.activeChaos.push({
     def: pickedDef,
     mesh,
+    spot: m.spot,
     pattern,
     dir,
-    zDepth,
+    frontDist,
     age: 0,
     dur,
     bobSeed: randRange(0, 10),
@@ -1025,6 +1539,13 @@ function spawnRandomChaosEvent(cfg) {
 function updateActiveChaos(dt, nowSec) {
   STATE.isBlockedByChaos = false;
   STATE.blockingChaosLabel = '';
+
+  const curM = STATE.missions[STATE.missionIdx];
+  const camYaw = curM ? (curM.spot.rotY + STATE.dragU * 0.55) : 0;
+  const rightX = Math.cos(camYaw);
+  const rightZ = -Math.sin(camYaw);
+  const fwdX = Math.sin(camYaw);
+  const fwdZ = Math.cos(camYaw);
 
   for (let i = STATE.activeChaos.length - 1; i >= 0; i--) {
     const c = STATE.activeChaos[i];
@@ -1036,58 +1557,62 @@ function updateActiveChaos(dt, nowSec) {
     }
 
     const u = c.age / c.dur;
-    let x = 0;
+    let sideOffset = 0;
     let y = 0;
 
     if (c.pattern === 'pop_bottom') {
-      // 화면 아래에서 불쑥 올라와 기웃거리다가 쏙 내려감!
       const pop = Math.sin(u * Math.PI);
-      x = Math.sin(u * TAU + c.bobSeed) * 0.85;
-      y = lerp(-3.2, 0.15, Math.min(1, pop * 1.35));
+      sideOffset = Math.sin(u * TAU + c.bobSeed) * 0.85;
+      y = lerp(-3.2, 0.25, Math.min(1, pop * 1.35));
     } else if (c.pattern === 'fly_arc') {
-      x = lerp(-6.8 * c.dir, 6.8 * c.dir, u);
+      sideOffset = lerp(-6.6 * c.dir, 6.6 * c.dir, u);
       y = 0.5 + Math.sin(u * Math.PI) * 2.2;
     } else if (c.pattern === 'hover_top') {
-      x = lerp(-5.5 * c.dir, 5.5 * c.dir, u);
+      sideOffset = lerp(-5.4 * c.dir, 5.4 * c.dir, u);
       y = 0.2 + Math.sin(nowSec * 6 + c.bobSeed) * 0.35;
     } else if (c.pattern === 'hesitate_cross') {
-      // 한가운데(u = 0.38 ~ 0.62)에서 얄밉게 잠깐 멈칫거리다가 후다닥 지나가는 페인트 모션!
       let prog = u;
-      if (u > 0.36 && u < 0.64) {
-        prog = 0.36 + (u - 0.36) * 0.22;
-      } else if (u >= 0.64) {
-        prog = 0.4216 + ((u - 0.64) / 0.36) * 0.5784;
-      }
-      x = lerp(-6.8 * c.dir, 6.8 * c.dir, prog);
+      if (u > 0.36 && u < 0.64) prog = 0.36 + (u - 0.36) * 0.22;
+      else if (u >= 0.64) prog = 0.4216 + ((u - 0.64) / 0.36) * 0.5784;
+      sideOffset = lerp(-6.6 * c.dir, 6.6 * c.dir, prog);
       y = Math.abs(Math.sin(nowSec * 12 + c.bobSeed)) * 0.22;
     } else {
-      x = lerp(-6.8 * c.dir, 6.8 * c.dir, u);
+      sideOffset = lerp(-6.6 * c.dir, 6.6 * c.dir, u);
       y = Math.abs(Math.sin(nowSec * 11 + c.bobSeed)) * 0.20;
     }
 
-    c.mesh.position.set(x, y, c.zDepth);
+    const wx = c.spot.x + fwdX * c.frontDist + rightX * sideOffset;
+    const wz = c.spot.z + fwdZ * c.frontDist + rightZ * sideOffset;
+    c.mesh.position.set(wx, y, wz);
+    c.mesh.rotation.y = camYaw + (c.dir < 0 ? 0.2 : -0.2);
 
-    // 현재 카메라 시야 중심(커플 피사체 영역)을 실제로 가리고 있을 때만 방해 판정!
-    const relX = Math.abs(x - STATE.aimX * 0.7);
-    const blockWidth = c.zDepth > 3.6 ? 1.85 : 1.65;
-    if (relX < blockWidth && y > -1.25) {
+    if (Math.abs(sideOffset) < 1.72 && y > -1.25) {
       STATE.isBlockedByChaos = true;
       STATE.blockingChaosLabel = c.def.failLabel;
     }
   }
 }
 
-// ─── 스테이지 준비 & 브리핑 모달 오픈 ───
+// ─── 스테이지 준비 & 미션 전환 ───
+function setupMissionStartCamera(m) {
+  moveCoupleToSpot(m.spot);
+  // 플레이어가 직접 드래그해서 구도를 맞추는 재미를 위해 초기 카메라를 정면 아이레벨(0, 0) 근처로 세팅!
+  // (만약 목표 자체가 (0, 0) 근처라면 살짝 옆에서 시작해 구도를 맞추게 함)
+  STATE.dragU = Math.abs(m.targetU) < 0.25 ? (trueRand() < 0.5 ? -0.65 : 0.65) : 0;
+  STATE.dragV = Math.abs(m.targetV) < 0.25 ? 0.45 : 0;
+  syncOptionButtons();
+}
+
 function prepareStage(stageIndex) {
   STATE.stageIdx = stageIndex;
   STATE.highestStageReached = Math.max(STATE.highestStageReached, stageIndex + 1);
   const cfg = STAGE_CONFIGS[stageIndex];
 
   clearActiveChaos();
-  buildVenueScene(cfg.venue);
+  STATE.venueSpots = buildVenueScene(cfg.venue);
   buildCoupleForStage(cfg);
 
-  STATE.missions = generateRandomMissionsForStage(cfg);
+  STATE.missions = generateRandomMissionsForStage(cfg, STATE.venueSpots);
   STATE.missionIdx = 0;
   STATE.capturedGallery = [];
   STATE.stagePayEarned = 0;
@@ -1095,24 +1620,28 @@ function prepareStage(stageIndex) {
   STATE.hearts = 3;
   STATE.timeLeft = cfg.timeLimit;
   STATE.currentZoom = 1;
-  STATE.aimX = 0;
-  STATE.aimY = 0;
+  STATE.currentTilt = 0;
   STATE.posePhase = 0;
-  STATE.chaosTimer = randRange(1.2, 2.2);
-  syncZoomButtons();
+  STATE.chaosTimer = randRange(1.4, 2.4);
 
-  // 브리핑 모달에 예시 사진 5~10장 채우기
   $('brief-badge').textContent = `STAGE ${cfg.stage} / 10 · ${cfg.venueName}`;
   $('brief-couple').textContent = `💑 ${cfg.coupleName}`;
   $('brief-quote').textContent = cfg.quote;
 
   const grid = $('brief-grid');
-  grid.innerHTML = STATE.missions.map(m => `
-    <div class="brief-item">
-      <img src="${m.refDataUrl}" alt="${m.poseLabel}">
-      <div class="brief-item-txt">#${m.idx} ${m.poseLabel}<br><span style="color:#d97706">(${m.zoom}x 배율)</span></div>
-    </div>
-  `).join('');
+  grid.innerHTML = STATE.missions.map(m => {
+    const tiltTxt = m.tilt < 0 ? ' · ↖사선' : m.tilt > 0 ? ' · ↗사선' : '';
+    return `
+      <div class="brief-item">
+        <img src="${m.refDataUrl}" alt="${m.poseLabel}">
+        <div class="brief-item-txt">
+          #${m.idx} ${m.comp.name.replace('📐 ', '')}<br>
+          <span style="color:#0369a1">${m.spot.name}</span><br>
+          <span style="color:#d97706">(${m.zoom}x${tiltTxt})</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 
   STATE.phase = 'brief';
   $('start-modal').classList.add('hidden');
@@ -1127,11 +1656,16 @@ function prepareStage(stageIndex) {
 function loadCurrentMissionCard() {
   const m = STATE.missions[STATE.missionIdx];
   if (!m) return;
-  $('ref-num').textContent = `#${m.idx} / ${STATE.missions.length}`;
-  $('ref-zoom').textContent = `${m.zoom}x`;
+  const tiltTxt = m.tilt < 0 ? ' · ↖사선' : m.tilt > 0 ? ' · ↗사선' : '';
+  $('ref-num').textContent = `#${m.idx}/${STATE.missions.length}`;
+  $('ref-zoom').textContent = `${m.zoom}x${tiltTxt}`;
   $('ref-img').src = m.refDataUrl;
+  if ($('ref-comp')) {
+    $('ref-comp').textContent = `${m.comp.name} · ${m.spot.name}`;
+  }
   $('ref-cap').textContent = m.poseLabel;
-  syncZoomButtons();
+  clearActiveChaos();
+  setupMissionStartCamera(m);
 }
 
 function beginStageShooting() {
@@ -1151,15 +1685,21 @@ function beginStageShooting() {
   }
 }
 
-// ─── 배율 선택 & 드래그 패닝 ───
+// ─── 배율(`0.5x/1x/2x`), 사선 기울기(`↖/수평/↗`), 드래그 3D 구도 조작 ───
 const zoomBtns = Array.from(document.querySelectorAll('.zoom-btn'));
+const tiltBtns = Array.from(document.querySelectorAll('.tilt-btn'));
 
-function syncZoomButtons() {
-  const curMission = STATE.missions[STATE.missionIdx];
+function syncOptionButtons() {
+  const curM = STATE.missions[STATE.missionIdx];
   zoomBtns.forEach(btn => {
     const z = Number(btn.dataset.zoom);
     btn.classList.toggle('active', z === STATE.currentZoom);
-    btn.classList.toggle('hint', !!curMission && z === curMission.zoom && z !== STATE.currentZoom);
+    btn.classList.toggle('hint', !!curM && z === curM.zoom && z !== STATE.currentZoom);
+  });
+  tiltBtns.forEach(btn => {
+    const t = Number(btn.dataset.tilt);
+    btn.classList.toggle('active', t === STATE.currentTilt);
+    btn.classList.toggle('hint', !!curM && t === curM.tilt && t !== STATE.currentTilt);
   });
 }
 
@@ -1168,14 +1708,30 @@ zoomBtns.forEach(btn => {
     unlockAudio();
     STATE.currentZoom = Number(btn.dataset.zoom);
     SFX.tick();
-    syncZoomButtons();
+    syncOptionButtons();
   });
 });
 
+tiltBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    unlockAudio();
+    STATE.currentTilt = Number(btn.dataset.tilt);
+    SFX.tick();
+    syncOptionButtons();
+  });
+});
+
+// 우측 하단 단추: 구도가 너무 헷갈릴 때 목표 앵글 근처로 스냅 보정 도와주기!
+$('btn-recenter').innerHTML = '<span>📐</span><span>앵글맞춤</span>';
 $('btn-recenter').addEventListener('click', () => {
-  STATE.aimX = 0;
-  STATE.aimY = 0;
+  const m = STATE.missions[STATE.missionIdx];
+  if (!m) return;
+  STATE.dragU = lerp(STATE.dragU, m.targetU, 0.85);
+  STATE.dragV = lerp(STATE.dragV, m.targetV, 0.85);
+  STATE.currentZoom = m.zoom;
+  STATE.currentTilt = m.tilt;
   SFX.tick();
+  syncOptionButtons();
 });
 
 glCanvas.addEventListener('pointerdown', e => {
@@ -1189,14 +1745,23 @@ glCanvas.addEventListener('pointerdown', e => {
 });
 
 glCanvas.addEventListener('pointermove', e => {
-  if (STATE.phase !== 'play' || !STATE.dragging || e.pointerId !== STATE.pointerId) return;
+  if (STATE.phase !== 'play') return;
+  if (!STATE.dragging && (e.buttons > 0 || e.pointerType === 'touch')) {
+    STATE.dragging = true;
+    STATE.pointerId = e.pointerId;
+    STATE.lastClientX = e.clientX;
+    STATE.lastClientY = e.clientY;
+    return;
+  }
+  if (!STATE.dragging || e.pointerId !== STATE.pointerId) return;
   const dx = e.clientX - STATE.lastClientX;
   const dy = e.clientY - STATE.lastClientY;
   STATE.lastClientX = e.clientX;
   STATE.lastClientY = e.clientY;
 
-  STATE.aimX = clamp(STATE.aimX - dx * 0.0085, -2.6, 2.6);
-  STATE.aimY = clamp(STATE.aimY + dy * 0.0065, -1.3, 1.3);
+  // 좌우 드래그 → 카메라 궤도 회전/여백, 상하 드래그 → 로우앵글(아래로) ↔ 하이앵글(위로)!
+  STATE.dragU = clamp(STATE.dragU + dx * 0.0068, -1.35, 1.35);
+  STATE.dragV = clamp(STATE.dragV - dy * 0.0068, -1.35, 1.35);
 });
 
 function endPan(e) {
@@ -1207,27 +1772,87 @@ function endPan(e) {
 glCanvas.addEventListener('pointerup', endPan);
 glCanvas.addEventListener('pointercancel', endPan);
 
-// ─── 실시간 일치도(%) 산출 ───
+// ─── 실시간 일치도(%) 산출 (구도 앵글 + 배율 + 기울기 + 포즈 타이밍 + 방해물 여부!) ───
+function getAngleError() {
+  const m = STATE.missions[STATE.missionIdx];
+  if (!m) return 0;
+  return Math.hypot(STATE.dragU - m.targetU, STATE.dragV - m.targetV);
+}
+
 function evaluateLiveMatch() {
   const cfg = STAGE_CONFIGS[STATE.stageIdx];
   const m = STATE.missions[STATE.missionIdx];
   if (!cfg || !m) return 0;
 
   if (STATE.isBlockedByChaos) {
-    return Math.round(24 + STATE.poseAmount * 16);
+    return Math.round(22 + STATE.poseAmount * 16);
   }
 
-  // 1) 포즈 타이밍 점수 (0 ~ 62점)
-  const poseScore = Math.pow(STATE.poseAmount, 1.35) * 62;
+  // 1) 3D 카메라 구도(앵글·여백·로우/하이) 점수 (0 ~ 32점)
+  const angErr = getAngleError();
+  const angleScore = angErr <= 0.20 ? 32 : clamp(32 - (angErr - 0.20) * 34, 0, 32);
 
-  // 2) 배율 일치 점수 (일치 시 22점, 불일치 시 감점)
-  const zoomScore = (STATE.currentZoom === m.zoom) ? 22 : 4;
+  // 2) 커플 포즈 정점 타이밍 점수 (0 ~ 44점)
+  const poseScore = Math.pow(STATE.poseAmount, 1.3) * 44;
 
-  // 3) 구도 중심 조준 점수 (0 ~ 16점)
-  const aimErr = Math.hypot(STATE.aimX - m.aimX, STATE.aimY - m.aimY);
-  const aimScore = clamp(16 - aimErr * 9.5, 0, 16);
+  // 3) 배율(`0.5x/1x/2x`) 점수 (14점)
+  const zoomScore = (STATE.currentZoom === m.zoom) ? 14 : 2;
 
-  return clamp(Math.round(poseScore + zoomScore + aimScore), 10, 100);
+  // 4) 사선 기울기(`↖/수평/↗`) 점수 (10점)
+  const tiltScore = (STATE.currentTilt === m.tilt) ? 10 : 1;
+
+  return clamp(Math.round(angleScore + poseScore + zoomScore + tiltScore), 10, 100);
+}
+
+// ─── 2D 뷰파인더 구도 가이드 과녁 링 렌더링 (`drawCompositionGuideOverlay`) ───
+function drawCompositionGuideOverlay() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (ovCanvas.width !== Math.floor(w * dpr) || ovCanvas.height !== Math.floor(h * dpr)) {
+    ovCanvas.width = Math.floor(w * dpr);
+    ovCanvas.height = Math.floor(h * dpr);
+  }
+  ovCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ovCtx.clearRect(0, 0, w, h);
+
+  if (STATE.phase !== 'play') return;
+  const m = STATE.missions[STATE.missionIdx];
+  if (!m) return;
+
+  const cx = w * 0.5;
+  const cy = h * 0.51;
+  const du = m.targetU - STATE.dragU;
+  const dv = m.targetV - STATE.dragV;
+  const dist = Math.hypot(du, dv);
+
+  if (dist > 0.20) {
+    // 목표 앵글 방향을 직관적인 점선 화살표 & 노란 과녁 링으로 표시!
+    const tx = cx + clamp(du * 115, -135, 135);
+    const ty = cy - clamp(dv * 115, -125, 125);
+
+    ovCtx.save();
+    ovCtx.strokeStyle = 'rgba(250, 204, 21, 0.88)';
+    ovCtx.lineWidth = 3;
+    ovCtx.setLineDash([7, 6]);
+    ovCtx.beginPath();
+    ovCtx.moveTo(cx, cy);
+    ovCtx.lineTo(tx, ty);
+    ovCtx.stroke();
+    ovCtx.setLineDash([]);
+
+    ovCtx.beginPath();
+    ovCtx.arc(tx, ty, 22, 0, TAU);
+    ovCtx.fillStyle = 'rgba(250, 204, 21, 0.20)';
+    ovCtx.fill();
+    ovCtx.stroke();
+
+    ovCtx.font = '900 12px "Pretendard","Apple SD Gothic Neo",sans-serif';
+    ovCtx.textAlign = 'center';
+    ovCtx.fillStyle = '#fef08a';
+    ovCtx.fillText('📐 이쪽으로 드래그!', tx, ty - 28);
+    ovCtx.restore();
+  }
 }
 
 // ─── 📸 셔터 촬영 판정!! ───
@@ -1238,9 +1863,7 @@ function showDevelopedPhotoPopup(dataUrl, label, isGood) {
   box.classList.toggle('bad', !isGood);
   box.classList.add('show');
   STATE.devPopupTimer = 0.95;
-
-  const slot = $('last-shot-slot');
-  slot.innerHTML = `<img src="${dataUrl}" alt="최근 사진">`;
+  $('last-shot-slot').innerHTML = `<img src="${dataUrl}" alt="최근 사진">`;
 }
 
 function triggerShutter() {
@@ -1248,7 +1871,6 @@ function triggerShutter() {
   unlockAudio();
   SFX.shutterClick();
 
-  // 하얀 셔터 플래시 번쩍!
   const fl = $('shutter-flash');
   fl.classList.add('bang');
   requestAnimationFrame(() => {
@@ -1260,28 +1882,31 @@ function triggerShutter() {
   const m = STATE.missions[STATE.missionIdx];
   const matchPct = STATE.currentMatchPct;
 
-  // 1) 방해물이 찍혔거나 합격 일치도 미달!
   if (STATE.isBlockedByChaos || matchPct < cfg.minMatch) {
     SFX.photoFail();
     STATE.hearts -= 1;
 
-    let failReason = `💦 타이밍 어긋남! (일치 ${matchPct}% < ${cfg.minMatch}%)`;
+    let failReason = `💦 포즈 타이밍 어긋남! (일치 ${matchPct}%)`;
     if (STATE.isBlockedByChaos) {
       failReason = `${STATE.blockingChaosLabel} (일치 ${matchPct}%)`;
     } else if (STATE.currentZoom !== m.zoom) {
-      failReason = `🔍 배율 불일치! [${m.zoom}x]로 찍어야 해요!`;
+      failReason = `🔍 [${m.zoom}x] 배율로 맞춰 찍으세요!`;
+    } else if (STATE.currentTilt !== m.tilt) {
+      const tName = m.tilt < 0 ? '↖사선' : m.tilt > 0 ? '↗사선' : '수평';
+      failReason = `📐 카메라 기울기를 [${tName}]으로 맞추세요!`;
+    } else if (getAngleError() > 0.35) {
+      failReason = `📐 드래그해서 [${m.comp.name.replace('📐 ', '')}] 구도를 맞추세요!`;
     }
 
     showDevelopedPhotoPopup(shotUrl, failReason, false);
     updateHUD();
 
     if (STATE.hearts <= 0) {
-      setTimeout(() => finishCareer(false, '커플 인내심 소진! 엉뚱한 사진만 찍다가 알바 해고…'), 650);
+      setTimeout(() => finishCareer(false, '커플 인내심 소진! 구도가 엉뚱한 사진만 찍다가 알바 해고…'), 650);
     }
     return;
   }
 
-  // 2) 미션 컷 촬영 대성공!!
   SFX.photoPass();
   const bonusMult = matchPct >= 95 ? 1.35 : matchPct >= 88 ? 1.15 : 1.0;
   const pay = Math.round((cfg.basePay * bonusMult) / 100) * 100;
@@ -1294,7 +1919,7 @@ function triggerShutter() {
 
   STATE.capturedGallery.push({
     idx: m.idx,
-    label: m.poseLabel,
+    compName: m.comp.name.replace('📐 ', ''),
     matchPct,
     dataUrl: shotUrl,
   });
@@ -1308,13 +1933,11 @@ function triggerShutter() {
   STATE.missionIdx += 1;
   STATE.posePhase = 0;
 
-  // 이번 스테이지의 모든 미션 사진 촬영 완료!!
   if (STATE.missionIdx >= STATE.missions.length) {
     STATE.phase = 'transition';
     if (STATE.stageIdx >= STAGE_CONFIGS.length - 1) {
-      // 대망의 10스테이지 올클리어!!
       SFX.win();
-      setTimeout(() => finishCareer(true, '👑 전설의 10스테이지 올클리어!! 우주급 소동을 뚫고 모든 인생샷을 건졌습니다!'), 650);
+      setTimeout(() => finishCareer(true, '👑 10대 월드 명소 올클리어!! 모든 다채로운 구도와 돌발 소동을 정복했습니다!'), 650);
     } else {
       SFX.win();
       setTimeout(() => openStageClearModal(), 580);
@@ -1348,12 +1971,12 @@ function openStageClearModal() {
 
   $('sc-chip').textContent = `🎉 STAGE ${cfg.stage} 클리어! [${cfg.coupleName}] 대만족!`;
   $('sc-title').textContent = `알바비 +${STATE.stagePayEarned.toLocaleString()}원 입금!`;
-  $('sc-sub').textContent = `평균 일치도 ${avg}% · 다음 의뢰: STAGE ${nextCfg.stage} [${nextCfg.coupleName}] (${nextCfg.shotsReq}장)`;
+  $('sc-sub').textContent = `평균 일치도 ${avg}% · 다음 출장지: STAGE ${nextCfg.stage} [${nextCfg.venueName}] (${nextCfg.shotsReq}장)`;
 
   $('sc-gallery').innerHTML = STATE.capturedGallery.map(it => `
     <div class="brief-item">
-      <img src="${it.dataUrl}" alt="${it.label}">
-      <div class="brief-item-txt">#${it.idx} 일치 ${it.matchPct}% ✨</div>
+      <img src="${it.dataUrl}" alt="${it.compName}">
+      <div class="brief-item-txt">#${it.idx} ${it.compName}<br><span style="color:#16a34a">일치 ${it.matchPct}% ✨</span></div>
     </div>
   `).join('');
 
@@ -1379,6 +2002,7 @@ function updateHUD() {
   timerEl.classList.toggle('urgent', sec <= 10);
 
   const m = STATE.missions[STATE.missionIdx];
+  const angErr = getAngleError();
   const ready = !STATE.isBlockedByChaos && STATE.currentMatchPct >= cfg.minMatch;
 
   const mp = $('match-pill');
@@ -1396,37 +2020,42 @@ function updateHUD() {
     af.className = 'af-reticle blocked';
     afLbl.textContent = '⚠️ 찍으면 방해물 찍힘!';
   } else if (m && STATE.currentZoom !== m.zoom) {
-    mp.textContent = `🔍 [${m.zoom}x] 배율 필요 (${STATE.currentMatchPct}%)`;
+    mp.textContent = `🔍 [${m.zoom}x] 배율 선택 필요`;
     mp.className = 'match-pill';
     af.className = 'af-reticle';
-    afLbl.textContent = `아래 [${m.zoom}x] 버튼을 누르세요`;
+    afLbl.textContent = `아래 [${m.zoom}x] 단추를 누르세요`;
+  } else if (m && STATE.currentTilt !== m.tilt) {
+    const tName = m.tilt < 0 ? '↖사선' : m.tilt > 0 ? '↗사선' : '수평';
+    mp.textContent = `📐 [${tName}] 기울기 선택 필요`;
+    mp.className = 'match-pill';
+    af.className = 'af-reticle';
+    afLbl.textContent = `아래 [${tName}] 단추를 누르세요`;
+  } else if (angErr > 0.25) {
+    mp.textContent = `📐 드래그해 구도 맞추기 (${STATE.currentMatchPct}%)`;
+    mp.className = 'match-pill';
+    af.className = 'af-reticle';
+    afLbl.textContent = '노란 과녁 쪽으로 화면 드래그!';
   } else if (ready) {
     mp.textContent = `✨ 일치 ${STATE.currentMatchPct}% · 지금 찰칵!!`;
     mp.className = 'match-pill good';
     af.className = 'af-reticle locked';
-    afLbl.textContent = `삑! ${STATE.currentMatchPct}% 포즈 일치!`;
+    afLbl.textContent = `삑! ${STATE.currentMatchPct}% 구도·포즈 완벽!`;
   } else {
     mp.textContent = `일치도 ${STATE.currentMatchPct}% (목표 ${cfg.minMatch}%+)`;
     mp.className = 'match-pill';
     af.className = 'af-reticle';
-    afLbl.textContent = '포즈 정점을 기다리세요';
+    afLbl.textContent = '구도 OK! 포즈 정점 대기!';
   }
 
   $('pose-fill').style.width = `${Math.round(STATE.poseAmount * 100)}%`;
 }
 
-// ─── 최종 종료 & 전체 랭킹 기록 ───
+// ─── 최종 종료 & 랭킹 ───
 function computeSnapRankTitle(clearedAll, stageReached, totalPay) {
-  if (clearedAll) {
-    return '👑 전설의 10스테이지 마스터 스냅 신(神)';
-  }
-  if (stageReached >= 7 || totalPay >= 350000) {
-    return '📸 우주 기행도 뚫는 프로 스냅 사진가';
-  }
-  if (stageReached >= 4 || totalPay >= 140000) {
-    return '🦆 오리 피하기 숙련 스냅 알바생';
-  }
-  return '🐣 오리 얼빡샷 수집가 수습 알바';
+  if (clearedAll) return '👑 전설의 10대 명소 마스터 스냅 신(神)';
+  if (stageReached >= 7 || totalPay >= 350000) return '📸 구도 천재 월드투어 스냅 사진가';
+  if (stageReached >= 4 || totalPay >= 140000) return '🦆 돌발 소동 돌파 숙련 알바생';
+  return '🐣 수평 맞추기 연습생 수습 알바';
 }
 
 function formatLadderMetric(row) {
@@ -1440,7 +2069,6 @@ async function finishCareer(clearedAll, summaryComment) {
   STATE.phase = 'gameover';
   BGM.setUrgent(false);
   clearActiveChaos();
-
   if (!clearedAll) SFX.fail();
 
   const stageReached = clearedAll ? 10 : (STATE.stageIdx + 1);
@@ -1487,12 +2115,7 @@ async function finishCareer(clearedAll, summaryComment) {
     errorMm: null,
     rankTitle,
     seed: 1,
-    meta: {
-      clearedAll,
-      stageReached,
-      shots: STATE.totalShotsSuccess,
-      avgAcc,
-    },
+    meta: { clearedAll, stageReached, shots: STATE.totalShotsSuccess, avgAcc },
   };
 
   $('result-modal').classList.remove('hidden');
@@ -1508,7 +2131,6 @@ async function finishCareer(clearedAll, summaryComment) {
   }
 }
 
-// ─── 새 커리어 시작 (1스테이지부터 완전 새로운 랜덤 시나리오 생성!) ───
 function startNewCareer() {
   unlockAudio();
   STATE.totalPay = 0;
@@ -1517,6 +2139,46 @@ function startNewCareer() {
   STATE.highestStageReached = 1;
   STATE.recentChaosIds = [];
   prepareStage(0);
+}
+
+// ─── 배경 명소 애니메이션 업데이트 (대관람차·회전목마·풍차·열기구·벚꽃·눈송이·불꽃놀이!) ───
+function updateVenueAnimations(dt, nowSec) {
+  if (envAnimState.ferrisWheel) {
+    envAnimState.ferrisWheel.rotation.z = nowSec * 0.25;
+  }
+  if (envAnimState.carousel) {
+    envAnimState.carousel.rotation.y = nowSec * 0.65;
+  }
+  if (envAnimState.windmillBlades) {
+    envAnimState.windmillBlades.rotation.z = -nowSec * 0.85;
+  }
+  for (const hb of envAnimState.balloons) {
+    hb.mesh.position.y = hb.baseY + Math.sin(nowSec * 1.2 + hb.phase) * 0.65;
+  }
+
+  if (envAnimState.particleKind === 'petal' || envAnimState.particleKind === 'snow') {
+    for (let i = 0; i < envAnimState.ambientParticles.length; i++) {
+      const p = envAnimState.ambientParticles[i];
+      p.position.y -= dt * (envAnimState.particleKind === 'petal' ? 1.4 : 1.9);
+      p.position.x += Math.sin(nowSec * 2 + i) * dt * 0.8;
+      p.rotation.z += dt * 2;
+      if (p.position.y < 0.1) p.position.y = 8.8;
+    }
+  } else if (envAnimState.particleKind === 'firework') {
+    for (const fw of envAnimState.ambientParticles) {
+      const u = (nowSec * 0.65 + fw.userData.phase) % 1;
+      const r = easeOutBurst(u) * fw.userData.spd * 2.4;
+      fw.position.set(
+        fw.userData.cx + Math.cos(fw.userData.ang) * r,
+        fw.userData.cy + Math.sin(fw.userData.ang) * r - u * u * 1.5,
+        -13.5
+      );
+      fw.scale.setScalar(Math.max(0.05, 1.2 - u));
+    }
+  }
+}
+function easeOutBurst(t) {
+  return 1 - Math.pow(1 - clamp(t, 0, 1), 2.4);
 }
 
 // ─── 메인 루프 ───
@@ -1530,21 +2192,25 @@ function tick(now) {
 
   if (STATE.devPopupTimer > 0) {
     STATE.devPopupTimer -= dt;
-    if (STATE.devPopupTimer <= 0) {
-      $('dev-popup').classList.remove('show');
-    }
+    if (STATE.devPopupTimer <= 0) $('dev-popup').classList.remove('show');
   }
 
+  updateVenueAnimations(dt, nowSec);
   const cfg = STAGE_CONFIGS[STATE.stageIdx] || STAGE_CONFIGS[0];
 
   if (STATE.phase === 'menu' || STATE.phase === 'brief' || STATE.phase === 'stageclear') {
     const previewWave = 0.5 + 0.5 * Math.sin(nowSec * 2.0);
     applyCouplePose('hand_hold', previewWave);
-    camera.fov = 40;
-    camera.updateProjectionMatrix();
-    const bz = getResponsiveCamBaseZ();
-    camera.position.set(Math.sin(nowSec * 0.45) * 1.4, 2.45, bz);
-    camera.lookAt(0, 1.85, 0);
+    const spot0 = STATE.venueSpots[0] || { x: 0, z: 0, rotY: 0 };
+    moveCoupleToSpot(spot0);
+    applyDynamicCamera({
+      spot: spot0,
+      comp: COMPOSITION_PRESETS[0],
+      uVal: Math.sin(nowSec * 0.45) * 0.65,
+      vVal: -0.25 + Math.cos(nowSec * 0.35) * 0.35,
+      zoomVal: 0.5,
+      tiltVal: 0,
+    });
   } else if (STATE.phase === 'play') {
     STATE.timeLeft = Math.max(0, STATE.timeLeft - dt);
     if (STATE.timeLeft <= 0) {
@@ -1554,14 +2220,23 @@ function tick(now) {
 
     const m = STATE.missions[STATE.missionIdx];
     if (m) {
-      // 커플 포즈 주기적 리듬 애니메이션 (정점에서 잠깐 머물러 찍는 손맛 보장!)
       STATE.posePhase += dt * m.cycleSpeed;
       const rawWave = 0.5 - 0.5 * Math.cos(STATE.posePhase);
       STATE.poseAmount = clamp(Math.pow(rawWave, 0.78) * 1.08, 0, 1);
       applyCouplePose(m.poseId, STATE.poseAmount);
+
+      applyDynamicCamera({
+        spot: m.spot,
+        comp: m.comp,
+        uVal: STATE.dragU,
+        vVal: STATE.dragV,
+        zoomVal: STATE.currentZoom,
+        tiltVal: STATE.currentTilt,
+        swaySec: nowSec,
+        stageLv: cfg.stage,
+      });
     }
 
-    // 100% 랜덤 돌발 상황 출현 타이머
     STATE.chaosTimer -= dt;
     if (STATE.chaosTimer <= 0) {
       if (STATE.activeChaos.length < cfg.maxConcurrentChaos) {
@@ -1571,13 +2246,10 @@ function tick(now) {
     }
 
     updateActiveChaos(dt, nowSec);
-    applyViewfinderCamera(STATE.currentZoom, STATE.aimX, STATE.aimY, nowSec, cfg.stage);
-
     STATE.currentMatchPct = evaluateLiveMatch();
+
     const readyNow = !STATE.isBlockedByChaos && STATE.currentMatchPct >= cfg.minMatch;
-    if (readyNow && !STATE.prevReadyLock) {
-      SFX.focusBeep();
-    }
+    if (readyNow && !STATE.prevReadyLock) SFX.focusBeep();
     STATE.prevReadyLock = readyNow;
 
     BGM.setUrgent(STATE.timeLeft <= 10 || cfg.stage >= 7);
@@ -1585,24 +2257,36 @@ function tick(now) {
   }
 
   renderer.render(scene, camera);
+  drawCompositionGuideOverlay();
 
+  const curM = STATE.missions[STATE.missionIdx];
   window.__snapDebug = {
     phase: STATE.phase,
     stage: cfg.stage,
     venue: cfg.venue,
     missionIdx: STATE.missionIdx,
     missionsTotal: STATE.missions.length,
-    missionPoses: STATE.missions.map(x => `${x.poseId}@${x.zoom}x`),
+    missionSummary: STATE.missions.map(x => `${x.spot.name}:${x.comp.id}:${x.poseId}`),
     currentZoom: STATE.currentZoom,
-    targetZoom: STATE.missions[STATE.missionIdx] ? STATE.missions[STATE.missionIdx].zoom : 1,
+    targetZoom: curM ? curM.zoom : 1,
+    currentTilt: STATE.currentTilt,
+    targetTilt: curM ? curM.tilt : 0,
+    dragU: Number(STATE.dragU.toFixed(2)),
+    dragV: Number(STATE.dragV.toFixed(2)),
+    targetU: curM ? curM.targetU : 0,
+    targetV: curM ? curM.targetV : 0,
     matchPct: STATE.currentMatchPct,
     minMatch: cfg.minMatch,
     blocked: STATE.isBlockedByChaos,
-    activeChaosIds: STATE.activeChaos.map(c => `${c.def.id}:${c.pattern}:${c.dir}`),
+    activeChaosIds: STATE.activeChaos.map(c => `${c.def.id}:${c.pattern}`),
     hearts: STATE.hearts,
     totalPay: STATE.totalPay,
   };
 }
+window.__snapJumpStage = idx => {
+  prepareStage(clamp(idx, 0, STAGE_CONFIGS.length - 1));
+  beginStageShooting();
+};
 
 // ─── UI 버튼 및 공유·랭킹 바인딩 ───
 function syncBgmBtn() {
@@ -1661,7 +2345,7 @@ $('btn-share').addEventListener('click', async () => {
 
   await shareChallengeLink({
     title: '📸 웨딩·여행 스냅 알바 — 이게뭔겜? 404 아케이드',
-    text: `📸 [${STATE.lastFinalRun.nickname}]님의 스냅 알바 수입: ${STATE.totalPay.toLocaleString()}원 (STAGE ${STATE.lastFinalRun.actualValue}/10 · 인생샷 ${STATE.totalShotsSuccess}장)! 오리와 UFO 난입 뚫고 더 잘 찍을 수 있나요?`,
+    text: `📸 [${STATE.lastFinalRun.nickname}]님의 10대 명소 스냅 알바 수입: ${STATE.totalPay.toLocaleString()}원 (STAGE ${STATE.lastFinalRun.actualValue}/10 · 인생샷 ${STATE.totalShotsSuccess}장)! 다양한 구도와 랜덤 소동 이길 수 있나요?`,
     url: shareUrl,
   });
 });
@@ -1669,7 +2353,7 @@ $('btn-share').addEventListener('click', async () => {
 $('btn-save-img').addEventListener('click', () => {
   if (!STATE.lastFinalRun) return;
   downloadResultCard({
-    gameTitle: '웨딩·여행 스냅 알바 — 10스테이지',
+    gameTitle: '웨딩·여행 스냅 알바 — 10대 명소',
     rankTitle: STATE.lastFinalRun.rankTitle,
     headline: `${STATE.totalPay.toLocaleString()}원 정산`,
     subline: `도달 STAGE ${STATE.lastFinalRun.actualValue}/10 · 인생샷 ${STATE.totalShotsSuccess}장`,
@@ -1678,9 +2362,8 @@ $('btn-save-img').addEventListener('click', () => {
   });
 });
 
-// 초기 배경 프리뷰 세팅 및 도전장 확인
 (async function init() {
-  buildVenueScene('lake_wedding');
+  STATE.venueSpots = buildVenueScene('lake_wedding');
   buildCoupleForStage(STAGE_CONFIGS[0]);
   syncBgmBtn();
   syncBestBadges();

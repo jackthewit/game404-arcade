@@ -309,23 +309,44 @@ const introCustomerGroup = new THREE.Group();
 introCustomerGroup.visible = false;
 scene.add(introCustomerGroup);
 {
-  const pureWhiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#f1f5f9', emissiveIntensity: 0.15, roughness: 0.38 });
-  const skinMat = new THREE.MeshStandardMaterial({ color: '#f3c5a5', roughness: 0.55 });
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.1, 4.8, 16), pureWhiteMat);
-  torso.scale.set(1.28, 1, 0.68);
-  torso.position.set(0, 1.8, 10.6);
-  const sleeveL = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.68, 2.2, 12), pureWhiteMat);
-  sleeveL.rotation.z = 0.55;
-  sleeveL.position.set(-2.95, 2.9, 10.4);
-  const sleeveR = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.68, 2.2, 12), pureWhiteMat);
-  sleeveR.rotation.z = -0.55;
-  sleeveR.position.set(2.95, 2.9, 10.4);
+  const pureWhiteMat = new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#f1f5f9', emissiveIntensity: 0.14, roughness: 0.45 });
+  const trimWhiteMat = new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.55 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: '#f3c5a5', roughness: 0.52 });
+  const introLathePts = [
+    new THREE.Vector2(0.01, 0.0),
+    new THREE.Vector2(2.05, 0.05),
+    new THREE.Vector2(1.96, 1.1),
+    new THREE.Vector2(2.35, 3.1),
+    new THREE.Vector2(2.48, 4.1),
+    new THREE.Vector2(1.95, 4.65),
+    new THREE.Vector2(0.95, 4.88),
+    new THREE.Vector2(0.01, 4.9),
+  ];
+  const torso = new THREE.Mesh(new THREE.LatheGeometry(introLathePts, 24), pureWhiteMat);
+  torso.scale.set(1.22, 1, 0.64);
+  torso.position.set(0, -0.4, 10.6);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(1.02, 0.16, 10, 24), trimWhiteMat);
+  collar.rotation.x = Math.PI / 2;
+  collar.scale.set(1.12, 0.78, 1);
+  collar.position.set(0, 4.46, 10.55);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.84, 0.85, 18), skinMat);
+  neck.position.set(0, 4.82, 10.55);
+  const sleeveL = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.86, 2.25, 16), pureWhiteMat);
+  sleeveL.rotation.z = 0.58;
+  sleeveL.position.set(-2.95, 2.95, 10.45);
+  const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.44, 1.9, 6, 10), skinMat);
+  armL.rotation.z = 0.42;
+  armL.rotation.x = 0.55;
+  armL.position.set(-3.85, 1.85, 9.75);
+  const sleeveR = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.86, 2.25, 16), pureWhiteMat);
+  sleeveR.rotation.z = -0.58;
+  sleeveR.position.set(2.95, 2.95, 10.45);
   // 주문하며 차림표를 짚는 오른팔과 손
   const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.46, 3.6, 6, 10), skinMat);
   armR.rotation.x = 1.32;
   armR.rotation.z = -0.22;
   armR.position.set(2.1, 1.9, 7.2);
-  introCustomerGroup.add(torso, sleeveL, sleeveR, armR);
+  introCustomerGroup.add(torso, collar, neck, sleeveL, armL, sleeveR, armR);
 }
 
 // ─── 2. 대왕 짬뽕 그릇 보스 & "씨익—" 웃는 사악한 짬뽕 파츠 ───
@@ -599,93 +620,348 @@ chopsticksGroup.add(liftedNoodlesGroup);
   }
 }
 
-// ─── 4. 플레이어 기체: 새하얀 순백 3D 티셔츠 & 국물 얼룩 자국 ───
+// ─── 4. 플레이어 기체: 실제 3D 흰 티셔츠 착용 상체 & 동그란 원 가이드 & 스윽 회피 모션 ───
+// (사람 얼굴·눈·코·입 없음! 목선까지만 조형된 입체 착용 상체 + 양팔·손)
 const playerGroup = new THREE.Group();
-playerGroup.position.set(0, 0.38, 5.6);
+playerGroup.position.set(0, 0, 5.6);
 scene.add(playerGroup);
 
+// 허리 피벗: 국물이 다가올 때 허리부터 옆으로 "스윽—" 기울이고 어깨를 틀어 피하는 회전축!
 const shirtTiltGroup = new THREE.Group();
+shirtTiltGroup.position.set(0, 0.08, 0.92);
 playerGroup.add(shirtTiltGroup);
 
+const torsoBodyGroup = new THREE.Group();
+const BASE_TORSO_PITCH = -0.70; // 65° 위쪽 카메라 시선에서 명치가 원 가이드와 일치하고 가슴·어깨·소매 입체감이 살아나는 각도
+torsoBodyGroup.rotation.x = BASE_TORSO_PITCH;
+shirtTiltGroup.add(torsoBodyGroup);
+
+const shoulderPivotL = new THREE.Group();
+const shoulderPivotR = new THREE.Group();
+const coreGuideGroup = new THREE.Group();
+let corePulseRing = null;
+let dodgeSwishMesh = null;
+let dodgeSwishMat = null;
+
 const shirtPureMat = new THREE.MeshStandardMaterial({
-  color: '#ffffff',
-  emissive: '#f8fafc',
-  emissiveIntensity: 0.18,
-  roughness: 0.38,
+  color: '#f8fafc',
+  emissive: '#e2e8f0',
+  emissiveIntensity: 0.04,
+  roughness: 0.54,
+  metalness: 0.02,
 });
-const shirtTrimMat = new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.45 });
-const coreGlowMat = new THREE.MeshBasicMaterial({ color: '#38bdf8' });
-const coreRingMat = new THREE.MeshBasicMaterial({ color: '#0284c7', transparent: true, opacity: 0.65, side: THREE.DoubleSide });
-const stainOrangeMat = new THREE.MeshBasicMaterial({ color: '#f97316' });
-const stainEdgeMat = new THREE.MeshBasicMaterial({ color: '#fdba74', transparent: true, opacity: 0.65 });
+const shirtFoldMat = new THREE.MeshStandardMaterial({
+  color: '#cbd5e1',
+  roughness: 0.65,
+});
+const shirtTrimMat = new THREE.MeshStandardMaterial({ color: '#dbe4ee', roughness: 0.58 });
+const skinBodyMat = new THREE.MeshStandardMaterial({
+  color: '#f4c29f',
+  emissive: '#fdba74',
+  emissiveIntensity: 0.04,
+  roughness: 0.50,
+});
+const pantsWaistMat = new THREE.MeshStandardMaterial({ color: '#1e3a5f', roughness: 0.68 });
+const stainOrangeMat = new THREE.MeshBasicMaterial({ color: '#f97316', depthWrite: false });
+const stainEdgeMat = new THREE.MeshBasicMaterial({ color: '#fdba74', transparent: true, opacity: 0.72, depthWrite: false });
 
-const stainMeshes = []; // 맞을 때마다 하나씩 드러나는 3개의 국물 얼룩!
+const stainMeshes = []; // 맞을 때마다 입체 티셔츠 곡면 위에 하나씩 드러나는 3개의 국물 얼룩!
 {
-  // 밝은 식탁보 위에서도 반팔 흰 티셔츠 실루엣이 칼같이 선명하게 보이도록 진남색 입체 아웃라인 받침 추가!
-  const shirtOutlineMat = new THREE.MeshBasicMaterial({ color: '#1e293b' });
-  const bodyOutline = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.30, 2.62), shirtOutlineMat);
-  bodyOutline.position.y = -0.06;
-  const sleeveOutGeo = new THREE.BoxGeometry(1.18, 0.28, 1.16);
-  const sleeveOutL = new THREE.Mesh(sleeveOutGeo, shirtOutlineMat);
-  sleeveOutL.position.set(-1.36, -0.07, -0.58);
-  sleeveOutL.rotation.y = 0.46;
-  const sleeveOutR = new THREE.Mesh(sleeveOutGeo, shirtOutlineMat);
-  sleeveOutR.position.set(1.36, -0.07, -0.58);
-  sleeveOutR.rotation.y = -0.46;
-  shirtTiltGroup.add(bodyOutline, sleeveOutL, sleeveOutR);
+  const shirtOutlineMat = new THREE.MeshBasicMaterial({ color: '#0f172a', side: THREE.BackSide });
 
-  // 몸통 + 반팔 양쪽 소매 + 라운드 넥 칼라
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.38, 2.35), shirtPureMat);
-  body.castShadow = true;
-  body.receiveShadow = true;
+  // 바닥 그림자 (상체의 입체 부유감·착석감 강조)
+  const groundShadow = new THREE.Mesh(
+    new THREE.CircleGeometry(1.45, 24),
+    new THREE.MeshBasicMaterial({ color: '#0f172a', transparent: true, opacity: 0.20, depthWrite: false })
+  );
+  groundShadow.rotation.x = -Math.PI / 2;
+  groundShadow.scale.set(1.22, 0.92, 1);
+  groundShadow.position.set(0, 0.025, 0.16);
+  playerGroup.add(groundShadow);
 
-  const sleeveGeo = new THREE.BoxGeometry(0.95, 0.34, 0.92);
-  const sleeveL = new THREE.Mesh(sleeveGeo, shirtPureMat);
-  sleeveL.position.set(-1.32, -0.01, -0.58);
-  sleeveL.rotation.y = 0.46;
-  sleeveL.castShadow = true;
+  // 스윽 회피할 때 상체 옆에 살짝 비치는 바람 잔상 아크
+  dodgeSwishMat = new THREE.MeshBasicMaterial({
+    color: '#bae6fd',
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  dodgeSwishMesh = new THREE.Mesh(new THREE.RingGeometry(1.35, 1.72, 20, 1, -0.85, 1.7), dodgeSwishMat);
+  dodgeSwishMesh.rotation.x = -Math.PI / 2;
+  dodgeSwishMesh.position.set(0, 0.34, 0.08);
+  playerGroup.add(dodgeSwishMesh);
 
-  const sleeveR = new THREE.Mesh(sleeveGeo, shirtPureMat);
-  sleeveR.position.set(1.32, -0.01, -0.58);
-  sleeveR.rotation.y = -0.46;
-  sleeveR.castShadow = true;
+  // 1) 티셔츠 밑단 아래로 살짝 보이는 네이비 하의 허리단
+  const pantsWaist = new THREE.Mesh(new THREE.CylinderGeometry(0.84, 0.80, 0.34, 24), pantsWaistMat);
+  pantsWaist.scale.set(1.16, 1, 0.62);
+  pantsWaist.position.set(0, -0.08, 0);
+  torsoBodyGroup.add(pantsWaist);
 
-  // 목 둘레 시보리 & 파인 목 구멍
-  const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.11, 10, 22), shirtTrimMat);
-  collarRing.rotation.x = Math.PI / 2;
-  collarRing.position.set(0, 0.20, -0.96);
-  const neckHole = new THREE.Mesh(new THREE.CircleGeometry(0.42, 18), new THREE.MeshBasicMaterial({ color: '#cbd5e1' }));
-  neckHole.rotation.x = -Math.PI / 2;
-  neckHole.position.set(0, 0.205, -0.96);
+  // 2) 실제 3D 착용 상체 볼륨 (허리 잘록함 → 입체 가슴팍 → 승모근·어깨로 이어지는 유선형 토르소)
+  const torsoProfile = [
+    new THREE.Vector2(0.01, 0.00),
+    new THREE.Vector2(0.90, 0.02),
+    new THREE.Vector2(0.92, 0.14), // 밑단 시보리 두께
+    new THREE.Vector2(0.85, 0.48), // 잘록한 허리 라인
+    new THREE.Vector2(0.91, 0.96), // 명치·갈비뼈
+    new THREE.Vector2(1.03, 1.50), // 볼륨감 있는 가슴팍
+    new THREE.Vector2(1.11, 1.98), // 넓은 어깨·겨드랑이 연결부
+    new THREE.Vector2(0.96, 2.30), // 둥근 어깨 윗선
+    new THREE.Vector2(0.54, 2.48), // 승모근 → 라운드넥 시보리
+    new THREE.Vector2(0.40, 2.52),
+    new THREE.Vector2(0.01, 2.52),
+  ];
+  const torsoGeo = new THREE.LatheGeometry(torsoProfile, 32);
+  const torsoMesh = new THREE.Mesh(torsoGeo, shirtPureMat);
+  torsoMesh.scale.set(1.20, 1.0, 0.64);
+  torsoMesh.castShadow = true;
+  torsoMesh.receiveShadow = true;
 
-  // 정밀 회피 중심 코어 (배 위쪽 명치 자리 — 빛나는 하늘색 보석 코어!)
-  const coreDot = new THREE.Mesh(new THREE.CylinderGeometry(SHIRT_CORE_R * 0.72, SHIRT_CORE_R * 0.72, 0.08, 20), coreGlowMat);
-  coreDot.position.set(0, 0.22, 0.08);
-  const coreRing = new THREE.Mesh(new THREE.RingGeometry(SHIRT_CORE_R * 0.95, SHIRT_CORE_R * 1.18, 24), coreRingMat);
-  coreRing.rotation.x = -Math.PI / 2;
-  coreRing.position.set(0, 0.215, 0.08);
+  const torsoOutline = new THREE.Mesh(torsoGeo, shirtOutlineMat);
+  torsoOutline.scale.set(1.27, 1.03, 0.70);
+  torsoOutline.position.y = -0.03;
+  torsoBodyGroup.add(torsoOutline, torsoMesh);
 
-  shirtTiltGroup.add(body, sleeveL, sleeveR, collarRing, neckHole, coreDot, coreRing);
+  // 가슴 입체 볼륨 보강 + 자연스러운 면 티셔츠 원단 주름 능선들
+  for (const side of [-1, 1]) {
+    const chestVol = new THREE.Mesh(new THREE.SphereGeometry(0.52, 18, 14), shirtPureMat);
+    chestVol.scale.set(1.05, 0.88, 0.56);
+    chestVol.position.set(side * 0.42, 1.56, 0.42);
+    torsoBodyGroup.add(chestVol);
+  }
 
-  // 피격 시 티셔츠 위에 실제로 남는 동그란 주황 국물 얼룩 3단계!
+  // 티셔츠 앞판 자연스러운 입체 옷주름 & 겨드랑이 암홀 솔기 (실제 면 티셔츠 원단 볼륨감 강조)
+  const foldSpecs = [
+    { x: -0.38, y: 0.90, z: 0.57, rz: -0.32, rx: 0.06, len: 0.82, r: 0.042 },
+    { x: 0.34, y: 0.82, z: 0.56, rz: 0.35, rx: 0.06, len: 0.76, r: 0.040 },
+    { x: -0.06, y: 0.48, z: 0.56, rz: 0.52, rx: 0.04, len: 0.66, r: 0.038 },
+    { x: 0.56, y: 1.32, z: 0.54, rz: -0.24, rx: 0.10, len: 0.56, r: 0.036 },
+    { x: -0.56, y: 1.34, z: 0.54, rz: 0.24, rx: 0.10, len: 0.54, r: 0.036 },
+  ];
+  for (const f of foldSpecs) {
+    const fold = new THREE.Mesh(new THREE.CapsuleGeometry(f.r, f.len, 5, 10), shirtFoldMat);
+    fold.position.set(f.x, f.y, f.z);
+    fold.rotation.set(f.rx, 0, f.rz);
+    fold.scale.set(1.0, 1.0, 0.42);
+    torsoBodyGroup.add(fold);
+  }
+
+  // 라운드넥 아래 쇄골 그림자 & 양쪽 암홀 봉제선 디테일
+  const collarShadowRing = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.042, 10, 28, Math.PI * 1.15), shirtFoldMat);
+  collarShadowRing.rotation.set(Math.PI / 2 + 0.22, 0, -Math.PI * 0.075);
+  collarShadowRing.scale.set(1.16, 0.85, 1.0);
+  collarShadowRing.position.set(0, 2.38, 0.12);
+  torsoBodyGroup.add(collarShadowRing);
+
+  for (const side of [-1, 1]) {
+    const armSeam = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.032, 8, 20), shirtFoldMat);
+    armSeam.rotation.y = Math.PI / 2 - side * 0.25;
+    armSeam.scale.set(0.84, 1.06, 1.0);
+    armSeam.position.set(side * 1.08, 1.98, 0.06);
+    torsoBodyGroup.add(armSeam);
+  }
+
+  // 티셔츠 아랫단 시보리 링
+  const hemRing = new THREE.Mesh(new THREE.TorusGeometry(0.90, 0.055, 10, 28), shirtTrimMat);
+  hemRing.rotation.x = Math.PI / 2;
+  hemRing.scale.set(1.20, 0.64, 1.0);
+  hemRing.position.set(0, 0.06, 0);
+  torsoBodyGroup.add(hemRing);
+
+  // 3) 라운드넥 리브 시보리 칼라 & 목·쇄골 (얼굴·눈·코·입 없음! 깔끔한 크롭 목선 마감)
+  const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.095, 12, 28), shirtTrimMat);
+  collarRing.rotation.x = Math.PI / 2 + 0.16;
+  collarRing.scale.set(1.16, 0.82, 1.0);
+  collarRing.position.set(0, 2.46, 0.05);
+
+  // 목 밑 쇄골 노출 피부 & 쇄골 뼈대 디테일
+  const neckBaseSkin = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 0.24, 20), skinBodyMat);
+  neckBaseSkin.scale.set(1.12, 1.0, 0.78);
+  neckBaseSkin.position.set(0, 2.48, 0.04);
+
+  for (const side of [-1, 1]) {
+    const clav = new THREE.Mesh(new THREE.CapsuleGeometry(0.042, 0.30, 5, 8), skinBodyMat);
+    clav.rotation.z = Math.PI / 2 - side * 0.18;
+    clav.position.set(side * 0.22, 2.48, 0.25);
+    torsoBodyGroup.add(clav);
+  }
+
+  // 입체 원기둥 목 (위쪽은 매끈한 크롭 마감 — 얼굴 없음)
+  const neckPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.35, 0.46, 22), skinBodyMat);
+  neckPillar.scale.set(1.02, 1.0, 0.88);
+  neckPillar.position.set(0, 2.74, -0.01);
+  neckPillar.castShadow = true;
+
+  const neckOutline = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.39, 0.48, 20), shirtOutlineMat);
+  neckOutline.scale.set(1.05, 1.0, 0.92);
+  neckOutline.position.copy(neckPillar.position);
+
+  torsoBodyGroup.add(collarRing, neckBaseSkin, neckOutline, neckPillar);
+
+  // 4) 양쪽 입체 어깨 + 원통형 반팔 소매 + 팔뚝 & 손 (회피 시 균형 리액션!)
+  function buildArmAndSleeve(side) {
+    const pivot = side < 0 ? shoulderPivotL : shoulderPivotR;
+    pivot.position.set(side * 1.14, 2.02, 0.02);
+    torsoBodyGroup.add(pivot);
+
+    // 둥근 어깨 볼륨 캡
+    const shoulderCap = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 14), shirtPureMat);
+    shoulderCap.scale.set(1.02, 0.96, 0.84);
+    shoulderCap.castShadow = true;
+    pivot.add(shoulderCap);
+
+    // 입체 원통형 반팔 소매 (앞·바깥쪽으로 자연스럽게 뻗음)
+    const sleeveGroup = new THREE.Group();
+    sleeveGroup.rotation.z = side * 0.54;
+    sleeveGroup.rotation.x = -0.18;
+    pivot.add(sleeveGroup);
+
+    const sleeveGeo = new THREE.CylinderGeometry(0.41, 0.48, 0.98, 20);
+    const sleeveMesh = new THREE.Mesh(sleeveGeo, shirtPureMat);
+    sleeveMesh.scale.set(1.0, 1.0, 0.88);
+    sleeveMesh.position.y = -0.44;
+    sleeveMesh.castShadow = true;
+
+    const sleeveOut = new THREE.Mesh(sleeveGeo, shirtOutlineMat);
+    sleeveOut.scale.set(1.10, 1.05, 0.98);
+    sleeveOut.position.y = -0.44;
+
+    const cuffRing = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.055, 10, 22), shirtTrimMat);
+    cuffRing.rotation.x = Math.PI / 2;
+    cuffRing.scale.set(1.0, 0.88, 1.0);
+    cuffRing.position.y = -0.92;
+
+    // 소매 밖으로 선명하게 뻗어 나온 팔뚝 & 손 (식탁 위에서 자세를 잡고 회피 시 균형 리액션!)
+    const forearmGroup = new THREE.Group();
+    forearmGroup.position.set(0, -0.90, 0.04);
+    forearmGroup.rotation.x = -0.68; // +Z(앞쪽·카메라 시야)로 팔뚝을 자연스럽게 굽힘
+    forearmGroup.rotation.z = -side * 0.34;
+    sleeveGroup.add(forearmGroup);
+
+    const forearmGeo = new THREE.CapsuleGeometry(0.24, 0.78, 6, 12);
+    const forearm = new THREE.Mesh(forearmGeo, skinBodyMat);
+    forearm.position.y = -0.44;
+    forearm.castShadow = true;
+
+    const forearmOut = new THREE.Mesh(forearmGeo, shirtOutlineMat);
+    forearmOut.scale.set(1.16, 1.04, 1.16);
+    forearmOut.position.y = -0.44;
+
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 12), skinBodyMat);
+    hand.scale.set(0.96, 1.14, 0.80);
+    hand.position.set(0, -0.94, 0.05);
+    hand.castShadow = true;
+
+    const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.18, 4, 8), skinBodyMat);
+    thumb.position.set(-side * 0.20, -0.86, 0.14);
+    thumb.rotation.z = side * 0.45;
+
+    const handOut = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), shirtOutlineMat);
+    handOut.scale.set(0.96, 1.14, 0.80);
+    handOut.position.copy(hand.position);
+
+    forearmGroup.add(forearmOut, forearm, handOut, hand, thumb);
+    sleeveGroup.add(sleeveOut, sleeveMesh, cuffRing);
+  }
+  buildArmAndSleeve(-1);
+  buildArmAndSleeve(1);
+
+  // 5) 피격 시 입체 3D 티셔츠 곡면 위에 착 달라붙는 주황 국물 얼룩 3단계!
   const stainSpecs = [
-    { x: -0.62, z: 0.68, r: 0.32 }, // 1타: 왼쪽 밑단에 한 방울 톡!
-    { x: 0.65, z: -0.35, r: 0.38 }, // 2타: 오른쪽 가슴팍에 두 방울!
-    { x: 0.02, z: 0.10, r: 0.68 },  // 3타(치명타): 정중앙 명치에 왕건이 국물 얼룩!
+    { x: -0.48, y: 0.56, z: 0.56, rx: -0.06, ry: -0.35, r: 0.30 }, // 1타: 왼쪽 아랫배 옷자락
+    { x: 0.50, y: 1.62, z: 0.68, rx: -0.18, ry: 0.36, r: 0.36 },  // 2타: 오른쪽 가슴팍 곡면
+    { x: 0.00, y: 1.24, z: 0.71, rx: -0.10, ry: 0.00, r: 0.62 },  // 3타(치명타): 정중앙 명치 앞판 왕얼룩!
   ];
   for (const sp of stainSpecs) {
     const sg = new THREE.Group();
-    const outer = new THREE.Mesh(new THREE.CircleGeometry(sp.r * 1.32, 18), stainEdgeMat);
-    outer.rotation.x = -Math.PI / 2;
-    const inner = new THREE.Mesh(new THREE.CircleGeometry(sp.r, 18), stainOrangeMat);
-    inner.rotation.x = -Math.PI / 2;
-    inner.position.y = 0.004;
-    sg.add(outer, inner);
-    sg.position.set(sp.x, 0.23, sp.z);
+    const outer = new THREE.Mesh(new THREE.CircleGeometry(sp.r * 1.32, 20), stainEdgeMat);
+    const inner = new THREE.Mesh(new THREE.CircleGeometry(sp.r, 20), stainOrangeMat);
+    inner.position.z = 0.006;
+    // 흘러내리는 작은 국물 방울 디테일
+    const drip = new THREE.Mesh(new THREE.CircleGeometry(sp.r * 0.34, 12), stainOrangeMat);
+    drip.position.set(sp.r * 0.18, -sp.r * 1.05, 0.006);
+    sg.add(outer, inner, drip);
+    sg.position.set(sp.x, sp.y, sp.z);
+    sg.rotation.set(sp.rx, sp.ry, 0);
+    sg.renderOrder = 6;
     sg.visible = false;
-    shirtTiltGroup.add(sg);
+    torsoBodyGroup.add(sg);
     stainMeshes.push(sg);
   }
+
+  // 6) 동그란 원 가이드 (판정 중심 (STATE.px, STATE.pz + 0.08) 고정! 상체가 옆으로 스윽 피해도 히트박스 기준점 100% 유지)
+  coreGuideGroup.position.set(0, 0.36, 0.08);
+  playerGroup.add(coreGuideGroup);
+
+  // 흰 티셔츠 위에서도 동그란 원 가이드가 또렷하게 보이도록 어두운 대비 외곽 링 + 하늘색 가이드 링 + 중심 코어 점
+  const guideContrastRing = new THREE.Mesh(
+    new THREE.RingGeometry(SHIRT_CORE_R * 0.86, SHIRT_CORE_R * 1.32, 32),
+    new THREE.MeshBasicMaterial({
+      color: '#0f172a',
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  guideContrastRing.rotation.x = -Math.PI / 2;
+  guideContrastRing.renderOrder = 14;
+
+  const coreRing = new THREE.Mesh(
+    new THREE.RingGeometry(SHIRT_CORE_R * 0.92, SHIRT_CORE_R * 1.22, 32),
+    new THREE.MeshBasicMaterial({
+      color: '#0ea5e9',
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  coreRing.rotation.x = -Math.PI / 2;
+  coreRing.renderOrder = 15;
+
+  const coreDot = new THREE.Mesh(
+    new THREE.CircleGeometry(SHIRT_CORE_R * 0.56, 24),
+    new THREE.MeshBasicMaterial({
+      color: '#38bdf8',
+      transparent: true,
+      opacity: 0.95,
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  coreDot.rotation.x = -Math.PI / 2;
+  coreDot.renderOrder = 16;
+
+  const coreCenterPin = new THREE.Mesh(
+    new THREE.CircleGeometry(SHIRT_CORE_R * 0.24, 16),
+    new THREE.MeshBasicMaterial({
+      color: '#ffffff',
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  coreCenterPin.rotation.x = -Math.PI / 2;
+  coreCenterPin.renderOrder = 17;
+
+  corePulseRing = new THREE.Mesh(
+    new THREE.RingGeometry(SHIRT_CORE_R * 1.30, SHIRT_CORE_R * 1.52, 32),
+    new THREE.MeshBasicMaterial({
+      color: '#7dd3fc',
+      transparent: true,
+      opacity: 0.0,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  corePulseRing.rotation.x = -Math.PI / 2;
+  corePulseRing.renderOrder = 15;
+
+  coreGuideGroup.add(guideContrastRing, coreRing, coreDot, coreCenterPin, corePulseRing);
 }
 
 // ─── 5. 입체 주황 국물 탄막 방울 공유 지오메트리 & 재질 ───
@@ -786,11 +1062,15 @@ const STATE = {
   bossEvilTimer: 0,    // 대왕 패턴 시 사악한 얼굴 잠시 출현
   slurpBannerTimer: 0,
 
-  // 플레이어 위치 및 입력
+  // 플레이어 위치 및 입력 + 국물 접근 시 미리 옆으로 "스윽—" 피하는 상체 모션 상태
   px: 0,
   pz: 5.8,
   vx: 0,
   vz: 0,
+  dodgeEvade: 0,       // -1(왼쪽으로 스윽 회피) ~ +1(오른쪽으로 스윽 회피)
+  dodgeDuck: 0,        // 0 ~ 1 (가까운 왕방울에 상체를 살짝 뒤로 사리는 정도)
+  dodgeLockDir: 0,     // 좌우 떨림 방지를 위한 회피 방향 잠금 (-1 | 0 | 1)
+  dodgeLockTimer: 0,
   dragging: false,
   pointerId: null,
   lastClientX: 0,
@@ -1242,16 +1522,174 @@ function resetArenaState() {
   STATE.pz = 6.2;
   STATE.vx = 0;
   STATE.vz = 0;
+  STATE.dodgeEvade = 0;
+  STATE.dodgeDuck = 0;
+  STATE.dodgeLockDir = 0;
+  STATE.dodgeLockTimer = 0;
   STATE.dragging = false;
   STATE.pointerId = null;
   STATE.popTexts = [];
   STATE.camShake = 0;
 
-  playerGroup.position.set(STATE.px, 0.38, STATE.pz);
+  playerGroup.position.set(STATE.px, 0, STATE.pz);
   playerGroup.visible = true;
+  shirtTiltGroup.position.set(0, 0.08, 0.92);
   shirtTiltGroup.rotation.set(0, 0, 0);
+  torsoBodyGroup.position.set(0, 0, 0);
+  torsoBodyGroup.rotation.set(BASE_TORSO_PITCH, 0, 0);
+  shoulderPivotL.rotation.set(0, 0, 0);
+  shoulderPivotR.rotation.set(0, 0, 0);
+  if (dodgeSwishMat) dodgeSwishMat.opacity = 0;
+  if (corePulseRing) corePulseRing.material.opacity = 0;
+  shirtPureMat.emissive.set('#e2e8f0');
+  shirtPureMat.emissiveIntensity = 0.04;
   stainMeshes.forEach(m => { m.visible = false; });
   $('slurp-alert').classList.remove('show');
+}
+
+// ─── 국물이 다가올 때 미리 옆으로 "스윽—" 피하는 3D 상체 모션 계산 ───
+function updateBodyDodgePose(dt, nowSec) {
+  if (STATE.phase === 'menu') {
+    const idleWave = Math.sin(nowSec * 1.6) * 0.12;
+    const breath = Math.sin(nowSec * 2.8) * 0.025;
+    playerGroup.position.set(0, 0, 5.8);
+    shirtTiltGroup.position.set(idleWave * 0.25, 0.08 + breath, 0.92);
+    shirtTiltGroup.rotation.set(0, -idleWave * 0.18, -idleWave * 0.16);
+    torsoBodyGroup.rotation.set(BASE_TORSO_PITCH + breath * 0.5, 0, 0);
+    shoulderPivotL.rotation.set(0, 0, 0);
+    shoulderPivotR.rotation.set(0, 0, 0);
+    if (dodgeSwishMat) dodgeSwishMat.opacity = 0;
+    if (corePulseRing) corePulseRing.material.opacity = 0.22 + Math.sin(nowSec * 4) * 0.12;
+    return;
+  }
+
+  if (STATE.dodgeLockTimer > 0) {
+    STATE.dodgeLockTimer = Math.max(0, STATE.dodgeLockTimer - dt);
+    if (STATE.dodgeLockTimer <= 0) STATE.dodgeLockDir = 0;
+  }
+
+  const coreX = STATE.px;
+  const coreZ = STATE.pz + 0.08;
+
+  // 1) 다가오는 국물 방울 궤적 선제 감지 (최접근 0.65초 전부터 미리 옆으로 스윽—!)
+  let bestThreatWeight = 0;
+  let bestThreatEvadeDir = 0;
+  let maxDuckNeed = 0;
+
+  for (let i = 0; i < STATE.droplets.length; i++) {
+    const d = STATE.droplets[i];
+    const rx = d.x - coreX;
+    const rz = d.z - coreZ;
+    const rvx = d.vx - STATE.vx * 0.25;
+    const rvz = d.vz - STATE.vz * 0.25;
+    const spdSq = rvx * rvx + rvz * rvz;
+    if (spdSq < 0.25) continue;
+
+    // 최접근 시점(초): 양수면 앞으로 다가올 방울, 살짝 음수(-0.10~0)면 방금 옆을 스쳐 지나가는 중인 방울
+    const tClosest = -(rx * rvx + rz * rvz) / spdSq;
+    if (tClosest < -0.10 || tClosest > 0.66) continue;
+
+    const clampT = Math.max(0, tClosest);
+    const closestX = rx + rvx * clampT;
+    const closestZ = rz + rvz * clampT;
+    const closestDist = Math.hypot(closestX, closestZ);
+
+    const senseRadius = SHIRT_CORE_R + d.hitR + 2.75;
+    if (closestDist >= senseRadius) continue;
+
+    const closeness = 1 - clamp(closestDist / senseRadius, 0, 1);
+    const timeCurve = tClosest >= 0
+      ? Math.pow(1 - tClosest / 0.66, 0.72) // 멀리서부터 부드럽게 미리 스윽 시작!
+      : (1 + tClosest / 0.10);              // 스쳐 지나간 뒤 매끄럽게 복귀
+    const sizeBoost = 0.85 + Math.min(0.65, d.radius * 0.55);
+    const weight = closeness * timeCurve * sizeBoost;
+
+    if (weight > bestThreatWeight) {
+      bestThreatWeight = weight;
+      // 국물이 내 왼쪽(closestX < 0)으로 스치려 하면 상체는 오른쪽(+1)으로 스윽!
+      // 국물이 내 오른쪽(closestX > 0)으로 스치려 하면 상체는 왼쪽(-1)으로 스윽!
+      if (Math.abs(closestX) > 0.16) {
+        bestThreatEvadeDir = closestX < 0 ? 1 : -1;
+      } else if (Math.abs(STATE.vx) > 0.8) {
+        bestThreatEvadeDir = STATE.vx >= 0 ? 1 : -1;
+      } else {
+        bestThreatEvadeDir = STATE.dodgeLockDir !== 0 ? STATE.dodgeLockDir : (d.vx >= 0 ? -1 : 1);
+      }
+      // 아레나 벽 끝에서는 벽 반대쪽 안쪽으로 몸을 틀어 자연스럽게 회피
+      if (STATE.px > ARENA_HALF_X - 1.1 && bestThreatEvadeDir > 0) bestThreatEvadeDir = -1;
+      if (STATE.px < -ARENA_HALF_X + 1.1 && bestThreatEvadeDir < 0) bestThreatEvadeDir = 1;
+    }
+
+    if (closestDist < SHIRT_CORE_R + d.hitR + 1.55) {
+      maxDuckNeed = Math.max(maxDuckNeed, weight);
+    }
+  }
+
+  // 좌우 지터링 방지를 위해 한 번 잡은 스윽 회피 방향을 잠깐 유지
+  let activeDir = bestThreatEvadeDir;
+  if (bestThreatWeight > 0.18) {
+    if (STATE.dodgeLockDir === 0 || bestThreatWeight > 0.72) {
+      STATE.dodgeLockDir = bestThreatEvadeDir;
+      STATE.dodgeLockTimer = 0.20;
+    } else {
+      activeDir = STATE.dodgeLockDir;
+    }
+  }
+
+  // 2) 플레이어의 직접 좌우 이동 관성 + 국물 근접 자동 스윽 회피 결합
+  const moveLean = clamp(STATE.vx / 11.5, -0.68, 0.68);
+  const autoSlip = activeDir * clamp(bestThreatWeight * 1.28, 0, 1.0);
+  // 직접 움직이는 중이면 이동 방향과 자동 회피 중 더 큰 스윽 모션을 채택
+  let targetEvade = clamp(autoSlip + moveLean * 0.62, -1.08, 1.08);
+  if (Math.abs(autoSlip) > 0.25 && Math.sign(autoSlip) === Math.sign(moveLean)) {
+    targetEvade = clamp(autoSlip * 0.85 + moveLean * 0.45, -1.12, 1.12);
+  }
+  const targetDuck = clamp(maxDuckNeed * 0.95 + clamp(STATE.vz / 16, -0.2, 0.35), -0.2, 1.0);
+
+  // 다가올 때는 재빠르게 "스윽—"(dt*13.5), 지나간 뒤에는 탄력 있게 제자리 복귀(dt*7.0)
+  const prevEvade = STATE.dodgeEvade;
+  const evadeRate = Math.abs(targetEvade) > Math.abs(prevEvade) ? 13.5 : 7.0;
+  STATE.dodgeEvade = lerp(prevEvade, targetEvade, Math.min(1, dt * evadeRate));
+  STATE.dodgeDuck = lerp(STATE.dodgeDuck, targetDuck, Math.min(1, dt * 10.5));
+
+  const ev = STATE.dodgeEvade;
+  const dk = Math.max(0, STATE.dodgeDuck);
+  const breath = Math.sin(nowSec * 4.2) * 0.018;
+
+  // 3) 허리 축은 원 가이드 아래 중심을 지키면서, 상체·어깨·양팔이 옆으로 "스윽—" 웨이브 회피!
+  shirtTiltGroup.position.set(
+    ev * 0.36,
+    0.08 + breath,
+    0.92 + dk * 0.20
+  );
+  shirtTiltGroup.rotation.z = -ev * 0.42; // 피하는 쪽으로 허리부터 상체가 스윽 기울어짐!
+  shirtTiltGroup.rotation.y = -ev * 0.50; // 국물이 다가오는 쪽 어깨를 뒤로 빼며 가슴팍을 스윽 비켜냄!
+  shirtTiltGroup.rotation.x = clamp(STATE.vz * 0.012, -0.14, 0.14);
+
+  torsoBodyGroup.rotation.x = BASE_TORSO_PITCH - dk * 0.14;
+
+  // 국물 쪽 팔은 몸통 안쪽으로 바짝 사리고, 피하는 쪽 팔은 살짝 들어 균형 잡기
+  const tuckL = ev > 0 ? ev : 0;  // 오른쪽으로 피할 때 왼팔(국물 쪽) 사림
+  const openL = ev < 0 ? -ev : 0; // 왼쪽으로 피할 때 왼팔 균형
+  const tuckR = ev < 0 ? -ev : 0; // 왼쪽으로 피할 때 오른팔(국물 쪽) 사림
+  const openR = ev > 0 ? ev : 0;  // 오른쪽으로 피할 때 오른팔 균형
+
+  shoulderPivotL.rotation.set(tuckL * 0.28 - openL * 0.16, tuckL * 0.32, tuckL * 0.30 - openL * 0.22);
+  shoulderPivotR.rotation.set(tuckR * 0.28 - openR * 0.16, -tuckR * 0.32, -tuckR * 0.30 + openR * 0.22);
+
+  // 스윽 바람 잔상 & 원 가이드 맥동 피드백
+  const evadeSpeed = Math.abs(ev - prevEvade) / Math.max(0.001, dt);
+  const swishStrength = clamp((Math.abs(ev) - 0.22) * 0.85 + evadeSpeed * 0.08, 0, 1);
+  if (dodgeSwishMesh && dodgeSwishMat) {
+    dodgeSwishMat.opacity = swishStrength * 0.42;
+    dodgeSwishMesh.rotation.z = ev >= 0 ? Math.PI * 0.95 : -0.05;
+    dodgeSwishMesh.position.x = ev * 0.22;
+  }
+  if (corePulseRing) {
+    const pulse = 1 + Math.sin(nowSec * 12) * 0.08;
+    corePulseRing.scale.setScalar(pulse);
+    corePulseRing.material.opacity = clamp(0.18 + Math.abs(ev) * 0.55, 0.15, 0.78);
+  }
 }
 
 function startIntroSequence() {
@@ -1767,14 +2205,19 @@ function tick(now) {
       STATE.vz *= Math.pow(0.04, dt);
     }
 
-    // 플레이어 흰 티셔츠 위치 및 경쾌한 기울기·무적 깜빡임 업데이트
-    playerGroup.position.set(STATE.px, 0.38, STATE.pz);
-    shirtTiltGroup.rotation.z = lerp(shirtTiltGroup.rotation.z, clamp(-STATE.vx * 0.018, -0.22, 0.22), Math.min(1, dt * 14));
-    shirtTiltGroup.rotation.x = lerp(shirtTiltGroup.rotation.x, clamp(STATE.vz * 0.015, -0.18, 0.18), Math.min(1, dt * 14));
+    // 플레이어 3D 착용 상체 위치 및 "미리 옆으로 스윽—" 회피 모션·무적 보호막 점멸 업데이트
+    playerGroup.position.set(STATE.px, 0, STATE.pz);
+    playerGroup.visible = true;
+    torsoBodyGroup.visible = true;
+    coreGuideGroup.visible = true;
+    updateBodyDodgePose(dt, nowSec);
     if (STATE.invulnTimer > 0) {
-      playerGroup.visible = Math.floor(nowSec * 18) % 2 === 0;
+      const flashOn = Math.floor(nowSec * 18) % 2 === 0;
+      shirtPureMat.emissive.set(flashOn ? '#38bdf8' : '#e2e8f0');
+      shirtPureMat.emissiveIntensity = flashOn ? 0.38 : 0.06;
     } else {
-      playerGroup.visible = true;
+      shirtPureMat.emissive.set('#e2e8f0');
+      shirtPureMat.emissiveIntensity = 0.04;
     }
 
     // 젓가락질 주기 타이머 & 3D 젓가락 면 들기 애니메이션!
@@ -1892,6 +2335,9 @@ function tick(now) {
     s.mat.opacity = 1 - s.age / s.dur;
   }
 
+  if (STATE.phase === 'menu') {
+    updateBodyDodgePose(dt, nowSec);
+  }
   updateCameraAndIntro(dt, nowSec);
   renderer.render(scene, camera);
   drawOverlay(dt);
@@ -1907,6 +2353,8 @@ function tick(now) {
     dropletsCount: STATE.droplets.length,
     px: Number(STATE.px.toFixed(2)),
     pz: Number(STATE.pz.toFixed(2)),
+    dodgeEvade: Number(STATE.dodgeEvade.toFixed(3)),
+    dodgeDuck: Number(STATE.dodgeDuck.toFixed(3)),
   };
 }
 

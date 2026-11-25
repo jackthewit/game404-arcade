@@ -325,20 +325,29 @@
       transition: width 0.05s linear;
     }
 
-    /* 배율 선택 링 (0.5x / 1x / 2x) */
+    /* 배율 & 감성 기울기 선택 바 */
+    .cam-opt-row {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
     .zoom-selector {
       pointer-events: auto;
       display: inline-flex;
-      gap: 6px;
+      gap: 4px;
       padding: 4px 6px;
       border-radius: 999px;
-      background: rgba(12, 14, 22, 0.82);
+      background: rgba(12, 14, 22, 0.84);
       border: 1px solid rgba(255, 255, 255, 0.16);
       backdrop-filter: blur(8px);
     }
-    .zoom-btn {
-      width: 38px;
+    .zoom-btn, .tilt-btn {
+      min-width: 38px;
       height: 30px;
+      padding: 0 8px;
       border-radius: 999px;
       border: 1.5px solid transparent;
       background: transparent;
@@ -348,23 +357,35 @@
       cursor: pointer;
       position: relative;
       transition: all 0.14s ease;
+      font-family: inherit;
     }
-    .zoom-btn.active {
+    .zoom-btn.active, .tilt-btn.active {
       background: rgba(250, 204, 21, 0.22);
       border-color: #facc15;
       color: #fde047;
-      transform: scale(1.06);
+      transform: scale(1.05);
     }
-    .zoom-btn.hint::after {
+    .zoom-btn.hint::after, .tilt-btn.hint::after {
       content: '';
       position: absolute;
       top: 2px;
-      right: 4px;
+      right: 3px;
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: #4ade80;
       box-shadow: 0 0 8px #4ade80;
+    }
+    .comp-tag-pill {
+      margin-top: 3px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 9.5px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.2;
     }
 
     .shutter-bar {
@@ -601,6 +622,7 @@
           <span class="zoom-req-pill" id="ref-zoom">1x</span>
         </div>
         <img class="polaroid-img" id="ref-img" alt="예시 사진">
+        <div class="comp-tag-pill" id="ref-comp">📐 다리 2m 로우앵글</div>
         <div class="polaroid-cap" id="ref-cap">손잡고 다정 뒷모습</div>
       </div>
       <div class="match-pill" id="match-pill">일치도 0%</div>
@@ -630,10 +652,17 @@
       </div>
     </div>
 
-    <div class="zoom-selector">
-      <button type="button" class="zoom-btn" data-zoom="0.5">0.5x</button>
-      <button type="button" class="zoom-btn active" data-zoom="1">1x</button>
-      <button type="button" class="zoom-btn" data-zoom="2">2x</button>
+    <div class="cam-opt-row">
+      <div class="zoom-selector" aria-label="배율 선택">
+        <button type="button" class="zoom-btn" data-zoom="0.5">0.5x</button>
+        <button type="button" class="zoom-btn active" data-zoom="1">1x</button>
+        <button type="button" class="zoom-btn" data-zoom="2">2x</button>
+      </div>
+      <div class="zoom-selector" aria-label="카메라 기울기 선택">
+        <button type="button" class="tilt-btn" data-tilt="-1">↖사선</button>
+        <button type="button" class="tilt-btn active" data-tilt="0">수평</button>
+        <button type="button" class="tilt-btn" data-tilt="1">↗사선</button>
+      </div>
     </div>
 
     <div class="shutter-bar">
@@ -658,9 +687,9 @@
         똑같은 구도·배율·타이밍에 셔터를 누르세요!
       </p>
       <div class="rule-list">
-        <div>🖼️ <b>예시 사진 재현</b> — 드래그로 구도를 맞추고 <b>0.5x·1x·2x 배율</b>과 <b>커플 포즈 정점</b>이 겹칠 때 찰칵!</div>
-        <div>🦆 <b>100% 리얼 랜덤 돌발 소동</b> — 오리·전 애인·스프링클러부터 <b>공룡탈·서빙로봇·UFO 납치·선글라스 알파카</b>까지 매 판 완전히 다른 기행이 터집니다!</div>
-        <div>👑 <b>총 10스테이지 정복</b> — 5대 명소에서 점점 까다로운 커플들이 등장하며 미션 수와 엉뚱함이 계속 배가됩니다!</div>
+        <div>📐 <b>12종 다이내믹 스냅 구도</b> — 드래그로 <b>로우앵글·하이앵글·좌우 대각선·삼분할 여백·사선 틸트</b> 구도와 <b>0.5x·1x·2x 배율</b>을 맞추고 포즈 정점에 찰칵!</div>
+        <div>🌍 <b>10대 월드 명소 씬</b> — 가든 웨딩·유럽 노천카페·제주 해변·회전목마 유원지·노을 등대·은행나무길·벚꽃 고궁·설원 채플·라벤더 풍차·별빛 루프탑까지 매 스테이지 새 무대가 펼쳐집니다!</div>
+        <div>🦆 <b>100% 리얼 랜덤 돌발 소동</b> — 오리·전 애인·스프링클러부터 <b>공룡탈·짬뽕 서빙로봇·UFO 납치·선글라스 알파카</b>까지 빈틈을 노려 인생샷을 건지세요!</div>
       </div>
       <div id="start-rival-box" style="display:none" class="vs-card"></div>
       <div class="stat-grid" style="grid-template-columns:1fr 1fr">
