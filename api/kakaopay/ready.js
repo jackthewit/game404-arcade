@@ -71,10 +71,14 @@ export default async function handler(req, res) {
 
     const data = await kpRes.json().catch(() => ({}));
     if (!kpRes.ok || !data.tid) {
+      let friendlyMsg = data.error_message || data.msg || '카카오페이 결제 준비 요청에 실패했습니다.';
+      if (Number(data.error_code) === -403 && secretKey.startsWith('PRD') && cid === 'TC0ONETIME') {
+        friendlyMsg = '운영용 Secret Key(PRD...)에는 실제 가맹점 코드(KAKAOPAY_CID)가 필요합니다. 가맹점 계약 전 테스트라면 DEV... 키를 넣거나, 개인 후원은 카카오 송금 QR·링크를 등록해 주세요.';
+      }
       return res.status(kpRes.status || 400).json({
         ok: false,
         code: data.error_code || 'KAKAOPAY_READY_FAILED',
-        message: data.error_message || data.msg || '카카오페이 결제 준비 요청에 실패했습니다.',
+        message: friendlyMsg,
       });
     }
 
