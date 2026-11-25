@@ -12,88 +12,88 @@ export const DEFAULT_SOCIAL_STATS = {
       "ytId": "hUlDgApbvng",
       "igCode": "DfzL-jBBslN",
       "ytViews": 1431,
-      "igViews": 0,
+      "igViews": 84337,
       "ytLikes": 8,
-      "igLikes": 566,
-      "likes": 574,
+      "igLikes": 572,
+      "likes": 580,
       "comments": 6,
-      "shares": 0
+      "shares": 511
   },
   film: {
       "ytId": "ADY8WhZWY8c",
       "igCode": "DfzLUtRAfgu",
       "ytViews": 1219,
-      "igViews": 0,
+      "igViews": 51839,
       "ytLikes": 8,
-      "igLikes": 199,
-      "likes": 207,
+      "igLikes": 200,
+      "likes": 208,
       "comments": 6,
-      "shares": 0
+      "shares": 71
   },
   haircut: {
       "ytId": "QaCzc4uhdGg",
       "igCode": "DfoqYjvhRfp",
       "ytViews": 3516,
-      "igViews": 0,
+      "igViews": 58119,
       "ytLikes": 8,
-      "igLikes": 193,
-      "likes": 201,
+      "igLikes": 196,
+      "likes": 204,
       "comments": 12,
-      "shares": 82
+      "shares": 155
   },
   nail: {
       "ytId": "_zDkFh3ie78",
       "igCode": "Df8UlPuvmfo",
       "ytViews": 1183,
-      "igViews": 0,
+      "igViews": 4292,
       "ytLikes": 6,
       "igLikes": 13,
       "likes": 19,
       "comments": 3,
-      "shares": 0
+      "shares": 11
   },
   toilet: {
       "ytId": "HzgtlFKDyGU",
       "igCode": "Df-7bsPgpVB",
       "ytViews": 1005,
-      "igViews": 0,
+      "igViews": 2868,
       "ytLikes": 1,
       "igLikes": 6,
       "likes": 7,
       "comments": 0,
-      "shares": 0
+      "shares": 1
   },
   boxcut: {
       "ytId": "XuuolbLucZs",
       "igCode": "DgJpsXPiFva",
-      "ytViews": 692,
-      "igViews": 0,
-      "ytLikes": 3,
+      "ytViews": 1032,
+      "igViews": 2474,
+      "ytLikes": 1,
       "igLikes": 11,
-      "likes": 14,
+      "likes": 12,
       "comments": 0,
-      "shares": 0
+      "shares": 1
   },
   jjamppong: {
       "ytId": "DavQKBq1piI",
-      "igCode": "",
-      "ytViews": 1901,
-      "igViews": 0,
+      "igCode": "Df4BcfEBn4z",
+      "ytViews": 1902,
+      "igViews": 3338,
       "ytLikes": 2,
-      "igLikes": 0,
-      "likes": 2,
+      "igLikes": 10,
+      "likes": 12,
       "comments": 1,
-      "shares": 0
+      "shares": 5
   },
   snap: {
       "ytId": "ExQY9NqSb-M",
-      "igCode": "",
-      "ytViews": 2222,
-      "igViews": 0,
+      "igCode": "Dfxq3lqhb9y",
+      "ytViews": 2223,
+      "igViews": 2976,
       "ytLikes": 9,
-      "igLikes": 0,
-      "likes": 9,
-      "comments": 0,
+      "igLikes": 13,
+      "likes": 22,
+      "comments": 1,
       "shares": 0
   },
 };
@@ -278,15 +278,16 @@ async function fetchSocialOverride(sb, gameId) {
     const row = await res.json();
     if (row && row.id) {
       const def = DEFAULT_SOCIAL_STATS[gameId] || {};
-      const ytViews = Math.max(0, Number(row.target_value || 0));
-      const igViews = Math.max(0, Number(row.actual_value || 0));
-      const likes = Number((row.meta && row.meta.likes) ?? def.likes ?? 0);
-      const comments = Number((row.meta && row.meta.comments) ?? def.comments ?? 0);
-      const shares = Number((row.meta && row.meta.shares) ?? def.shares ?? 0);
+      const ytViews = Math.max(Number(def.ytViews || 0), Number(row.target_value || 0));
+      const igViews = Math.max(Number(def.igViews || 0), Number(row.actual_value || 0));
+      const likes = Math.max(Number(def.likes || 0), Number((row.meta && row.meta.likes) ?? 0));
+      const comments = Math.max(Number(def.comments || 0), Number((row.meta && row.meta.comments) ?? 0));
+      const shares = Math.max(Number(def.shares || 0), Number((row.meta && row.meta.shares) ?? 0));
       const merged = { ...def, ytViews, igViews, likes, comments, shares };
+      const oldAuto = !row.rank_title || /^(♥\d|쇼츠 |반응 |신작 공개)/.test(row.rank_title);
       return {
         ...merged,
-        label: row.rank_title || formatSocialStatsLabel(merged),
+        label: (igViews > 0 && oldAuto) ? formatSocialStatsLabel(merged) : (row.rank_title || formatSocialStatsLabel(merged)),
       };
     }
   } catch {
