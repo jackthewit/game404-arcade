@@ -6,3 +6,10 @@ node_modules
 _뺀것
 .DS_Store
 .env*
+.impeccable/mocks
+.impeccable/review
+.impeccable/questions
+.impeccable/scratch_unused
+.impeccable/config.local.json
+.impeccable/*.json.tmp
+.impeccable/serve-question*

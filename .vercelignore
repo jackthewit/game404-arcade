@@ -9,3 +9,6 @@ README.md
 .gitignore
 node_modules
 dev-server.mjs
+.impeccable
+PRODUCT.md
+DESIGN.md

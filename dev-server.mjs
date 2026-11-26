@@ -30,6 +30,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.webp': 'image/webp',
+  '.woff2': 'font/woff2',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
 };

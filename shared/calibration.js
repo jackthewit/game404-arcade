@@ -1,33 +1,223 @@
 // 실제 화면 물리 길이(1cm = 몇 CSS px) 초정밀 계산 및 4종 실측 보정 모달
-// 지원 모드:
-//   1) 화면 대각선 인치 원탭 계산 (OS 해상도 스케일링과 무관하게 피타고라스 공식으로 정밀 산출)
-//   2) 신용카드 / 교통카드 실물 대보기 (ISO/IEC 7810 ID-1: 8.56cm × 5.398cm)
-//   3) 실제 자 5cm 눈금 대보기 (0~5cm, 1mm 단위)
-//   4) 100원(2.40cm) / 500원(2.65cm) 동전 대보기
 
 const STORAGE_KEY = 'fgs.realcm.v2';
+const FONTS_HREF = new URL('../assets/fonts/arcade-fonts.css', import.meta.url).href;
+let calStyleInjected = false;
 
-// 현재 화면의 논리 대각선 CSS 픽셀 (OS 디스플레이 배율이 이미 반영된 screen.width × screen.height)
+function ensureArcadeFonts() {
+  if (document.getElementById('g404-arcade-fonts')) return;
+  const link = document.createElement('link');
+  link.id = 'g404-arcade-fonts';
+  link.rel = 'stylesheet';
+  link.href = FONTS_HREF;
+  document.head.appendChild(link);
+}
+
+function injectCalStyles() {
+  ensureArcadeFonts();
+  if (calStyleInjected) return;
+  calStyleInjected = true;
+  const st = document.createElement('style');
+  st.textContent = `
+    #fgs-cal-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(21, 23, 26, 0.7);
+      backdrop-filter: blur(8px);
+      overflow-y: auto;
+      touch-action: pan-y;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+    #fgs-cal-modal :focus-visible {
+      outline: 2.5px solid #163ECA;
+      outline-offset: 2px;
+    }
+    #fgs-cal-modal .cal-tray-shell {
+      width: min(95vw, 476px);
+      background: #D8DDE4;
+      border: 2px solid #15171A;
+      border-radius: 4px;
+      padding: 9px;
+      box-shadow: 0 24px 52px -14px rgba(21, 23, 26, 0.44);
+      color: #15171A;
+    }
+    #fgs-cal-modal .cal-paper {
+      background: #F5F7FA;
+      border: 2px solid #15171A;
+      border-radius: 3px;
+      padding: 20px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+    #fgs-cal-modal .cal-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    #fgs-cal-modal .cal-heading {
+      margin: 0;
+      font-family: "Do Hyeon", "Apple SD Gothic Neo", sans-serif;
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: #15171A;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #fgs-cal-modal .cal-close-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 3px;
+      border: 1.5px solid #15171A;
+      background: #E9EDF2;
+      color: #15171A;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    #fgs-cal-modal .cal-desc {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.52;
+      color: #373D45;
+      font-weight: 600;
+    }
+    #fgs-cal-modal .cal-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    #fgs-cal-modal .cal-tab-btn {
+      padding: 9px 4px;
+      border-radius: 3px;
+      border: 1.5px solid #15171A;
+      background: #E9EDF2;
+      color: #15171A;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.14s ease, color 0.14s ease;
+    }
+    #fgs-cal-modal .cal-tab-btn.is-active {
+      background: #15171A;
+      color: #F2BE18;
+    }
+    #fgs-cal-modal .cal-stage-well {
+      min-height: 206px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #D8DDE4;
+      border: 1.5px solid #15171A;
+      border-radius: 3px;
+      padding: 14px 10px;
+      overflow: hidden;
+    }
+    #fgs-cal-modal .cal-step-btn {
+      width: 38px;
+      height: 36px;
+      border-radius: 3px;
+      border: 1.5px solid #15171A;
+      background: #E9EDF2;
+      color: #15171A;
+      font-family: "Chakra Petch", "Pretendard", sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #fgs-cal-modal .cal-preset-chip {
+      padding: 7px 11px;
+      border-radius: 2px;
+      border: 1.5px solid #15171A;
+      background: #F5F7FA;
+      color: #15171A;
+      font-family: "Chakra Petch", "Pretendard", sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-variant-numeric: tabular-nums;
+    }
+    #fgs-cal-modal .cal-preset-chip.is-on {
+      background: #163ECA;
+      color: #FFFFFF;
+    }
+    #fgs-cal-modal .cal-readout-bar {
+      text-align: center;
+      font-family: "Chakra Petch", "Pretendard", sans-serif;
+      font-size: 13px;
+      color: #15171A;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      background: #E9EDF2;
+      border: 1px solid #C6CDD6;
+      border-radius: 2px;
+      padding: 5px 10px;
+    }
+    #fgs-cal-modal .cal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    #fgs-cal-modal .cal-btn-cancel {
+      padding: 12px;
+      border-radius: 3px;
+      border: 1.5px solid #15171A;
+      background: #E9EDF2;
+      color: #15171A;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #fgs-cal-modal .cal-btn-save {
+      padding: 12px;
+      border-radius: 3px;
+      border: 2px solid #15171A;
+      background: #C92A1D;
+      color: #FFFFFF;
+      font-size: 14.5px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+  `;
+  document.head.appendChild(st);
+}
+
 export function getScreenDiagPx() {
   const sw = Math.max(320, window.screen.width || window.innerWidth);
   const sh = Math.max(320, window.screen.height || window.innerHeight);
   return { sw, sh, diagPx: Math.hypot(sw, sh) };
 }
 
-// 대각선 인치(inch) → 실제 물리 1cm당 CSS px (어떤 OS 배율 설정이든 수학적으로 정확!)
 export function pxPerCmFromInches(diagInches) {
   const { diagPx } = getScreenDiagPx();
   const cmDiag = Number(diagInches) * 2.54;
   return diagPx / cmDiag;
 }
 
-// 현재 pxPerCm 에 해당하는 추정 대각선 인치 역산
 export function inchesFromPxPerCm(pxPerCm) {
   const { diagPx } = getScreenDiagPx();
   return diagPx / (pxPerCm * 2.54);
 }
 
-// 대표 기기 논리 해상도 테이블로 초기 추정 오차 최소화
 export function detectDeviceAndPxPerCm() {
   const ua = navigator.userAgent || '';
   const dpr = window.devicePixelRatio || 1;
@@ -36,7 +226,6 @@ export function detectDeviceAndPxPerCm() {
   const W = Math.max(sw, sh);
   const H = Math.min(sw, sh);
 
-  // 1) 아이폰 (논리 해상도 → 실제 대각선 인치)
   if (/iPhone/i.test(ua)) {
     const iphoneMap = [
       [956, 440, 6.9, 'iPhone 16 Pro Max (6.9")'],
@@ -58,7 +247,6 @@ export function detectDeviceAndPxPerCm() {
     return { pxPerCm: pxPerCmFromInches(6.1), inch: 6.1, label: 'iPhone (6.1" 추정)', calibrated: false };
   }
 
-  // 2) 아이패드 (거의 전 모델 264 PPI = 51.97 CSS px/cm, mini 는 326 PPI = 64.17)
   if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) {
     if (W <= 1133 && H <= 744) {
       return { pxPerCm: 64.17, inch: 8.3, label: 'iPad mini (8.3")', calibrated: false };
@@ -66,14 +254,11 @@ export function detectDeviceAndPxPerCm() {
     return { pxPerCm: 51.97, inch: 11.0, label: 'iPad (264 PPI)', calibrated: false };
   }
 
-  // 3) 안드로이드 / 모바일
   if (coarse && H <= 500) {
-    // 가로폭 기준 대략적 인치 추정 (6.1~6.8")
     const inch = H >= 410 ? 6.7 : H >= 385 ? 6.3 : 6.1;
     return { pxPerCm: pxPerCmFromInches(inch), inch, label: `스마트폰 (${inch}" 추정)`, calibrated: false };
   }
 
-  // 4) 맥북 / 아이맥 / 외장 모니터 (논리 해상도 매칭 — 개발자도구 모바일 시뮬레이션 W < 1000 제외)
   if (/Macintosh/i.test(ua) && W >= 1000) {
     const macMap = [
       [1512, 982, 14.2, 'MacBook Pro 14"'],
@@ -101,7 +286,6 @@ export function detectDeviceAndPxPerCm() {
     return { pxPerCm: pxPerCmFromInches(fallbackInch), inch: fallbackInch, label: `Mac (${fallbackInch}" 추정)`, calibrated: false };
   }
 
-  // 5) 모바일 에뮬레이션 / 윈도우 / 기타 데스크톱 모니터
   if (H <= 500 && W <= 980) {
     const inch = H >= 410 ? 6.7 : 6.1;
     return { pxPerCm: pxPerCmFromInches(inch), inch, label: `모바일 화면 (${inch}" 추정)`, calibrated: false };
@@ -116,7 +300,6 @@ export function getPxPerCm() {
     if (raw) {
       const parsed = JSON.parse(raw);
       const { sw, sh } = getScreenDiagPx();
-      // 사용자가 같은 화면 해상도에서 보정한 값이면 그대로 사용!
       if (
         Number.isFinite(parsed.pxPerCm) &&
         parsed.pxPerCm >= 20 &&
@@ -130,7 +313,6 @@ export function getPxPerCm() {
           label: parsed.label || '실측 보정됨',
         };
       }
-      // 만약 인치로 저장돼 있었고 해상도만 바뀐 경우 → 저장된 인치로 새 해상도에 맞춰 자동 재계산!
       if (Number.isFinite(parsed.inch) && parsed.inch >= 4 && parsed.inch <= 65) {
         return {
           pxPerCm: pxPerCmFromInches(parsed.inch),
@@ -171,49 +353,61 @@ export function saveByScreenInches(diagInches, label) {
   });
 }
 
-// 4종 정밀 보정 모달 (인치 원탭 / 신용카드 8.56cm / 실제 자 5cm / 동전)
 export function openCalibrationModal(onSave, onLiveChange = null) {
+  injectCalStyles();
+  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const old = document.getElementById('fgs-cal-modal');
   if (old) old.remove();
 
   const cur = getPxPerCm();
   const isMobile = Boolean(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 520);
-  let mode = 'card'; // 'card' | 'ruler' | 'inch' | 'coin'
-  let coinType = '100'; // '100' (2.40cm) | '500' (2.65cm)
+  let mode = 'card';
+  let coinType = '100';
   let pxPerCm = cur.pxPerCm;
   let chosenLabel = cur.label || '실측 보정';
 
+  const rulerSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>`;
+
   const wrap = document.createElement('div');
   wrap.id = 'fgs-cal-modal';
-  wrap.className = 'modal-backdrop';
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.setAttribute('aria-label', '실제 1cm 정밀 보정');
   wrap.innerHTML = `
-    <div class="modal-card" style="gap:11px;width:min(95vw,470px)">
-      <div class="modal-title" style="font-size:20px">📏 실제 1cm 정밀 보정</div>
-      <p class="modal-sub" style="font-size:12.5px">
-        기기·모니터마다 픽셀 크기가 달라요. 아래 중 편한 방법으로 <b>딱 한 번</b> 맞추면, 진짜 자로 재도 1.00cm가 정확히 일치합니다!
-      </p>
-
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-        <button type="button" class="btn btn-primary cal-tab" data-mode="card" style="padding:9px 4px;font-size:12px">💳 카드</button>
-        <button type="button" class="btn btn-ghost cal-tab" data-mode="ruler" style="padding:9px 4px;font-size:12px">📏 자(5cm)</button>
-        <button type="button" class="btn btn-ghost cal-tab" data-mode="inch" style="padding:9px 4px;font-size:12px">🖥️ 인치</button>
-        <button type="button" class="btn btn-ghost cal-tab" data-mode="coin" style="padding:9px 4px;font-size:12px">🪙 동전</button>
-      </div>
-
-      <div id="cal-stage" style="min-height:205px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(255,255,255,0.04);border:1.5px dashed rgba(255,255,255,0.2);border-radius:16px;padding:14px 10px;overflow:hidden"></div>
-
-      <div id="cal-slider-wrap" style="display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <button type="button" class="pill-btn" id="cal-minus" style="padding:8px 13px;font-size:15px">−</button>
-          <input type="range" id="cal-slider" min="22" max="92" step="0.1" value="${pxPerCm.toFixed(1)}" style="flex:1;accent-color:#ffd84a">
-          <button type="button" class="pill-btn" id="cal-plus" style="padding:8px 13px;font-size:15px">+</button>
+    <div class="cal-tray-shell">
+      <div class="cal-paper">
+        <div class="cal-head-row">
+          <h2 class="cal-heading">${rulerSvg}<span>실제 1cm 영점 게이지 보정</span></h2>
+          <button type="button" class="cal-close-icon" id="cal-top-close" aria-label="닫기">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
-        <div id="cal-readout" style="text-align:center;font-size:12px;color:#b8b0cc;font-variant-numeric:tabular-nums"></div>
-      </div>
+        <p class="cal-desc">
+          화면·모니터마다 픽셀 밀도가 다릅니다. 아래 도구 중 편한 방법으로 <b>한 번만</b> 맞추면 실제 자로 잰 1.00cm와 똑같이 맞춰집니다.
+        </p>
 
-      <div class="btn-row">
-        <button type="button" class="btn btn-ghost" id="cal-cancel" style="padding:12px">닫기</button>
-        <button type="button" class="btn btn-primary" id="cal-save" style="padding:12px">✓ 이 1cm로 저장</button>
+        <div class="cal-tabs" role="group" aria-label="보정 측정 방식">
+          <button type="button" class="cal-tab-btn is-active" data-mode="card" aria-pressed="true">신용카드</button>
+          <button type="button" class="cal-tab-btn" data-mode="ruler" aria-pressed="false">자 (5cm)</button>
+          <button type="button" class="cal-tab-btn" data-mode="inch" aria-pressed="false">화면 인치</button>
+          <button type="button" class="cal-tab-btn" data-mode="coin" aria-pressed="false">동전 대보기</button>
+        </div>
+
+        <div id="cal-stage" class="cal-stage-well"></div>
+
+        <div id="cal-slider-wrap" style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="cal-step-btn" id="cal-minus" aria-label="1cm 픽셀 줄이기">−</button>
+            <input type="range" id="cal-slider" aria-label="1cm 픽셀 미세 조절" min="22" max="92" step="0.1" value="${pxPerCm.toFixed(1)}" style="flex:1;accent-color:#15171A;cursor:pointer">
+            <button type="button" class="cal-step-btn" id="cal-plus" aria-label="1cm 픽셀 늘리기">+</button>
+          </div>
+          <div id="cal-readout" class="cal-readout-bar"></div>
+        </div>
+
+        <div class="cal-actions">
+          <button type="button" class="cal-btn-cancel" id="cal-cancel">닫기</button>
+          <button type="button" class="cal-btn-save" id="cal-save">이 1cm 눈금 저장</button>
+        </div>
       </div>
     </div>
   `;
@@ -222,7 +416,7 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
   const stage = wrap.querySelector('#cal-stage');
   const slider = wrap.querySelector('#cal-slider');
   const readout = wrap.querySelector('#cal-readout');
-  const tabs = wrap.querySelectorAll('.cal-tab');
+  const tabs = wrap.querySelectorAll('.cal-tab-btn');
 
   function notifyLive() {
     if (onLiveChange) onLiveChange(pxPerCm);
@@ -230,31 +424,32 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
 
   function renderStage() {
     tabs.forEach(t => {
-      t.className = t.dataset.mode === mode ? 'btn btn-primary cal-tab' : 'btn btn-ghost cal-tab';
+      const active = t.dataset.mode === mode;
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
     const estInch = inchesFromPxPerCm(pxPerCm);
-    readout.textContent = `1cm = ${pxPerCm.toFixed(1)}px · 환산 화면 크기 약 ${estInch.toFixed(1)}"`;
+    readout.textContent = `1cm = ${pxPerCm.toFixed(1)}px · 환산 화면 대각선 약 ${estInch.toFixed(1)}"`;
     slider.value = pxPerCm.toFixed(1);
 
     if (mode === 'card') {
-      const availW = Math.min(window.innerWidth - 64, 420);
+      const availW = Math.min(window.innerWidth - 76, 420);
       const fullCardW = 8.56 * pxPerCm;
       const usePortrait = fullCardW > availW;
       const wPx = usePortrait ? 5.398 * pxPerCm : fullCardW;
       const hPx = usePortrait ? Math.min(148, 8.56 * pxPerCm * 0.45) : 5.398 * pxPerCm;
-      const dimLabel = usePortrait ? '카드 짧은 변을 가로로 대세요 (5.40cm)' : '신용카드·교통카드를 그대로 포개세요 (8.56 × 5.40cm)';
+      const dimLabel = usePortrait ? '카드 짧은 변을 가로로 포개세요 (5.40cm)' : '실물 신용카드·교통카드를 사각형에 포개세요 (8.56 × 5.40cm)';
 
       stage.innerHTML = `
-        <div style="font-size:12px;color:#ffd84a;font-weight:800;text-align:center">${dimLabel}</div>
-        <div style="position:relative;width:${wPx.toFixed(1)}px;height:${hPx.toFixed(1)}px;border-radius:12px;background:linear-gradient(135deg,rgba(255,216,74,0.24),rgba(124,92,255,0.26));border:2.5px solid #ffd84a;box-shadow:0 8px 24px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center">
-          <div style="position:absolute;left:12%;top:28%;width:15%;height:22%;border-radius:4px;border:1.5px solid rgba(255,216,74,0.75);background:rgba(255,216,74,0.22)"></div>
-          <span style="font-size:12px;font-weight:900;color:#fff;text-shadow:0 1px 4px #000">${usePortrait ? '5.40 cm' : '8.56 cm'}</span>
+        <div style="font-size:12.5px;color:#15171A;font-weight:900;text-align:center">${dimLabel}</div>
+        <div style="position:relative;width:${wPx.toFixed(1)}px;height:${hPx.toFixed(1)}px;border-radius:4px;background:#F2BE18;border:2.5px solid #15171A;box-shadow:0 8px 18px -8px rgba(21,23,26,0.28);display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;left:12%;top:28%;width:15%;height:22%;border-radius:2px;border:1.5px solid #15171A;background:#F5F7FA"></div>
+          <span style="font-family:'Chakra Petch','Pretendard',sans-serif;font-size:14px;font-weight:700;color:#15171A;font-variant-numeric:tabular-nums">${usePortrait ? '5.40 cm' : '8.56 cm'}</span>
         </div>
       `;
     } else if (mode === 'ruler') {
-      // 실제 자(0~5cm)를 대고 맞추는 눈금자
-      const availW = Math.min(window.innerWidth - 70, 415);
+      const availW = Math.min(window.innerWidth - 82, 415);
       const maxCm = 5 * pxPerCm <= availW ? 5 : 4;
       const rW = maxCm * pxPerCm;
       let ticks = '';
@@ -263,14 +458,14 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
         const isCm = mm % 10 === 0;
         const isHalf = mm % 5 === 0;
         const h = isCm ? 34 : isHalf ? 22 : 13;
-        ticks += `<div style="position:absolute;left:${x.toFixed(1)}px;top:0;width:${isCm ? 2 : 1}px;height:${h}px;background:${isCm ? '#1e1629' : '#6c6478'}"></div>`;
+        ticks += `<div style="position:absolute;left:${x.toFixed(1)}px;top:0;width:${isCm ? 2 : 1}px;height:${h}px;background:${isCm ? '#15171A' : '#373D45'}"></div>`;
         if (isCm) {
-          ticks += `<div style="position:absolute;left:${x.toFixed(1)}px;top:37px;transform:translateX(-50%);font-size:12px;font-weight:900;color:#1e1629">${mm / 10}</div>`;
+          ticks += `<div style="position:absolute;left:${x.toFixed(1)}px;top:37px;transform:translateX(-50%);font-family:'Chakra Petch','Pretendard',sans-serif;font-size:12.5px;font-weight:700;color:#15171A;font-variant-numeric:tabular-nums">${mm / 10}</div>`;
         }
       }
       stage.innerHTML = `
-        <div style="font-size:12px;color:#ffd84a;font-weight:800;text-align:center">실제 자를 화면에 대고 0 ~ ${maxCm}cm 눈금을 딱 맞추세요!</div>
-        <div style="padding:14px 14px 10px;background:#fffbf0;border-radius:10px;border:2px solid #2a2038;box-shadow:0 8px 20px rgba(0,0,0,0.35)">
+        <div style="font-size:12.5px;color:#15171A;font-weight:900;text-align:center">실제 자를 화면에 대고 0 ~ ${maxCm}cm 눈금을 일치시키세요</div>
+        <div style="padding:14px 16px 10px;background:#F5F7FA;border-radius:3px;border:2px solid #15171A;box-shadow:0 8px 18px -8px rgba(21,23,26,0.22)">
           <div style="position:relative;width:${rW.toFixed(1)}px;height:54px">${ticks}</div>
         </div>
       `;
@@ -296,16 +491,16 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
           ];
       const previewW = pxPerCm * 3;
       stage.innerHTML = `
-        <div style="font-size:12px;color:#ffd84a;font-weight:800;text-align:center">지금 보고 계신 화면 크기를 고르면 1cm를 정확히 계산해요!</div>
+        <div style="font-size:12.5px;color:#15171A;font-weight:900;text-align:center">현재 기기의 화면 규격을 선택하면 1cm를 즉시 산출합니다</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
-          ${presets.map(p => `<button type="button" class="pill-btn inch-preset" data-inch="${p.inch}" data-label="${p.t}" style="font-size:12px;padding:7px 11px">${p.t}</button>`).join('')}
+          ${presets.map(p => `<button type="button" class="cal-preset-chip ${chosenLabel === p.t ? 'is-on' : ''}" data-inch="${p.inch}" data-label="${p.t}" aria-pressed="${chosenLabel === p.t ? 'true' : 'false'}">${p.t}</button>`).join('')}
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-          <span style="font-size:11px;color:#b8b0cc">미리보기 3cm:</span>
-          <div style="width:${previewW.toFixed(1)}px;height:14px;border-radius:4px;background:#ffd84a;border:1px solid #fff"></div>
+          <span style="font-size:12px;color:#373D45;font-weight:800">실제 3cm 막대:</span>
+          <div style="width:${previewW.toFixed(1)}px;height:14px;border-radius:2px;background:#F2BE18;border:1.5px solid #15171A"></div>
         </div>
       `;
-      stage.querySelectorAll('.inch-preset').forEach(btn => {
+      stage.querySelectorAll('.cal-preset-chip').forEach(btn => {
         btn.onclick = () => {
           const inch = parseFloat(btn.dataset.inch);
           pxPerCm = pxPerCmFromInches(inch);
@@ -319,10 +514,10 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
       const dPx = diamCm * pxPerCm;
       stage.innerHTML = `
         <div style="display:flex;gap:6px">
-          <button type="button" class="pill-btn ${coinType === '100' ? 'highlight' : ''}" id="coin-100">100원 (2.40cm)</button>
-          <button type="button" class="pill-btn ${coinType === '500' ? 'highlight' : ''}" id="coin-500">500원 (2.65cm)</button>
+          <button type="button" class="cal-preset-chip ${coinType === '100' ? 'is-on' : ''}" id="coin-100" aria-pressed="${coinType === '100' ? 'true' : 'false'}">100원 (2.40cm)</button>
+          <button type="button" class="cal-preset-chip ${coinType === '500' ? 'is-on' : ''}" id="coin-500" aria-pressed="${coinType === '500' ? 'true' : 'false'}">500원 (2.65cm)</button>
         </div>
-        <div style="width:${dPx.toFixed(1)}px;height:${dPx.toFixed(1)}px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,216,74,0.4),rgba(180,180,200,0.22));border:2.5px solid #ffd84a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#ffd84a">
+        <div style="width:${dPx.toFixed(1)}px;height:${dPx.toFixed(1)}px;border-radius:50%;background:#F5F7FA;border:2.5px solid #15171A;box-shadow:0 6px 14px -6px rgba(21,23,26,0.25);display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch','Pretendard',sans-serif;font-weight:700;font-size:13.5px;color:#15171A;font-variant-numeric:tabular-nums">
           ${coinType}원
         </div>
       `;
@@ -354,18 +549,56 @@ export function openCalibrationModal(onSave, onLiveChange = null) {
     renderStage();
     notifyLive();
   };
-  wrap.querySelector('#cal-cancel').onclick = () => {
+
+  function cleanupAndRestoreFocus() {
+    document.removeEventListener('keydown', onKeyDown);
     wrap.remove();
+    if (opener && document.contains(opener)) opener.focus();
+  }
+
+  function closeModal() {
+    cleanupAndRestoreFocus();
     if (onLiveChange) onLiveChange(getPxPerCm().pxPerCm);
-  };
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeModal();
+      return;
+    }
+    if (e.key === 'Tab') {
+      const focusables = [...wrap.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])')].filter(el => !el.disabled);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+  document.addEventListener('keydown', onKeyDown);
+
+  wrap.querySelector('#cal-cancel').onclick = closeModal;
+  wrap.querySelector('#cal-top-close').onclick = closeModal;
+  wrap.addEventListener('click', (e) => {
+    if (e.target === wrap) closeModal();
+  });
+
   wrap.querySelector('#cal-save').onclick = () => {
     const saved = savePxPerCm(pxPerCm, {
       method: mode,
       label: chosenLabel,
     });
-    wrap.remove();
+    cleanupAndRestoreFocus();
     if (onSave) onSave(saved);
   };
 
   renderStage();
+  const initialFocus = wrap.querySelector('.cal-tab-btn.is-active') || slider;
+  if (initialFocus) initialFocus.focus();
 }

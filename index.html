@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <link rel="icon" type="image/png" href="./assets/icon-192.png">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
-  <title>이게뭔겜? 404 아케이드 — AI 제작 미니 웹게임</title>
+  <title>이게뭔겜? 404 아케이드 — AI 제작 미니 웹게임 합본팩</title>
   <meta name="description" content="404가지 즐거움이 있는 AI 제작 게임과 리뷰! 웨딩·여행 스냅 알바, 짬뽕 탄막, 열려라 택배!, 케이크 글씨 쓰기, 어떻게 잘라드릴까요?, 강화필름 한번에, 손톱 색칠하기, 무한 두루마리를 설치 없이 바로 플레이하세요.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="이게뭔겜? 404 아케이드">
@@ -19,766 +19,1191 @@
   <meta name="twitter:title" content="이게뭔겜? 404 아케이드 — 직접 만든 미니 게임, 바로 플레이!">
   <meta name="twitter:description" content="404가지 즐거움이 있는 AI 제작 게임과 리뷰! 설치 없이 바로 즐기고 전체 랭킹에 도전해 보세요.">
   <meta name="twitter:image" content="https://game404-arcade.vercel.app/assets/og-main.jpg">
-  <link rel="stylesheet" href="./shared/styles.css">
+  <link id="g404-arcade-fonts" rel="stylesheet" href="./assets/fonts/arcade-fonts.css">
   <style>
-    html, body {
-      height: auto;
-      min-height: 100%;
-      overflow-y: auto;
-      touch-action: pan-y;
+    :root {
+      --tray-stone: #D8DDE4;
+      --tray-well: #C6CDD6;
+      --tray-mid: #AEB7C3;
+      --label-paper: #F5F7FA;
+      --label-tint: #E9EDF2;
+      --ink: #15171A;
+      --ink-panel: #23272E;
+      --ink-secondary: #373D45;
+      --ink-on-dark: #F5F7FA;
+      --muted-on-dark: #CBD2DC;
+      --stamp-red: #C92A1D;
+      --stamp-red-hover: #B32216;
+      --serial-blue: #163ECA;
+      --plate-yellow: #F2BE18;
+      --rule-light: #C6CDD6;
+      --rule-dark: #373D45;
+      --font-display: 'Do Hyeon', 'Apple SD Gothic Neo', sans-serif;
+      --font-serial: 'Chakra Petch', 'Pretendard', sans-serif;
+      --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .hub {
-      max-width: 940px;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    ::selection {
+      background: var(--plate-yellow);
+      color: var(--ink);
+    }
+
+    html {
+      background: var(--tray-stone);
+      color: var(--ink);
+      scrollbar-color: #23272E #C6CDD6;
+      scrollbar-width: thin;
+      caret-color: var(--stamp-red);
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #C6CDD6;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #23272E;
+      border: 2px solid #C6CDD6;
+      border-radius: 2px;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--tray-stone);
+      background-image: radial-gradient(rgba(21, 23, 26, 0.05) 1px, transparent 0);
+      background-size: 16px 16px;
+      color: var(--ink);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a, button {
+      font-family: inherit;
+      text-underline-offset: 4px;
+    }
+
+    :focus-visible {
+      outline: 2.5px solid var(--serial-blue);
+      outline-offset: 2px;
+    }
+
+    .tray-shell {
+      max-width: 1360px;
       margin: 0 auto;
-      padding: max(22px, env(safe-area-inset-top) + 14px) 16px 52px;
+      padding: max(16px, env(safe-area-inset-top) + 10px) 24px 56px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-    }
-    .hero {
-      text-align: center;
-      padding: 26px 18px 22px;
-      border-radius: 26px;
-      background: linear-gradient(145deg, rgba(124, 92, 255, 0.22), rgba(255, 216, 74, 0.10));
-      border: 1.5px solid rgba(255, 255, 255, 0.14);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .hero h1 {
-      font-size: clamp(24px, 6vw, 34px);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-    }
-    .hero p {
-      font-size: 13.5px;
-      color: var(--muted);
-      line-height: 1.55;
-      max-width: 480px;
+      gap: 16px;
     }
 
-    /* 유튜브 & 인스타그램 공식 채널 링크 바 */
-    .social-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 2px;
-    }
-    .social-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 16px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 800;
-      text-decoration: none;
-      color: #ffffff;
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.26);
-      transition: transform 0.14s ease, filter 0.15s ease;
-    }
-    .social-btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.08);
-    }
-    .social-btn.yt {
-      background: linear-gradient(135deg, #ff2b4a, #cc0022);
-    }
-    .social-btn.ig {
-      background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af);
-    }
-    .social-btn svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
-      flex-shrink: 0;
-    }
-
-    .util-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 2px;
-    }
-
-    /* 인기 게임 정렬 헤더 & 3대 잣대 컨트롤 바 */
-    .pop-header {
+    /* 1. 상단 명판 도구 바 */
+    .tray-nameplate {
+      background: var(--label-paper);
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 20px -10px rgba(21, 23, 26, 0.18);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       flex-wrap: wrap;
-      padding: 4px 2px 0;
     }
-    .pop-title-group {
+
+    .brand-cluster {
       display: flex;
-      flex-direction: column;
-      gap: 3px;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .pop-title {
-      font-size: 18px;
+
+    .pack-stamp {
+      font-family: var(--font-serial);
+      font-weight: 700;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+      background: var(--ink);
+      color: var(--plate-yellow);
+      padding: 4px 11px;
+      border-radius: 2px;
+      line-height: 1.1;
+    }
+
+    .brand-title-inline {
+      font-size: 15.5px;
       font-weight: 900;
       letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    /* 기계식 5자리 드럼 적산 카운터 */
+    .mech-counter {
+      display: inline-flex;
+      align-items: stretch;
+      border: 1.5px solid var(--ink);
+      border-radius: 2px;
+      background: var(--ink);
+      overflow: hidden;
+      font-family: var(--font-serial);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mech-counter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      background: var(--label-tint);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      border-right: 1.5px solid var(--ink);
+      font-family: var(--font-body);
+    }
+
+    .counter-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: var(--stamp-red);
+      display: inline-block;
+    }
+
+    .mech-drums {
+      display: inline-flex;
+      align-items: stretch;
+      background: var(--ink);
+    }
+
+    .drum-cell {
+      width: 19px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 0;
+      background: var(--ink-panel);
+      color: var(--plate-yellow);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.1;
+      border-right: 1px solid var(--rule-dark);
+    }
+
+    .drum-cell:last-child {
+      border-right: none;
+    }
+
+    .mech-unit {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      background: var(--ink);
+      color: var(--ink-on-dark);
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .tool-cluster {
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
-    .pop-criteria-sub {
-      font-size: 12px;
-      color: #a9a0c4;
+
+    .keycap-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 3px;
+      border: 1.5px solid var(--ink);
+      background: var(--label-tint);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.14s var(--ease-snap), background 0.14s ease, color 0.14s ease;
+    }
+
+    .keycap-btn:hover {
+      background: var(--label-paper);
+      transform: translateY(1px);
+    }
+
+    .keycap-btn:active {
+      transform: translateY(2px);
+    }
+
+    .keycap-btn.is-yellow {
+      background: var(--plate-yellow);
+      color: var(--ink);
+    }
+
+    .keycap-btn.is-yellow:hover {
+      background: #F6C930;
+    }
+
+    .keycap-btn.is-muted {
+      background: var(--tray-well);
+      color: var(--ink-secondary);
+    }
+
+    .keycap-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    /* 2. 대표 마스터 카트리지 장착 슬롯 */
+    .master-well {
+      background: var(--tray-well);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 9px;
+    }
+
+    .master-cartridge {
+      display: grid;
+      grid-template-columns: minmax(340px, 1.12fr) 1fr;
+      gap: 24px;
+      background: var(--ink);
+      color: var(--ink-on-dark);
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+      padding: 16px 20px 16px 16px;
+      text-decoration: none;
+      box-shadow: 0 12px 24px -10px rgba(21, 23, 26, 0.34);
+      transition: transform 0.18s var(--ease-snap), box-shadow 0.18s var(--ease-snap), border-color 0.16s ease;
+      position: relative;
+    }
+
+    .master-cartridge:hover,
+    .master-cartridge:focus-visible {
+      transform: translateY(3px);
+      border-color: var(--plate-yellow);
+      box-shadow: 0 5px 10px -4px rgba(21, 23, 26, 0.38);
+    }
+
+    .master-cartridge:active {
+      transform: translateY(5px) scale(0.996);
+    }
+
+    .master-media-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 2px;
+      border: 2px solid var(--plate-yellow);
+      overflow: hidden;
+      background: var(--ink-panel);
+      align-self: center;
+    }
+
+    .master-media-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.28s var(--ease-snap);
+    }
+
+    .master-cartridge:hover .master-media-frame img {
+      transform: scale(1.02);
+    }
+
+    .master-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+      min-width: 0;
+    }
+
+    .master-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .master-heading {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(30px, 3.6vw, 46px);
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: var(--ink-on-dark);
+      word-break: keep-all;
+    }
+
+    .master-stamps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stamp-master {
+      background: var(--stamp-red);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 2px;
+      letter-spacing: 0.01em;
+    }
+
+    .stamp-spec {
+      background: var(--ink-panel);
+      color: var(--plate-yellow);
+      border: 1px solid var(--rule-dark);
+      font-family: var(--font-serial);
+      font-size: 13.5px;
       font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-variant-numeric: tabular-nums;
     }
+
+    .master-copy {
+      font-size: 15.5px;
+      line-height: 1.56;
+      color: var(--muted-on-dark);
+      max-width: 64ch;
+      word-break: keep-all;
+    }
+
+    .master-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule-dark);
+    }
+
+    .master-record {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--plate-yellow);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .master-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--stamp-red);
+      color: #FFFFFF;
+      border: 2px solid var(--ink-on-dark);
+      border-radius: 3px;
+      padding: 11px 22px;
+      font-size: 17px;
+      font-weight: 900;
+      white-space: nowrap;
+      transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .master-cartridge:hover .master-cta,
+    .master-cartridge:focus-visible .master-cta {
+      background: var(--plate-yellow);
+      color: var(--ink);
+      border-color: var(--plate-yellow);
+    }
+
+    /* 3. 성형 트레이 4구 카트리지 웰 그리드 */
+    .tray-wells-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .cart-well {
+      background: var(--tray-well);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 7px;
+      display: flex;
+      position: relative;
+    }
+
+    .cart-pack {
+      background: var(--label-paper);
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      text-decoration: none;
+      color: var(--ink);
+      box-shadow: 0 10px 18px -8px rgba(21, 23, 26, 0.24);
+      transition: transform 0.16s var(--ease-snap), box-shadow 0.16s var(--ease-snap), background 0.14s ease;
+    }
+
+    .cart-pack:hover,
+    .cart-pack:focus-visible {
+      transform: translateY(4px);
+      box-shadow: 0 2px 5px -2px rgba(21, 23, 26, 0.3);
+    }
+
+    .cart-pack:active {
+      transform: translateY(6px) scale(0.994);
+      box-shadow: none;
+    }
+
+    /* 평면 인쇄 커넥터 인덱스 띠 */
+    .cart-pin-strip {
+      height: 14px;
+      background: var(--label-tint);
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-serial);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--ink-secondary);
+    }
+
+    .pin-marks {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .pin-marks i {
+      display: inline-block;
+      width: 5px;
+      height: 6px;
+      background: var(--tray-mid);
+      border: 1px solid var(--ink);
+      transition: background 0.14s ease;
+    }
+
+    .cart-pack:hover .pin-marks i,
+    .cart-pack:focus-visible .pin-marks i {
+      background: var(--plate-yellow);
+    }
+
+    .cart-cap {
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-family: var(--font-serial);
+      font-size: 12.5px;
+      font-weight: 700;
+      border-bottom: 1.5px solid var(--ink);
+      font-variant-numeric: tabular-nums;
+      background: var(--serial-blue);
+      color: #FFFFFF;
+      transition: background 0.14s ease, color 0.14s ease;
+    }
+
+    .cart-pack.is-new .cart-cap {
+      background: var(--stamp-red);
+      color: #FFFFFF;
+    }
+
+    .cart-pack.is-rank .cart-cap {
+      background: var(--ink);
+      color: var(--plate-yellow);
+    }
+
+    .cap-serial-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .slot-lamp {
+      width: 7px;
+      height: 7px;
+      border-radius: 1px;
+      background: currentColor;
+      opacity: 0.55;
+      transition: opacity 0.14s ease, background 0.14s ease, transform 0.14s var(--ease-snap);
+    }
+
+    .cart-pack:hover .slot-lamp,
+    .cart-pack:focus-visible .slot-lamp {
+      opacity: 1;
+      background: var(--plate-yellow);
+      transform: scale(1.25);
+    }
+
+    .cart-art {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-bottom: 1.5px solid var(--ink);
+      background: var(--ink-panel);
+    }
+
+    .cart-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.26s var(--ease-snap);
+    }
+
+    .cart-pack:hover .cart-art img {
+      transform: scale(1.025);
+    }
+
+    .cart-pack.is-locked .cart-art img {
+      filter: blur(3px) brightness(0.65);
+    }
+
+    .cart-lock-veil {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: rgba(21, 23, 26, 0.54);
+    }
+
+    .cart-lock-tag {
+      background: var(--plate-yellow);
+      color: var(--ink);
+      border: 1.5px solid var(--ink);
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .cart-body {
+      padding: 11px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 9px;
+      flex: 1;
+    }
+
+    .cart-heading {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 1.14;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      word-break: keep-all;
+    }
+
+    .cart-summary {
+      font-size: 13px;
+      line-height: 1.44;
+      color: var(--ink-secondary);
+      margin-top: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: keep-all;
+    }
+
+    .cart-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 1px solid var(--rule-light);
+      font-size: 12px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cart-stat-txt {
+      color: var(--ink-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cart-go {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 2px;
+      border: 1.5px solid var(--ink);
+      background: var(--label-tint);
+      color: var(--ink);
+      font-family: var(--font-serial);
+      font-size: 11.5px;
+      font-weight: 700;
+      transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .cart-pack:hover .cart-go,
+    .cart-pack:focus-visible .cart-go {
+      background: var(--stamp-red);
+      border-color: var(--ink);
+      color: #FFFFFF;
+    }
+
+    /* 4. 전체 수록 카트리지 도감 (색인 장부) */
+    .ledger-section {
+      margin-top: 12px;
+      background: var(--label-paper);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 12px 26px -12px rgba(21, 23, 26, 0.18);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ledger-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .ledger-heading {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .ledger-sub {
+      font-size: 13.5px;
+      color: var(--ink-secondary);
+      font-weight: 600;
+      margin-top: 5px;
+    }
+
     .sort-tabs {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
+
     .sort-chip {
       padding: 7px 12px;
-      border-radius: 999px;
-      border: 1.5px solid rgba(255, 255, 255, 0.14);
-      background: rgba(27, 22, 41, 0.85);
-      color: #cfc8e6;
-      font-size: 12px;
+      border-radius: 3px;
+      border: 1.5px solid var(--ink);
+      background: var(--label-tint);
+      color: var(--ink);
+      font-size: 12.5px;
       font-weight: 800;
       cursor: pointer;
-      transition: all 0.14s ease;
+      transition: background 0.14s ease, color 0.14s ease;
     }
+
     .sort-chip:hover {
-      border-color: rgba(255, 216, 74, 0.45);
+      background: var(--label-paper);
     }
+
     .sort-chip.active {
-      background: #ffd84a;
-      color: #161122;
-      border-color: #ffd84a;
-      box-shadow: 0 4px 14px rgba(255, 216, 74, 0.28);
+      background: var(--ink);
+      color: var(--plate-yellow);
     }
 
-    /* 인기 TOP 1~3 카드 — 알약 배지와 완전히 구분되는 상단 수직 방패 메달 리본 */
-    .thumb-card.rank-1 {
-      border: 2px solid rgba(255, 216, 74, 0.88);
-      box-shadow: 0 14px 36px rgba(255, 216, 74, 0.20), 0 12px 28px rgba(0, 0, 0, 0.40);
-    }
-    .thumb-card.rank-2 {
-      border: 2px solid rgba(226, 232, 240, 0.62);
-    }
-    .thumb-card.rank-3 {
-      border: 2px solid rgba(251, 146, 60, 0.62);
-    }
-    .pop-medal-wrap {
-      position: absolute;
-      top: 0;
-      right: 14px;
-      z-index: 4;
-      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.68));
-      pointer-events: none;
-    }
-    .pop-medal-flag {
-      width: 48px;
-      padding: 6px 4px 13px;
-      clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    .ledger-rows {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 1px;
-      text-align: center;
-      position: relative;
-    }
-    .pop-medal-flag::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0) 42%);
-      pointer-events: none;
-    }
-    .pop-medal-flag.r1 {
-      background: linear-gradient(180deg, #fff08a 0%, #f59e0b 58%, #b45309 100%);
-      color: #231200;
-    }
-    .pop-medal-flag.r2 {
-      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 58%, #64748b 100%);
-      color: #0f172a;
-    }
-    .pop-medal-flag.r3 {
-      background: linear-gradient(180deg, #fb923c 0%, #c2410c 55%, #7c2d12 100%);
-      color: #ffffff;
-    }
-    .pop-medal-flag.is-new {
-      width: 52px;
-      padding: 7px 4px 13px;
-      background: linear-gradient(180deg, #6ee7b7 0%, #10b981 55%, #047857 100%);
-      color: #042f2e;
-    }
-    .pop-medal-new-txt {
-      font-size: 13.5px;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-      line-height: 1.05;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-    }
-    .thumb-card.is-new-card {
-      border-color: rgba(52, 211, 153, 0.72);
-      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45), 0 0 24px rgba(16, 185, 129, 0.16);
     }
 
-    /* 하단 일반 리스트 구역 */
-    .section-divider {
-      height: 1px;
-      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.14), rgba(255,255,255,0));
-      margin: 8px 0 2px;
-    }
-    .normal-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .normal-item {
-      text-decoration: none;
-      color: var(--text);
-      background: #191427;
-      border: 1.5px solid rgba(255, 255, 255, 0.12);
-      border-radius: 18px;
-      padding: 12px 16px;
+    .ledger-row {
       display: grid;
-      grid-template-columns: 32px 156px 1fr auto;
-      gap: 14px;
+      grid-template-columns: 44px 148px minmax(200px, 1.3fr) minmax(210px, 1fr) auto;
+      gap: 16px;
       align-items: center;
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
-      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+      padding: 13px 8px;
+      border-bottom: 1px solid var(--rule-light);
+      text-decoration: none;
+      color: var(--ink);
+      border-radius: 2px;
+      transition: background 0.14s ease, transform 0.14s var(--ease-snap);
     }
-    .normal-item:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 216, 74, 0.55);
-      background: #201a31;
+
+    .ledger-row:last-child {
+      border-bottom: none;
     }
-    .normal-item.is-locked {
-      opacity: 0.9;
-      border-color: rgba(255, 216, 74, 0.25);
+
+    .ledger-row:hover,
+    .ledger-row:focus-visible {
+      background: var(--label-tint);
+      transform: translateX(3px);
     }
-    .normal-idx {
-      font-size: 15px;
-      font-weight: 900;
-      color: #8f84b2;
+
+    .ledger-num {
+      font-family: var(--font-serial);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--serial-blue);
       text-align: center;
       font-variant-numeric: tabular-nums;
     }
-    .normal-thumb {
-      position: relative;
-      width: 156px;
+
+    .ledger-thumb {
+      width: 148px;
       aspect-ratio: 16 / 9;
-      border-radius: 12px;
+      border-radius: 2px;
+      border: 1.5px solid var(--ink);
       overflow: hidden;
-      background: #110d1b;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--ink-panel);
     }
-    .normal-thumb img {
+
+    .ledger-thumb img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
-    .normal-item.is-locked .normal-thumb img {
-      filter: blur(3px) brightness(0.62);
-    }
-    .normal-info {
+
+    .ledger-main {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       min-width: 0;
     }
-    .normal-title-row {
+
+    .ledger-title-line {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
     }
-    .normal-title {
-      font-size: 17px;
-      font-weight: 900;
+
+    .ledger-title {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 21px;
       letter-spacing: -0.02em;
+      color: var(--ink);
     }
-    .normal-tag {
+
+    .ledger-tag {
       padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
+      border-radius: 2px;
+      font-size: 11.5px;
       font-weight: 800;
-      background: rgba(255, 255, 255, 0.08);
-      color: #d7cff0;
+      background: var(--tray-stone);
+      border: 1px solid var(--tray-mid);
+      color: var(--ink);
     }
-    .normal-tag.new-pill {
-      background: rgba(16, 185, 129, 0.22);
-      border: 1px solid rgba(52, 211, 153, 0.55);
-      color: #6ee7b7;
+
+    .ledger-tag.is-new {
+      background: var(--stamp-red);
+      border-color: var(--stamp-red);
+      color: #FFFFFF;
     }
-    .normal-desc {
-      font-size: 12.5px;
-      color: #b7aed1;
+
+    .ledger-desc {
+      font-size: 13px;
+      color: var(--ink-secondary);
       line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
       word-break: keep-all;
     }
-    .normal-action {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 6px;
-    }
-    @media (max-width: 720px) {
-      .normal-item {
-        grid-template-columns: 112px 1fr;
-        gap: 12px;
-        padding: 12px;
-      }
-      .normal-idx { display: none; }
-      .normal-thumb { width: 112px; }
-      .normal-action {
-        grid-column: 1 / -1;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 8px;
-      }
-    }
-    .pop-medal-crown {
-      width: 15px;
-      height: 12px;
-      display: block;
-      flex-shrink: 0;
-    }
-    .pop-medal-kicker {
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      line-height: 1;
-      opacity: 0.88;
-    }
-    .pop-medal-num {
-      font-size: 22px;
-      font-weight: 900;
-      font-style: italic;
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-      font-variant-numeric: tabular-nums;
-    }
-    .pop-medal-flag.r1 .pop-medal-num {
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
-    }
-    .pop-medal-flag.r2 .pop-medal-num {
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
-    }
-    .pop-medal-flag.r3 .pop-medal-num {
-      text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.55);
-    }
-    .pop-medal-unit {
-      font-size: 10px;
-      font-style: normal;
-      font-weight: 900;
-      margin-left: 1px;
-    }
 
-    /* 카드 내부 3대 인기 지표 미니 배지 줄 */
-    .pop-metrics-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .pop-metric-pill {
-      padding: 3px 8px;
-      border-radius: 7px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      font-size: 11px;
-      font-weight: 800;
-      color: #d8d0ee;
-      font-variant-numeric: tabular-nums;
-    }
-    .pop-metric-pill.hot {
-      background: rgba(255, 216, 74, 0.11);
-      border-color: rgba(255, 216, 74, 0.28);
-      color: #fde68a;
-    }
-    .pop-metric-pill.plays {
-      background: rgba(56, 189, 248, 0.16);
-      border-color: rgba(56, 189, 248, 0.45);
-      color: #7dd3fc;
-      font-weight: 900;
-    }
-
-    /* 하단 카카오페이 응원 배너 */
-    .donate-banner {
-      background: linear-gradient(135deg, rgba(254, 229, 0, 0.14), rgba(124, 92, 255, 0.14));
-      border: 1.5px solid rgba(254, 229, 0, 0.36);
-      border-radius: 22px;
-      padding: 18px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    .donate-banner-txt {
+    .ledger-metrics {
       display: flex;
       flex-direction: column;
       gap: 3px;
-    }
-    .donate-banner-txt strong {
-      font-size: 15px;
-      font-weight: 900;
-      color: #fffef2;
-    }
-    .donate-banner-txt span {
       font-size: 12.5px;
-      color: #cac2e2;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* 썸네일 게임 버튼 그리드 */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+    .ledger-m-primary {
+      color: var(--ink);
     }
-    .thumb-card {
-      text-decoration: none;
-      color: var(--text);
-      background: #1b1629;
-      border: 1.5px solid rgba(255, 255, 255, 0.14);
-      border-radius: 22px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
-      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+
+    .ledger-m-best {
+      color: var(--serial-blue);
     }
-    .thumb-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(255, 216, 74, 0.65);
-      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.44);
-    }
-    .thumb-card.featured {
-      border-color: rgba(255, 216, 74, 0.45);
-    }
-    .thumb-card.is-locked {
-      cursor: pointer;
-      border-color: rgba(255, 216, 74, 0.28);
-      opacity: 0.94;
-    }
-    .thumb-card.is-locked:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 216, 74, 0.55);
-    }
-    .thumb-card.is-locked .thumb-visual img {
-      filter: blur(4px) brightness(0.62) saturate(0.75);
-      transform: scale(1.06);
-    }
-    .thumb-card.is-locked .thumb-play {
-      background: rgba(255, 255, 255, 0.16);
-      color: #fde68a;
-      border: 1px solid rgba(255, 226, 106, 0.45);
-    }
-    .thumb-lock-banner {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
+
+    .ledger-play-btn {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 14px 18px 46px;
-      text-align: center;
       gap: 6px;
-      pointer-events: none;
-    }
-    .thumb-lock-pill {
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: rgba(22, 16, 36, 0.88);
-      border: 1.5px solid rgba(255, 216, 74, 0.7);
-      color: #ffd84a;
-      font-size: 12px;
-      font-weight: 900;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-    }
-    .thumb-lock-msg {
-      font-size: 12.5px;
-      font-weight: 800;
-      color: #ffffff;
-      line-height: 1.4;
-      word-break: keep-all;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
-      max-width: 92%;
-    }
-    .grid-empty {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 40px 20px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px dashed rgba(255, 255, 255, 0.16);
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-    }
-    .footer-admin {
-      display: inline-block;
-      margin-top: 6px;
-      font-size: 11.5px;
-      color: #7c7399 !important;
-      opacity: 0.8;
-    }
-    .footer-admin:hover {
-      opacity: 1;
-      color: #c4b5fd !important;
-    }
-
-    /* 16:9 주요 장면 썸네일 + 타이포 오버레이 */
-    .thumb-visual {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      background: #130f1e;
-    }
-    .thumb-visual img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.35s ease;
-    }
-    .thumb-card:hover .thumb-visual img {
-      transform: scale(1.05);
-    }
-    .thumb-scrim {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(17, 13, 28, 0.22) 0%,
-        rgba(17, 13, 28, 0.06) 36%,
-        rgba(17, 13, 28, 0.72) 76%,
-        rgba(17, 13, 28, 0.94) 100%
-      );
-      pointer-events: none;
-    }
-    .thumb-badge {
-      position: absolute;
-      top: 11px;
-      left: 11px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      background: rgba(22, 17, 34, 0.82);
-      color: #ffe26a;
-      border: 1px solid rgba(255, 226, 106, 0.42);
-      backdrop-filter: blur(6px);
-    }
-    .thumb-typo {
-      position: absolute;
-      left: 14px;
-      right: 14px;
-      bottom: 12px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .thumb-title-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .thumb-kicker {
-      font-size: 11px;
-      font-weight: 800;
-      color: #fde68a;
-      letter-spacing: -0.01em;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-    }
-    .thumb-title {
-      font-size: clamp(17px, 4.2vw, 20px);
-      font-weight: 900;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      word-break: keep-all;
-      color: #ffffff;
-      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(0, 0, 0, 0.9);
-    }
-    .thumb-play {
-      flex-shrink: 0;
-      padding: 7px 13px;
-      border-radius: 999px;
-      background: #ffd84a;
-      color: #16111f;
-      font-size: 12px;
-      font-weight: 900;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-      white-space: nowrap;
-    }
-
-    .thumb-body {
-      padding: 13px 15px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-    }
-    .thumb-desc {
+      padding: 9px 15px;
+      border-radius: 3px;
+      border: 1.5px solid var(--ink);
+      background: var(--plate-yellow);
+      color: var(--ink);
       font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-      flex: 1;
-    }
-    .thumb-foot {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 12px;
-      font-weight: 800;
-    }
-    .card-best {
-      color: var(--green);
-    }
-    .card-meta {
-      color: #b5accf;
+      font-weight: 900;
+      white-space: nowrap;
+      transition: background 0.14s ease, color 0.14s ease;
     }
 
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: #877ea3;
-      line-height: 1.7;
+    .ledger-row:hover .ledger-play-btn,
+    .ledger-row:focus-visible .ledger-play-btn {
+      background: var(--stamp-red);
+      border-color: var(--ink);
+      color: #FFFFFF;
     }
-    .footer a {
-      color: #c4b5fd;
-      text-decoration: none;
+
+    /* 5. 응원 티켓 배너 & 푸터 */
+    .support-ticket {
+      margin-top: 6px;
+      background: var(--plate-yellow);
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 10px 22px -12px rgba(21, 23, 26, 0.22);
+    }
+
+    .support-copy h2 {
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: 22px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .support-copy p {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 3px;
+    }
+
+    .support-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: 3px;
+      border: 2px solid var(--ink);
+      background: var(--ink);
+      color: var(--label-paper);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.14s var(--ease-snap), background 0.14s ease;
+    }
+
+    .support-cta:hover {
+      background: var(--ink-panel);
+      transform: translateY(1px);
+    }
+
+    .tray-footer {
+      margin-top: 4px;
+      padding: 14px 4px 0;
+      border-top: 1.5px solid var(--tray-mid);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--ink-secondary);
       font-weight: 700;
     }
-    .footer a:hover {
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tray-footer a {
+      color: var(--ink);
+      font-weight: 800;
       text-decoration: underline;
+    }
+
+    .tray-footer a:hover {
+      color: var(--serial-blue);
+    }
+
+    .empty-state-box {
+      padding: 36px 20px;
+      text-align: center;
+      border: 2px dashed var(--ink);
+      border-radius: 3px;
+      background: var(--label-paper);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    /* 토스트 알림 (shared/challenge.js showToast 호환) */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom) + 14px);
+      transform: translateX(-50%) translateY(16px);
+      z-index: 9800;
+      background: var(--ink);
+      color: var(--label-paper);
+      border: 2px solid var(--plate-yellow);
+      border-radius: 3px;
+      padding: 10px 18px;
+      font-size: 13.5px;
+      font-weight: 800;
+      box-shadow: 0 12px 28px rgba(21, 23, 26, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.2s var(--ease-snap);
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 반응형 브레이크포인트 */
+    @media (max-width: 1120px) {
+      .tray-wells-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .ledger-row {
+        grid-template-columns: 38px 128px 1fr auto;
+      }
+      .ledger-metrics {
+        grid-column: 3 / 4;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .tray-shell {
+        padding: max(12px, env(safe-area-inset-top) + 8px) 14px 44px;
+        gap: 14px;
+      }
+      .master-cartridge {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 14px;
+      }
+      .master-cta {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tray-wells-grid {
+        grid-template-columns: 1fr;
+      }
+      .ledger-section {
+        padding: 16px 14px;
+      }
+      .ledger-row {
+        grid-template-columns: 104px 1fr;
+        gap: 10px;
+        padding: 12px 4px;
+      }
+      .ledger-num {
+        display: none;
+      }
+      .ledger-thumb {
+        width: 104px;
+      }
+      .ledger-metrics {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding-top: 4px;
+      }
+      .ledger-play-btn {
+        grid-column: 1 / -1;
+        justify-content: center;
+      }
+      .support-cta {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="hub">
-    <section class="hero">
-      <div class="rank-chip">🎮 이게뭔겜? 404 아케이드 <span id="hub-total-plays" style="color:#7dd3fc;margin-left:4px;"></span></div>
-      <h1>직접 만든 미니 게임, 바로 플레이!</h1>
-      <p>
-        404가지 즐거움이 있는 AI 제작 게임과 리뷰.<br>
-        기록을 세워 <b>전체 랭킹</b>에 도전하고, <b>공유 URL</b>로 친구의 순위 위치도 확인해 보세요!
-      </p>
+  <div class="tray-shell">
+    <!-- 1. 상단 명판 및 유틸리티 스위치 바 -->
+    <header class="tray-nameplate">
+      <div class="brand-cluster">
+        <span class="pack-stamp">404 ARCADE PACK</span>
+        <span class="brand-title-inline">이게뭔겜? 실물 손일 컬렉션</span>
+        <div class="mech-counter" id="hub-total-plays" aria-live="polite" aria-label="누적 실행 횟수 계수기">
+          <span class="mech-counter-label"><span class="counter-dot" aria-hidden="true"></span><span>누적 실행</span></span>
+          <span class="mech-drums" aria-hidden="true">
+            <span class="drum-cell">0</span><span class="drum-cell">0</span><span class="drum-cell">0</span><span class="drum-cell">0</span><span class="drum-cell">0</span>
+          </span>
+          <span class="mech-unit">회</span>
+        </div>
+      </div>
 
-      <!-- 유튜브 & 인스타그램 공식 채널 링크 -->
-      <div class="social-row">
-        <a class="social-btn yt" href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12l-6.2 3.6z"/></svg>
-          <span>유튜브 @이게뭔게임404game</span>
+      <nav class="tool-cluster" aria-label="아케이드 도구 및 공식 채널">
+        <button type="button" class="keycap-btn" id="hub-cal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>
+          <span>실제 1cm 보정</span>
+        </button>
+        <button type="button" class="keycap-btn" id="hub-bgm" aria-pressed="true">
+          <svg id="hub-bgm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <span id="hub-bgm-label">배경음 켜짐</span>
+        </button>
+        <button type="button" class="keycap-btn is-yellow" id="hub-donate-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          <span>응원과 후원</span>
+        </button>
+        <a class="keycap-btn" href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4L15.8 12l-6.2 3.6z"/></svg>
+          <span>유튜브</span>
         </a>
-        <a class="social-btn ig" href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.9c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.9.1s-3.6 0-4.9-.1c-1.2-.1-1.8-.2-2.2-.4a3.9 3.9 0 0 1-1.4-.9 3.9 3.9 0 0 1-.9-1.4c-.2-.4-.4-1.1-.4-2.2-.1-1.3-.1-1.6-.1-4.9s0-3.6.1-4.9c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4 1.3-.1 1.6-.1 4.9-.1M12 0C8.7 0 8.3 0 7.1.1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4A6 6 0 0 0 .6 4.1C.3 4.9.1 5.8.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.1 1.3.2 2.2.6 3 .3.8.7 1.5 1.4 2.2.7.7 1.4 1.1 2.2 1.4.8.3 1.7.5 3 .6 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c1.3-.1 2.2-.2 3-.6.8-.3 1.5-.7 2.2-1.4.7-.7 1.1-1.4 1.4-2.2.3-.8.5-1.7.6-3 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.1-1.3-.2-2.2-.6-3a6 6 0 0 0-1.4-2.2A6 6 0 0 0 19.9.6c-.8-.3-1.7-.5-3-.6C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>
-          <span>인스타그램 @game404notfound</span>
+        <a class="keycap-btn" href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>인스타그램</span>
         </a>
-      </div>
+      </nav>
+    </header>
 
-      <div class="util-row">
-        <button type="button" class="kakao-donate-btn" id="hub-donate-top">💛 응원과 후원</button>
-        <button type="button" class="pill-btn highlight" id="hub-cal">📏 화면 실제 1cm 보정하기</button>
-        <button type="button" class="pill-btn" id="hub-bgm">🔊 BGM 켜짐</button>
-      </div>
-    </section>
+    <main style="display:flex;flex-direction:column;gap:16px;">
+      <!-- 2. 대표 마스터 카트리지 데크 -->
+      <section id="master-deck" class="master-well" aria-label="대표 마스터 카트리지"></section>
 
-    <!-- 상단 구역: NEW & 인기 아케이드 -->
-    <section id="top-section" style="display:flex;flex-direction:column;gap:12px;">
-      <div class="pop-header" aria-label="NEW 및 인기 아케이드">
-        <div class="pop-title-group">
-          <div class="pop-title">🔥 NEW & 인기 아케이드</div>
-          <div class="pop-criteria-sub">신작(NEW)과 가장 사랑받는 인기 상위 미니 아케이드</div>
+      <!-- 3. 신작 및 인기 카트리지 성형 트레이 -->
+      <section id="tray-wells" class="tray-wells-grid" aria-label="신작 및 주요 추천 카트리지"></section>
+
+      <!-- 4. 전체 수록 카트리지 색인 장부 -->
+      <section id="catalog-ledger" class="ledger-section" aria-label="전체 수록 카트리지 도감">
+        <div class="ledger-header">
+          <div>
+            <h2 class="ledger-heading" id="ledger-heading-txt">전체 수록 카트리지 도감</h2>
+            <p class="ledger-sub">모바일과 PC 브라우저에서 설치 없이 즉시 실행하고 전체 랭킹에 이름을 올리세요.</p>
+          </div>
+          <div class="sort-tabs" id="sort-tabs" role="group" aria-label="목록 정렬 기준">
+            <button type="button" class="sort-chip active" data-sort="custom" aria-pressed="true">기본순</button>
+            <button type="button" class="sort-chip" data-sort="plays" aria-pressed="false">실행순</button>
+            <button type="button" class="sort-chip" data-sort="popular" aria-pressed="false">인기순</button>
+            <button type="button" class="sort-chip" data-sort="playtime" aria-pressed="false">플레이 시간순</button>
+          </div>
         </div>
-      </div>
-      <div class="grid" id="top-grid" aria-live="polite"></div>
-    </section>
+        <div class="ledger-rows" id="normal-list" aria-live="polite"></div>
+      </section>
 
-    <div class="section-divider" id="list-divider"></div>
-
-    <!-- 하단 구역: 일반 리스트 -->
-    <section id="normal-section" style="display:flex;flex-direction:column;gap:12px;">
-      <div class="pop-header" aria-label="일반 게임 리스트">
-        <div class="pop-title-group">
-          <div class="pop-title">🕹️ 일반 리스트</div>
-          <div class="pop-criteria-sub">설치 없이 바로 즐기는 아케이드 게임 목록</div>
+      <!-- 5. 제작자 응원 티켓 -->
+      <section class="support-ticket" aria-label="제작자 응원 안내">
+        <div class="support-copy">
+          <h2>404 아케이드 합본팩이 즐거우셨나요?</h2>
+          <p>카카오페이 QR 스캔 또는 송금 링크로 다음 실물 미니게임 카트리지 제작을 응원해 주세요.</p>
         </div>
-        <div class="sort-tabs" id="sort-tabs">
-          <button type="button" class="sort-chip active" data-sort="custom">📌 기본순</button>
-          <button type="button" class="sort-chip" data-sort="plays">🎮 실행순</button>
-          <button type="button" class="sort-chip" data-sort="popular">🔥 인기순</button>
-          <button type="button" class="sort-chip" data-sort="social">📱 릴스·쇼츠순</button>
-          <button type="button" class="sort-chip" data-sort="playtime">⏱ 플레이 시간순</button>
-        </div>
-      </div>
-      <div class="normal-list" id="normal-list" aria-live="polite"></div>
-    </section>
+        <button type="button" class="support-cta" id="hub-donate-bottom">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          <span>카카오페이 응원하기</span>
+        </button>
+      </section>
+    </main>
 
-    <section class="donate-banner">
-      <div class="donate-banner-txt">
-        <strong>☕ 404 아케이드 미니게임이 즐거우셨나요?</strong>
-        <span>카카오페이 QR 스캔 또는 송금 링크로 다음 AI 미니게임 제작을 응원해 주세요!</span>
+    <!-- 6. 하단 명판 푸터 -->
+    <footer class="tray-footer">
+      <div>모든 수록 게임은 별도 앱 설치 없이 웹 브라우저에서 바로 가동됩니다.</div>
+      <div class="footer-links">
+        <a href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">유튜브 @이게뭔게임404game</a>
+        <a href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">인스타그램 @game404notfound</a>
+        <a href="./admin.html">관리자 모드</a>
       </div>
-      <button type="button" class="kakao-donate-btn" id="hub-donate-bottom">💛 응원과 후원</button>
-    </section>
-
-    <footer class="footer">
-      <a href="https://www.youtube.com/@이게뭔게임404game" target="_blank" rel="noopener noreferrer">유튜브 @이게뭔게임404game</a>
-      ·
-      <a href="https://www.instagram.com/game404notfound/" target="_blank" rel="noopener noreferrer">인스타그램 @game404notfound</a><br>
-      모든 게임은 모바일·PC 브라우저에서 설치 없이 바로 실행됩니다.<br>
-      <a class="footer-admin" href="./admin.html">⚙ 관리자 모드</a>
     </footer>
-  </main>
+  </div>
 
   <script type="module">
     import { BGM } from './shared/audio.js';
     import { openCalibrationModal } from './shared/calibration.js';
     import { showToast } from './shared/challenge.js';
     import { DEFAULT_GAMES, fetchPublicCatalog, formatBestText, loadLayoutConfig } from './shared/catalog.js';
-    import { computeGamesPopularity } from './shared/popularity.js';
+    import { computeGamesPopularity, DEFAULT_SOCIAL_STATS } from './shared/popularity.js';
     import { openDonateModal, handleDonateReturnQuery } from './shared/donate.js';
 
     handleDonateReturnQuery();
 
-    const btnDonateTop = document.getElementById('hub-donate-top');
-    const btnDonateBot = document.getElementById('hub-donate-bottom');
-    [btnDonateTop, btnDonateBot].forEach(btn => {
-      if (!btn) return;
-      btn.style.cssText = 'display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:999px;background:#FEE500;color:#191919;border:1.5px solid #facc15;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 6px 16px rgba(254,229,0,0.24);';
-      btn.onclick = () => openDonateModal();
+    const playIconSvg = `<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.5 2.2v11.6L13.5 8 3.5 2.2z"/></svg>`;
+    const trophyIconSvg = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+    const speakerOnPaths = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>`;
+    const speakerOffPaths = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
+
+    [document.getElementById('hub-donate-top'), document.getElementById('hub-donate-bottom')].forEach(btn => {
+      if (btn) btn.onclick = () => openDonateModal();
     });
 
     const hubBgm = document.getElementById('hub-bgm');
+    const hubBgmIcon = document.getElementById('hub-bgm-icon');
+    const hubBgmLabel = document.getElementById('hub-bgm-label');
+
     function syncHubBgm() {
       if (!hubBgm) return;
       const muted = BGM.isMuted();
-      hubBgm.textContent = muted ? '🔇 BGM 꺼짐' : '🔊 BGM 켜짐';
-      hubBgm.classList.toggle('bgm-off', muted);
+      if (hubBgmLabel) hubBgmLabel.textContent = muted ? '배경음 꺼짐' : '배경음 켜짐';
+      if (hubBgmIcon) hubBgmIcon.innerHTML = muted ? speakerOffPaths : speakerOnPaths;
+      hubBgm.classList.toggle('is-muted', muted);
+      hubBgm.setAttribute('aria-pressed', muted ? 'false' : 'true');
     }
     syncHubBgm();
     if (hubBgm) {
       hubBgm.onclick = () => {
         const muted = BGM.toggleMute();
         syncHubBgm();
-        showToast(muted ? '🔇 모든 게임 BGM이 꺼졌어요' : '🔊 모든 게임 BGM이 켜졌어요');
+        showToast(muted ? '모든 게임 배경음이 꺼졌습니다.' : '모든 게임 배경음이 켜졌습니다.');
       };
     }
 
-    document.getElementById('hub-cal').onclick = () => openCalibrationModal(() => {
-      showToast('📏 실제 1cm 크기가 저장되었어요!');
-    });
+    const calBtn = document.getElementById('hub-cal');
+    if (calBtn) {
+      calBtn.onclick = () => openCalibrationModal(() => {
+        showToast('실제 1cm 영점 눈금이 저장되었습니다.');
+      });
+    }
 
     function esc(s) {
       return String(s || '')
@@ -788,34 +1213,67 @@
         .replace(/"/g, '&quot;');
     }
 
+    function stripPictographs(s) {
+      return String(s || '')
+        .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function formatPlayCount(p) {
+      if (p && Number(p.playsTotal) > 0) {
+        return `게임 실행 수 ${Math.round(Number(p.playsTotal)).toLocaleString()}회`;
+      }
+      return '게임 실행 수 집계 중';
+    }
+
+    function buildInitialPopMap(games) {
+      const m = {};
+      for (const g of games) {
+        const st = DEFAULT_SOCIAL_STATS[g.id];
+        const views = st ? (st.ytViews || 0) + (st.igViews || 0) : 0;
+        m[g.id] = {
+          playsTotal: 0,
+          playsLabel: '게임 실행 수 집계 중',
+          socialTotal: views,
+          socialLabel: '',
+          playSecTotal: 0,
+          playTimeLabel: '즉시 가동',
+          popularityScore: views,
+          topRun: null,
+        };
+      }
+      return m;
+    }
+
     let currentGames = [...DEFAULT_GAMES];
-    let popMap = {};
+    let popMap = buildInitialPopMap(currentGames);
     let newIdSet = new Set(['snap', 'jjamppong', 'boxcut']);
-    let normalSort = 'custom';
+    let ledgerSort = 'custom';
 
     function sortByOrder(list) {
       return [...list].sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100));
     }
 
-    function sortNormalGames(list) {
+    function sortCatalogGames(list) {
       return [...list].sort((a, b) => {
         const lockA = a.status === 'coming_soon' ? 1 : 0;
         const lockB = b.status === 'coming_soon' ? 1 : 0;
         if (lockA !== lockB) return lockA - lockB;
 
-        if (normalSort !== 'custom') {
+        if (ledgerSort !== 'custom') {
           const pa = popMap[a.id] || { playsTotal: 0, popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
           const pb = popMap[b.id] || { playsTotal: 0, popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
-          if (normalSort === 'plays' && (pb.playsTotal || 0) !== (pa.playsTotal || 0)) {
+          if (ledgerSort === 'plays' && (pb.playsTotal || 0) !== (pa.playsTotal || 0)) {
             return (pb.playsTotal || 0) - (pa.playsTotal || 0);
           }
-          if (normalSort === 'popular' && pb.popularityScore !== pa.popularityScore) {
+          if (ledgerSort === 'popular' && pb.popularityScore !== pa.popularityScore) {
             return pb.popularityScore - pa.popularityScore;
           }
-          if (normalSort === 'social' && pb.socialTotal !== pa.socialTotal) {
+          if (ledgerSort === 'social' && pb.socialTotal !== pa.socialTotal) {
             return pb.socialTotal - pa.socialTotal;
           }
-          if (normalSort === 'playtime' && pb.playSecTotal !== pa.playSecTotal) {
+          if (ledgerSort === 'playtime' && pb.playSecTotal !== pa.playSecTotal) {
             return pb.playSecTotal - pa.playSecTotal;
           }
         }
@@ -824,215 +1282,240 @@
     }
 
     function bindLockedClicks(root) {
+      if (!root) return;
       root.querySelectorAll('a[data-locked="1"]').forEach(el => {
         el.addEventListener('click', (e) => {
           e.preventDefault();
-          showToast(`🔒 ${el.dataset.lockMsg || '곧 공개 예정입니다!'}`);
+          showToast(stripPictographs(el.dataset.lockMsg) || '곧 공개 예정인 카트리지입니다.');
         });
       });
     }
 
+    function pickMasterAndTrayGames(visible) {
+      const unlocked = visible.filter(g => g.status !== 'coming_soon');
+      const pool = unlocked.length > 0 ? unlocked : visible;
+
+      const masterCandidates = pool.filter(g => !newIdSet.has(g.id));
+      let masterGame = masterCandidates[0] || pool[0];
+      if (masterCandidates.length > 0 && Object.keys(popMap).length > 0) {
+        masterGame = [...masterCandidates].sort((a, b) => {
+          const sa = (popMap[a.id] && popMap[a.id].popularityScore) || 0;
+          const sb = (popMap[b.id] && popMap[b.id].popularityScore) || 0;
+          return sb - sa;
+        })[0];
+      }
+
+      const rest = visible.filter(g => g.id !== masterGame.id);
+      const featuredFirst = [
+        ...rest.filter(g => newIdSet.has(g.id) || g.featured),
+        ...rest.filter(g => !newIdSet.has(g.id) && !g.featured),
+      ];
+      const trayGames = featuredFirst.slice(0, 4);
+      return { masterGame, trayGames };
+    }
+
+    function renderDrumCounter(sumPlays) {
+      const totalPlaysEl = document.getElementById('hub-total-plays');
+      if (!totalPlaysEl) return;
+      const digits = String(Math.max(0, Math.round(sumPlays || 0))).padStart(5, '0').split('');
+      const drumsHtml = digits.map(d => `<span class="drum-cell">${esc(d)}</span>`).join('');
+      totalPlaysEl.setAttribute('aria-label', sumPlays > 0 ? `누적 실행 ${sumPlays.toLocaleString()}회` : '누적 실행 집계 중');
+      totalPlaysEl.innerHTML = `
+        <span class="mech-counter-label"><span class="counter-dot" aria-hidden="true"></span><span>누적 실행</span></span>
+        <span class="mech-drums" aria-hidden="true">${drumsHtml}</span>
+        <span class="mech-unit">회</span>
+      `;
+    }
+
     function renderGames() {
-      const topSec = document.getElementById('top-section');
-      const topGrid = document.getElementById('top-grid');
-      const normalSec = document.getElementById('normal-section');
-      const normalList = document.getElementById('normal-list');
-      const divider = document.getElementById('list-divider');
-      if (!topGrid || !normalList) return;
+      const masterDeck = document.getElementById('master-deck');
+      const trayWells = document.getElementById('tray-wells');
+      const ledgerList = document.getElementById('normal-list');
+      const ledgerHeading = document.getElementById('ledger-heading-txt');
+      if (!masterDeck || !trayWells || !ledgerList) return;
 
       const visible = sortByOrder(currentGames).filter(g => g.status !== 'hidden');
       if (visible.length === 0) {
-        topSec.style.display = 'block';
-        normalSec.style.display = 'none';
-        divider.style.display = 'none';
-        topGrid.innerHTML = `<div class="grid-empty">🕹️ 지금 새로운 게임을 준비하고 있어요! 곧 공개됩니다.</div>`;
+        masterDeck.style.display = 'none';
+        trayWells.style.display = 'none';
+        ledgerList.innerHTML = `<div class="empty-state-box">새로운 미니게임 카트리지를 준비하고 있습니다. 곧 공개됩니다.</div>`;
         return;
       }
 
-      // 상단 구역: 관리자가 상단(featured)으로 지정했거나 NEW 배지가 켜진 게임 (관리자 sort_order 순서 그대로 노출)
-      let topGames = visible.filter(g => g.featured || newIdSet.has(g.id));
-      let normalGames = visible.filter(g => !g.featured && !newIdSet.has(g.id));
-
-      // 만약 전부 한쪽에만 몰려 있어 상단이 비어 있으면 상위 3개를 상단에 배치
-      if (topGames.length === 0) {
-        topGames = visible.slice(0, 3);
-        const topSet = new Set(topGames.map(x => x.id));
-        normalGames = visible.filter(x => !topSet.has(x.id));
+      masterDeck.style.display = 'block';
+      trayWells.style.display = 'grid';
+      if (ledgerHeading) {
+        ledgerHeading.textContent = `전체 수록 카트리지 도감 (${String(visible.length).padStart(2, '0')}종)`;
       }
 
-      topSec.style.display = topGames.length > 0 ? 'flex' : 'none';
-      normalSec.style.display = normalGames.length > 0 ? 'flex' : 'none';
-      divider.style.display = (topGames.length > 0 && normalGames.length > 0) ? 'block' : 'none';
+      const sumPlays = visible.reduce((acc, g) => acc + ((popMap[g.id] && popMap[g.id].playsTotal) || 0), 0);
+      renderDrumCounter(sumPlays);
 
-      const totalPlaysEl = document.getElementById('hub-total-plays');
-      if (totalPlaysEl) {
-        const sumPlays = visible.reduce((acc, g) => acc + ((popMap[g.id] && popMap[g.id].playsTotal) || 0), 0);
-        totalPlaysEl.textContent = sumPlays > 0 ? `· 누적 실행 ${sumPlays.toLocaleString()}회` : '';
+      const { masterGame, trayGames } = pickMasterAndTrayGames(visible);
+
+      // 1) 마스터 카트리지 렌더링
+      if (masterGame) {
+        const isLocked = masterGame.status === 'coming_soon';
+        const lockMsg = masterGame.lock_message || '곧 공개 예정입니다!';
+        const href = isLocked ? '#locked' : (masterGame.href || `./${encodeURIComponent(masterGame.id)}/`);
+        const pm = popMap[masterGame.id];
+        const bestTxt = isLocked ? '공개 대기 중' : stripPictographs(formatBestText(masterGame.id, pm && pm.topRun));
+        const statTxt = pm
+          ? `${formatPlayCount(pm)} · ${stripPictographs(pm.playTimeLabel)}`
+          : '게임 실행 수 집계 중';
+
+        masterDeck.innerHTML = `
+          <a class="master-cartridge" id="master-play-cta" href="${esc(href)}" data-game-id="${esc(masterGame.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
+            <div class="master-media-frame">
+              <img src="${esc(masterGame.thumb_url || `./assets/thumb-${masterGame.id}.jpg`)}" alt="${esc(masterGame.title)} 대표 플레이 장면">
+            </div>
+            <div class="master-info">
+              <div class="master-title-block">
+                <h1 class="master-heading">${esc(masterGame.title)}</h1>
+                <div class="master-stamps">
+                  <span class="stamp-master">${newIdSet.has(masterGame.id) ? '신작 마스터팩' : '인기 1위 마스터팩'}</span>
+                  <span class="stamp-spec">${esc(statTxt)}</span>
+                </div>
+              </div>
+              <p class="master-copy">${esc(masterGame.description || '')}</p>
+              <div class="master-bottom-bar">
+                <span class="master-record">${trophyIconSvg}<span>${esc(bestTxt)}</span></span>
+                <span class="master-cta">${playIconSvg}<span>${isLocked ? '공개 대기' : '카트리지 실행'}</span></span>
+              </div>
+            </div>
+          </a>
+        `;
       }
 
-      // NEW 카드를 제외한 인기 카드들에 순서대로 1·2·3위 메달 부여
-      let popRankCounter = 0;
-
-      topGrid.innerHTML = topGames.map((g) => {
+      // 2) 4구 성형 트레이 렌더링
+      let newSeq = 0;
+      let rankSeq = 1;
+      trayWells.innerHTML = trayGames.map((g, slotIdx) => {
         const isLocked = g.status === 'coming_soon';
         const isNew = newIdSet.has(g.id);
-        let rank = 0;
-        if (!isLocked && !isNew) {
-          popRankCounter += 1;
-          if (popRankCounter <= 3) rank = popRankCounter;
-        }
-
-        const classes = ['thumb-card'];
-        if (isNew && !isLocked) classes.push('is-new-card');
-        else if (rank === 1) classes.push('rank-1');
-        else if (rank === 2) classes.push('rank-2');
-        else if (rank === 3) classes.push('rank-3');
-        else if (!isLocked) classes.push('featured');
-        if (isLocked) classes.push('is-locked');
-
-        const p = popMap[g.id];
-        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id, p && p.topRun);
-        const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
+        const lockMsg = g.lock_message || '곧 공개 예정입니다!';
         const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
+        const p = popMap[g.id];
+        const bestTxt = isLocked ? '공개 대기 중' : stripPictographs(formatBestText(g.id, p && p.topRun));
 
-        let ribbonHtml = '';
-        if (isNew && !isLocked) {
-          ribbonHtml = `
-            <div class="pop-medal-wrap" aria-label="신작 NEW">
-              <div class="pop-medal-flag is-new">
-                <span class="pop-medal-kicker">신작</span>
-                <div class="pop-medal-new-txt">NEW</div>
-              </div>
-            </div>
-          `;
-        } else if (rank >= 1 && rank <= 3) {
-          const crownSvg = rank === 1
-            ? `<svg class="pop-medal-crown" viewBox="0 0 24 18" fill="currentColor" aria-hidden="true"><path d="M2 15L0 4l6.5 4.5L12 1l5.5 7.5L24 4l-2 11H2zm1 2h18v1.5H3V17z"/></svg>`
-            : `<span class="pop-medal-kicker">인기</span>`;
-          ribbonHtml = `
-            <div class="pop-medal-wrap" aria-label="인기 ${rank}위">
-              <div class="pop-medal-flag r${rank}">
-                ${crownSvg}
-                <div class="pop-medal-num">${rank}<span class="pop-medal-unit">위</span></div>
-              </div>
-            </div>
-          `;
+        let serialLeft = 'PACK';
+        let variantCls = '';
+        if (isNew) {
+          newSeq += 1;
+          serialLeft = `신작 #0${newSeq}`;
+          variantCls = 'is-new';
+        } else {
+          rankSeq += 1;
+          serialLeft = `인기 ${rankSeq}위`;
+          variantCls = 'is-rank';
         }
 
-        const metricsHtml = p ? `
-          <div class="pop-metrics-row">
-            <span class="pop-metric-pill plays">🎮 ${esc(p.playsLabel || p.visitsLabel)}</span>
-            <span class="pop-metric-pill hot">📱 ${esc(p.socialLabel)}</span>
-            <span class="pop-metric-pill">⏱ ${esc(p.playTimeLabel)}</span>
-          </div>
-        ` : `
-          <div class="pop-metrics-row">
-            <span class="pop-metric-pill plays">🎮 실행 수 불러오는 중…</span>
-          </div>
-        `;
+        const serialRight = formatPlayCount(p);
+        const subMetric = bestTxt;
 
         return `
-          <a class="${classes.join(' ')}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
-            <div class="thumb-visual">
-              <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)} 주요 장면">
-              <div class="thumb-scrim"></div>
-              <span class="thumb-badge">${esc(g.badge || '🎮 미니게임')}</span>
-              ${ribbonHtml}
-              ${isLocked ? `
-                <div class="thumb-lock-banner">
-                  <span class="thumb-lock-pill">🔒 공개 예정</span>
-                  <span class="thumb-lock-msg">${esc(lockMsg)}</span>
-                </div>
-              ` : ''}
-              <div class="thumb-typo">
-                <div class="thumb-title-wrap">
-                  <span class="thumb-kicker">${esc(g.kicker || '')}</span>
-                  <span class="thumb-title">${esc(g.title)}</span>
-                </div>
-                <span class="thumb-play">${isLocked ? '🔒 대기' : '▶ PLAY'}</span>
+          <div class="cart-well">
+            <a class="cart-pack ${variantCls} ${isLocked ? 'is-locked' : ''}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
+              <div class="cart-pin-strip" aria-hidden="true">
+                <span>SLOT-0${slotIdx + 1}</span>
+                <span class="pin-marks"><i></i><i></i><i></i><i></i><i></i></span>
               </div>
-            </div>
-            <div class="thumb-body">
-              ${metricsHtml}
-              <div class="thumb-desc">${esc(g.description || '')}</div>
-              <div class="thumb-foot">
-                <span class="card-best" ${isLocked ? 'style="color:#fde68a"' : ''}>${esc(bestText)}</span>
-                <span class="card-meta">${esc(g.metric_label || '글로벌 랭킹')}</span>
+              <div class="cart-cap">
+                <span class="cap-serial-left"><span class="slot-lamp" aria-hidden="true"></span><span>${esc(serialLeft)}</span></span>
+                <span>${esc(serialRight)}</span>
               </div>
-            </div>
-          </a>
+              <div class="cart-art">
+                <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)} 장면">
+                ${isLocked ? `<div class="cart-lock-veil"><span class="cart-lock-tag">공개 예정</span></div>` : ''}
+              </div>
+              <div class="cart-body">
+                <div>
+                  <h3 class="cart-heading">${esc(g.title)}</h3>
+                  <p class="cart-summary">${esc(isLocked ? lockMsg : (g.description || ''))}</p>
+                </div>
+                <div class="cart-foot">
+                  <span class="cart-stat-txt">${esc(subMetric)}</span>
+                  <span class="cart-go">${playIconSvg}<span>${isLocked ? '대기' : '실행'}</span></span>
+                </div>
+              </div>
+            </a>
+          </div>
         `;
       }).join('');
 
-      const sortedNormals = sortNormalGames(normalGames);
-      normalList.innerHTML = sortedNormals.map((g, idx) => {
+      // 3) 전체 수록 카트리지 색인 장부 (전체 공개 게임 정렬 비교)
+      const sortedAll = sortCatalogGames(visible);
+      ledgerList.innerHTML = sortedAll.map((g, idx) => {
         const isLocked = g.status === 'coming_soon';
-        const p = popMap[g.id];
-        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id, p && p.topRun);
-        const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
+        const isNew = newIdSet.has(g.id);
+        const lockMsg = g.lock_message || '곧 공개 예정입니다!';
         const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
-        const numTxt = String(idx + 1).padStart(2, '0');
-
-        const metricsHtml = p ? `
-          <div class="pop-metrics-row" style="margin-top:2px;">
-            <span class="pop-metric-pill plays">🎮 ${esc(p.playsLabel || p.visitsLabel)}</span>
-            <span class="pop-metric-pill hot">📱 ${esc(p.socialLabel)}</span>
-            <span class="pop-metric-pill">⏱ ${esc(p.playTimeLabel)}</span>
-          </div>
-        ` : `
-          <div class="pop-metrics-row" style="margin-top:2px;">
-            <span class="pop-metric-pill plays">🎮 실행 수 불러오는 중…</span>
-          </div>
-        `;
+        const p = popMap[g.id];
+        const bestTxt = isLocked ? '공개 대기 중' : stripPictographs(formatBestText(g.id, p && p.topRun));
+        const numTxt = `#${String(idx + 1).padStart(2, '0')}`;
+        const cleanBadge = stripPictographs(g.badge) || '아케이드';
+        const primaryMetrics = p
+          ? `${formatPlayCount(p)} · ${stripPictographs(p.playTimeLabel)}`
+          : '게임 실행 수 집계 중';
 
         return `
-          <a class="normal-item ${isLocked ? 'is-locked' : ''}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
-            <div class="normal-idx">${numTxt}</div>
-            <div class="normal-thumb">
+          <a class="ledger-row ${isLocked ? 'is-locked' : ''}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
+            <div class="ledger-num">${numTxt}</div>
+            <div class="ledger-thumb">
               <img src="${esc(g.thumb_url || `./assets/thumb-${g.id}.jpg`)}" alt="${esc(g.title)}">
             </div>
-            <div class="normal-info">
-              <div class="normal-title-row">
-                <span class="normal-title">${esc(g.title)}</span>
-                <span class="normal-tag">${esc(g.badge || '🎮 미니게임')}</span>
+            <div class="ledger-main">
+              <div class="ledger-title-line">
+                <h3 class="ledger-title">${esc(g.title)}</h3>
+                ${isNew ? `<span class="ledger-tag is-new">신작</span>` : ''}
+                <span class="ledger-tag">${esc(cleanBadge)}</span>
               </div>
-              <div class="normal-desc">${esc(isLocked ? lockMsg : (g.description || ''))}</div>
-              ${metricsHtml}
+              <p class="ledger-desc">${esc(isLocked ? lockMsg : (g.description || ''))}</p>
             </div>
-            <div class="normal-action">
-              <span class="thumb-play">${isLocked ? '🔒 대기' : '▶ PLAY'}</span>
-              <span class="card-best" style="font-size:11.5px;${isLocked ? 'color:#fde68a' : ''}">${esc(bestText)}</span>
+            <div class="ledger-metrics">
+              <span class="ledger-m-primary">${esc(primaryMetrics)}</span>
+              <span class="ledger-m-best">${esc(bestTxt)}</span>
             </div>
+            <span class="ledger-play-btn">${playIconSvg}<span>${isLocked ? '대기' : '실행'}</span></span>
           </a>
         `;
       }).join('');
 
-      bindLockedClicks(topGrid);
-      bindLockedClicks(normalList);
+      bindLockedClicks(masterDeck);
+      bindLockedClicks(trayWells);
+      bindLockedClicks(ledgerList);
     }
 
     document.querySelectorAll('#sort-tabs .sort-chip').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('#sort-tabs .sort-chip').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#sort-tabs .sort-chip').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
         btn.classList.add('active');
-        normalSort = btn.dataset.sort || 'custom';
+        btn.setAttribute('aria-pressed', 'true');
+        ledgerSort = btn.dataset.sort || 'custom';
         renderGames();
       });
     });
 
     async function refreshHub() {
-      const [pop, layout] = await Promise.all([
-        computeGamesPopularity(currentGames),
-        loadLayoutConfig(true),
-      ]);
-      popMap = pop;
-      newIdSet = new Set(layout.newIds || ['jjamppong', 'boxcut']);
-      renderGames();
+      try {
+        const [pop, layout] = await Promise.all([
+          computeGamesPopularity(currentGames),
+          loadLayoutConfig(true),
+        ]);
+        popMap = pop;
+        newIdSet = new Set(layout.newIds || ['snap', 'jjamppong', 'boxcut']);
+        renderGames();
 
-      const { games } = await fetchPublicCatalog();
-      currentGames = games;
-      popMap = await computeGamesPopularity(currentGames);
-      renderGames();
+        const { games } = await fetchPublicCatalog();
+        currentGames = games;
+        popMap = await computeGamesPopularity(currentGames);
+        renderGames();
+      } catch {
+        // 오프라인 시 초기 실측 카탈로그 유지
+      }
     }
 
     renderGames();

@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-26T08:22:00Z",
+  "title": "Design System: 이게뭔겜? 404 아케이드",
+  "extensions": {
+    "colorMeta": {
+      "stamp-red": {
+        "role": "primary",
+        "displayName": "버밀리온 실행 스탬프 (Vermilion Action Stamp)",
+        "canonical": "oklch(52.4% 0.198 28.5)",
+        "tonalRamp": [
+          "oklch(22% 0.08 28.5)",
+          "oklch(32% 0.13 28.5)",
+          "oklch(42% 0.17 28.5)",
+          "oklch(52.4% 0.198 28.5)",
+          "oklch(63% 0.17 28.5)",
+          "oklch(75% 0.11 28.5)",
+          "oklch(86% 0.06 28.5)",
+          "oklch(95% 0.02 28.5)"
+        ]
+      },
+      "serial-blue": {
+        "role": "secondary",
+        "displayName": "코발트 시리얼 블루 (Cobalt Serial Blue)",
+        "canonical": "oklch(45.2% 0.218 264.2)",
+        "tonalRamp": [
+          "oklch(20% 0.09 264.2)",
+          "oklch(32% 0.16 264.2)",
+          "oklch(45.2% 0.218 264.2)",
+          "oklch(56% 0.19 264.2)",
+          "oklch(67% 0.14 264.2)",
+          "oklch(78% 0.09 264.2)",
+          "oklch(88% 0.05 264.2)",
+          "oklch(95% 0.02 264.2)"
+        ]
+      },
+      "plate-yellow": {
+        "role": "tertiary",
+        "displayName": "크롬 옐로 명판 (Chrome Yellow Plate)",
+        "canonical": "oklch(82.8% 0.168 86.2)",
+        "tonalRamp": [
+          "oklch(24% 0.05 86.2)",
+          "oklch(38% 0.09 86.2)",
+          "oklch(52% 0.12 86.2)",
+          "oklch(68% 0.15 86.2)",
+          "oklch(82.8% 0.168 86.2)",
+          "oklch(88% 0.13 86.2)",
+          "oklch(93% 0.07 86.2)",
+          "oklch(97% 0.03 86.2)"
+        ]
+      },
+      "plate-yellow-hover": {
+        "role": "tertiary",
+        "displayName": "크롬 옐로 하이라이트 (Chrome Yellow Highlight)",
+        "canonical": "oklch(85.4% 0.162 87.5)",
+        "tonalRamp": [
+          "oklch(25% 0.05 87.5)",
+          "oklch(39% 0.09 87.5)",
+          "oklch(54% 0.12 87.5)",
+          "oklch(70% 0.15 87.5)",
+          "oklch(85.4% 0.162 87.5)",
+          "oklch(90% 0.12 87.5)",
+          "oklch(94% 0.06 87.5)",
+          "oklch(97.5% 0.02 87.5)"
+        ]
+      },
+      "tray-stone": {
+        "role": "neutral",
+        "displayName": "몰디드 스톤 트레이 (Molded Stone Tray)",
+        "canonical": "oklch(89.2% 0.012 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(62% 0.016 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(84.4% 0.014 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "tray-well": {
+        "role": "neutral",
+        "displayName": "리세스드 슬롯 웰 (Recessed Slot Well)",
+        "canonical": "oklch(84.4% 0.014 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(62% 0.016 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(84.4% 0.014 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "tray-mid": {
+        "role": "neutral",
+        "displayName": "커넥터 미드 스톤 (Connector Mid Stone)",
+        "canonical": "oklch(77.5% 0.016 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(62% 0.016 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(84.4% 0.014 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "label-paper": {
+        "role": "neutral",
+        "displayName": "코티드 라벨 페이퍼 (Coated Label Paper)",
+        "canonical": "oklch(97.4% 0.005 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(55% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(84.4% 0.014 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(94.2% 0.008 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "label-tint": {
+        "role": "neutral",
+        "displayName": "틴티드 유틸리티 스톡 (Tinted Utility Stock)",
+        "canonical": "oklch(94.2% 0.008 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(55% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(84.4% 0.014 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(94.2% 0.008 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "프린트 블랙 잉크 (Print Black Ink)",
+        "canonical": "oklch(20.2% 0.008 255)",
+        "tonalRamp": [
+          "oklch(15% 0.006 255)",
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(54% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "ink-panel": {
+        "role": "neutral",
+        "displayName": "다크 카트리지 패널 (Dark Cartridge Panel)",
+        "canonical": "oklch(26.8% 0.012 255)",
+        "tonalRamp": [
+          "oklch(15% 0.006 255)",
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(54% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "세컨더리 스탬프 잉크 (Secondary Stamp Ink)",
+        "canonical": "oklch(35.8% 0.015 253)",
+        "tonalRamp": [
+          "oklch(15% 0.006 255)",
+          "oklch(20.2% 0.008 255)",
+          "oklch(26.8% 0.012 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(54% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(89.2% 0.012 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "muted-on-dark": {
+        "role": "neutral",
+        "displayName": "뮤티드 다크 카피 (Muted Copy on Dark)",
+        "canonical": "oklch(85.8% 0.013 252)",
+        "tonalRamp": [
+          "oklch(20.2% 0.008 255)",
+          "oklch(35.8% 0.015 253)",
+          "oklch(52% 0.015 252)",
+          "oklch(68% 0.015 252)",
+          "oklch(77.5% 0.016 252)",
+          "oklch(85.8% 0.013 252)",
+          "oklch(92% 0.009 252)",
+          "oklch(97.4% 0.005 252)"
+        ]
+      },
+      "pure-white": {
+        "role": "neutral",
+        "displayName": "퓨어 화이트 스탬프 텍스트 (Pure White Stamp & QR Box)",
+        "canonical": "oklch(100% 0 0)",
+        "tonalRamp": [
+          "oklch(20% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(50% 0 0)",
+          "oklch(65% 0 0)",
+          "oklch(80% 0 0)",
+          "oklch(90% 0 0)",
+          "oklch(96% 0 0)",
+          "oklch(100% 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (마스터 카트리지 주 제목)",
+        "purpose": "대표 마스터 카트리지 h1 전용 대형 한글 간판 타이포그래피."
+      },
+      "headline": {
+        "displayName": "Headline (도감 및 오버레이 구역 제목)",
+        "purpose": "전체 수록 도감 헤더(28px), 잠금 오버레이(26px), 1cm 보정 모달(24px) 구역 제목."
+      },
+      "title": {
+        "displayName": "Title (카트리지·배너·모달 카드 제목)",
+        "purpose": "4구 트레이 개별 카트리지, 응원 배너, 후원 모달 제목(22px) 및 도감 행 제목(21px)."
+      },
+      "body": {
+        "displayName": "Body (마스터 소개 본문)",
+        "purpose": "대표 마스터 카트리지 설명 문단(최대 64ch, 어절 유지)."
+      },
+      "body-compact": {
+        "displayName": "Compact Body (카드 요약·모달 안내·단추)",
+        "purpose": "일반 카트리지 2줄 요약, 도감 1줄 설명, 모달 안내문 및 고밀도 UI 라벨."
+      },
+      "label": {
+        "displayName": "Serial Label (시리얼 캡·계수기·스펙 스탬프)",
+        "purpose": "슬롯 시리얼 캡, 5자리 드럼 계수기, 실측 지표, 도감 순번 등 고정폭 숫자 표기."
+      },
+      "serial-micro": {
+        "displayName": "Serial Micro (핀 커넥터·QR 시리얼 인덱스)",
+        "purpose": "카트리지 상단 SLOT-01 커넥터 띠 및 QR 하단 보조 시리얼 코드."
+      }
+    },
+    "shadows": [
+      {
+        "name": "panel-rest",
+        "value": "0 8px 20px -10px rgba(21, 23, 26, 0.18)",
+        "purpose": "상단 명판 바의 기본 안착 그림자."
+      },
+      {
+        "name": "ledger-rest",
+        "value": "0 12px 26px -12px rgba(21, 23, 26, 0.18)",
+        "purpose": "전체 수록 카트리지 도감 장부의 기본 안착 그림자."
+      },
+      {
+        "name": "cartridge-rest",
+        "value": "0 10px 18px -8px rgba(21, 23, 26, 0.24)",
+        "purpose": "성형 웰 안에 꽂혀 대기 중인 개별 카트리지 팩 그림자."
+      },
+      {
+        "name": "cartridge-pressed",
+        "value": "0 2px 5px -2px rgba(21, 23, 26, 0.3)",
+        "purpose": "호버·포커스 시 카트리지가 웰 안으로 내려앉으며 압축된 그림자."
+      },
+      {
+        "name": "master-rest",
+        "value": "0 12px 24px -10px rgba(21, 23, 26, 0.34)",
+        "purpose": "반전 먹색 마스터 카트리지의 기본 장착 그림자."
+      },
+      {
+        "name": "master-pressed",
+        "value": "0 5px 10px -4px rgba(21, 23, 26, 0.38)",
+        "purpose": "마스터 카트리지 호버·포커스 시 웰 바닥으로 밀착된 그림자."
+      },
+      {
+        "name": "modal-tray",
+        "value": "0 24px 52px -14px rgba(21, 23, 26, 0.44)",
+        "purpose": "1cm 영점 게이지 보정 모달 및 응원·후원 모달 외곽 트레이 부양 그림자."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-snap",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "카트리지 장착 변위 및 키캡 걸쇠 스냅 전이 곡선."
+      },
+      {
+        "name": "duration-keycap",
+        "value": "140ms",
+        "purpose": "키캡 단추, 시리얼 램프, 정렬 칩의 즉각적인 스위치 반응 시간."
+      },
+      {
+        "name": "duration-cartridge",
+        "value": "160ms",
+        "purpose": "4구 카트리지 팩 및 마스터 카트리지(180ms)의 장착 압입 전이 시간."
+      },
+      {
+        "name": "duration-media",
+        "value": "260ms",
+        "purpose": "카트리지 호버 시 16:9 장면 이미지의 미세 확대(scale 1.02~1.025) 전이 시간."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "820px"
+      },
+      {
+        "name": "lg",
+        "value": "1120px"
+      },
+      {
+        "name": "container",
+        "value": "1360px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Master Primary CTA Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "대표 마스터 카트리지 우측 하단에서 즉시 게임 실행을 유도하는 버밀리온 스탬프 주 단추.",
+      "html": "<button type=\"button\" class=\"ds-btn-master\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M3.5 2.2v11.6L13.5 8 3.5 2.2z\"/></svg><span>카트리지 실행</span></button>",
+      "css": ".ds-btn-master { display: inline-flex; align-items: center; gap: 9px; background: var(--stamp-red, #C92A1D); color: #FFFFFF; border: 2px solid var(--ink, #15171A); border-radius: 3px; padding: 11px 22px; font-family: var(--font-body, 'Pretendard', sans-serif); font-size: 17px; font-weight: 900; cursor: pointer; transition: background 0.14s ease, color 0.14s ease, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-master:hover { background: var(--plate-yellow, #F2BE18); color: var(--ink, #15171A); transform: translateY(1px); } .ds-btn-master:active { transform: translateY(2px); } .ds-btn-master:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; }"
+    },
+    {
+      "name": "Keycap Utility Button",
+      "kind": "button",
+      "refersTo": "button-keycap",
+      "description": "상단 명판 도구 바에서 1cm 보정, 배경음 토글, 공식 채널 이동에 쓰는 물리 키캡 단추.",
+      "html": "<button type=\"button\" class=\"ds-keycap-btn\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0z\"/><path d=\"m14.5 12.5 2-2\"/><path d=\"m11.5 9.5 2-2\"/><path d=\"m8.5 6.5 2-2\"/></svg><span>실제 1cm 보정</span></button>",
+      "css": ".ds-keycap-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 3px; border: 1.5px solid var(--ink, #15171A); background: var(--label-tint, #E9EDF2); color: var(--ink, #15171A); font-family: var(--font-body, 'Pretendard', sans-serif); font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease; } .ds-keycap-btn:hover { background: var(--label-paper, #F5F7FA); transform: translateY(1px); } .ds-keycap-btn:active { transform: translateY(2px); } .ds-keycap-btn:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; }"
+    },
+    {
+      "name": "Chrome Yellow Support Keycap",
+      "kind": "button",
+      "refersTo": "button-yellow",
+      "description": "응원과 후원 모달 호출 및 도감 행 실행 단추에 쓰는 크롬 옐로 강조 키캡.",
+      "html": "<button type=\"button\" class=\"ds-keycap-yellow\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z\"/></svg><span>응원과 후원</span></button>",
+      "css": ".ds-keycap-yellow { display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 3px; border: 1.5px solid var(--ink, #15171A); background: var(--plate-yellow, #F2BE18); color: var(--ink, #15171A); font-family: var(--font-body, 'Pretendard', sans-serif); font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease; } .ds-keycap-yellow:hover { background: #F6C930; transform: translateY(1px); } .ds-keycap-yellow:active { transform: translateY(2px); } .ds-keycap-yellow:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; }"
+    },
+    {
+      "name": "Catalog Sort Chip Group",
+      "kind": "chip",
+      "refersTo": "chip-sort",
+      "description": "전체 수록 카트리지 도감의 정렬 기준(기본순·실행순·인기순 등)을 전환하는 토글 칩.",
+      "html": "<div class=\"ds-sort-group\" role=\"group\" aria-label=\"목록 정렬 기준\"><button type=\"button\" class=\"ds-sort-chip is-active\" aria-pressed=\"true\">기본순</button><button type=\"button\" class=\"ds-sort-chip\" aria-pressed=\"false\">실행순</button><button type=\"button\" class=\"ds-sort-chip\" aria-pressed=\"false\">릴스·쇼츠순</button></div>",
+      "css": ".ds-sort-group { display: inline-flex; gap: 6px; flex-wrap: wrap; } .ds-sort-chip { padding: 7px 12px; border-radius: 3px; border: 1.5px solid var(--ink, #15171A); background: var(--label-tint, #E9EDF2); color: var(--ink, #15171A); font-family: var(--font-body, 'Pretendard', sans-serif); font-size: 12.5px; font-weight: 800; cursor: pointer; transition: background 0.14s ease, color 0.14s ease; } .ds-sort-chip:hover { background: var(--label-paper, #F5F7FA); } .ds-sort-chip.is-active { background: var(--ink, #15171A); color: var(--plate-yellow, #F2BE18); } .ds-sort-chip:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; }"
+    },
+    {
+      "name": "Mechanical 5-Digit Drum Counter",
+      "kind": "custom",
+      "refersTo": "counter-mechanical",
+      "description": "아케이드 전체 누적 실행 횟수를 5자리 고정폭 드럼 셀로 표시하는 기계식 적산 계수기.",
+      "html": "<div class=\"ds-mech-counter\" aria-label=\"누적 실행 12,840회\"><span class=\"ds-mech-label\"><span class=\"ds-mech-dot\" aria-hidden=\"true\"></span><span>누적 실행</span></span><span class=\"ds-mech-drums\" aria-hidden=\"true\"><span class=\"ds-drum\">1</span><span class=\"ds-drum\">2</span><span class=\"ds-drum\">8</span><span class=\"ds-drum\">4</span><span class=\"ds-drum\">0</span></span><span class=\"ds-mech-unit\">회</span></div>",
+      "css": ".ds-mech-counter { display: inline-flex; align-items: stretch; border: 1.5px solid var(--ink, #15171A); border-radius: 2px; background: var(--ink, #15171A); overflow: hidden; font-family: var(--font-serial, 'Chakra Petch', sans-serif); font-variant-numeric: tabular-nums; } .ds-mech-label { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; background: var(--label-tint, #E9EDF2); color: var(--ink, #15171A); font-family: var(--font-body, 'Pretendard', sans-serif); font-size: 12px; font-weight: 800; border-right: 1.5px solid var(--ink, #15171A); } .ds-mech-dot { width: 6px; height: 6px; border-radius: 1px; background: var(--stamp-red, #C92A1D); } .ds-mech-drums { display: inline-flex; align-items: stretch; } .ds-drum { width: 19px; display: inline-flex; align-items: center; justify-content: center; padding: 2px 0; background: var(--ink-panel, #23272E); color: var(--plate-yellow, #F2BE18); font-size: 14px; font-weight: 700; line-height: 1.1; border-right: 1px solid var(--ink-secondary, #373D45); } .ds-drum:last-child { border-right: none; } .ds-mech-unit { display: inline-flex; align-items: center; padding: 2px 6px; background: var(--ink, #15171A); color: var(--label-paper, #F5F7FA); font-size: 11.5px; font-weight: 700; }"
+    },
+    {
+      "name": "Molded Well Cartridge Card",
+      "kind": "card",
+      "refersTo": "card-cartridge",
+      "description": "오목한 성형 웰(cart-well) 안에 장착되어 호버·클릭 시 아래로 눌려 박히는 미니게임 카트리지 팩.",
+      "html": "<div class=\"ds-cart-well\"><a href=\"#play\" class=\"ds-cart-pack\"><div class=\"ds-pin-strip\" aria-hidden=\"true\"><span>SLOT-01</span><span class=\"ds-pins\"><i></i><i></i><i></i><i></i><i></i></span></div><div class=\"ds-cart-cap\"><span class=\"ds-cap-left\"><span class=\"ds-lamp\"></span><span>신작 #01</span></span><span>실행 1.4천회 · 쇼츠 8.2만회</span></div><div class=\"ds-cart-body\"><div><h3 class=\"ds-cart-title\">웨딩·여행 스냅 알바</h3><p class=\"ds-cart-desc\">10대 명소에서 구도를 맞춰 찰칵! 랜덤 난입 소동을 뚫고 인생샷을 건지세요.</p></div><div class=\"ds-cart-foot\"><span class=\"ds-cart-stat\">1위 기록 · 485,000원</span><span class=\"ds-cart-go\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 16 16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M3.5 2.2v11.6L13.5 8 3.5 2.2z\"/></svg><span>실행</span></span></div></div></a></div>",
+      "css": ".ds-cart-well { max-width: 310px; background: var(--tray-well, #C6CDD6); border: 2px solid var(--ink, #15171A); border-radius: 4px; padding: 7px; display: flex; } .ds-cart-pack { background: var(--label-paper, #F5F7FA); border: 2px solid var(--ink, #15171A); border-radius: 3px; overflow: hidden; display: flex; flex-direction: column; width: 100%; text-decoration: none; color: var(--ink, #15171A); box-shadow: 0 10px 18px -8px rgba(21, 23, 26, 0.24); transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1); } .ds-cart-pack:hover, .ds-cart-pack:focus-visible { transform: translateY(4px); box-shadow: 0 2px 5px -2px rgba(21, 23, 26, 0.3); } .ds-cart-pack:active { transform: translateY(6px) scale(0.994); box-shadow: none; } .ds-cart-pack:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; } .ds-pin-strip { height: 14px; background: var(--label-tint, #E9EDF2); border-bottom: 1.5px solid var(--ink, #15171A); padding: 0 8px; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-serial, 'Chakra Petch', sans-serif); font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink-secondary, #373D45); } .ds-pins { display: inline-flex; gap: 3px; } .ds-pins i { display: inline-block; width: 5px; height: 6px; background: var(--tray-mid, #AEB7C3); border: 1px solid var(--ink, #15171A); transition: background 0.14s ease; } .ds-cart-pack:hover .ds-pins i { background: var(--plate-yellow, #F2BE18); } .ds-cart-cap { padding: 5px 10px; display: flex; align-items: center; justify-content: space-between; gap: 6px; font-family: var(--font-serial, 'Chakra Petch', sans-serif); font-size: 12.5px; font-weight: 700; border-bottom: 1.5px solid var(--ink, #15171A); font-variant-numeric: tabular-nums; background: var(--stamp-red, #C92A1D); color: #FFFFFF; } .ds-cap-left { display: inline-flex; align-items: center; gap: 5px; } .ds-lamp { width: 7px; height: 7px; border-radius: 1px; background: currentColor; opacity: 0.55; transition: opacity 0.14s ease, background 0.14s ease, transform 0.14s cubic-bezier(0.16, 1, 0.3, 1); } .ds-cart-pack:hover .ds-lamp { opacity: 1; background: var(--plate-yellow, #F2BE18); transform: scale(1.25); } .ds-cart-body { padding: 11px 12px 10px; display: flex; flex-direction: column; gap: 9px; font-family: var(--font-body, 'Pretendard', sans-serif); } .ds-cart-title { margin: 0; font-family: var(--font-display, 'Do Hyeon', sans-serif); font-weight: 400; font-size: 22px; line-height: 1.14; letter-spacing: -0.02em; } .ds-cart-desc { margin: 4px 0 0; font-size: 13px; line-height: 1.44; color: var(--ink-secondary, #373D45); } .ds-cart-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--tray-well, #C6CDD6); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; } .ds-cart-stat { color: var(--ink-secondary, #373D45); } .ds-cart-go { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 2px; border: 1.5px solid var(--ink, #15171A); background: var(--label-tint, #E9EDF2); color: var(--ink, #15171A); font-family: var(--font-serial, 'Chakra Petch', sans-serif); font-size: 11.5px; font-weight: 700; transition: background 0.14s ease, color 0.14s ease; } .ds-cart-pack:hover .ds-cart-go { background: var(--stamp-red, #C92A1D); color: #FFFFFF; }"
+    },
+    {
+      "name": "Nameplate Brand & Tool Header",
+      "kind": "nav",
+      "refersTo": "nav-nameplate",
+      "description": "합본팩 명판 스탬프, 컬렉션 명칭, 유틸리티 키캡을 한 줄로 묶는 상단 인쇄 명판 바.",
+      "html": "<header class=\"ds-nameplate\"><div class=\"ds-brand-cluster\"><span class=\"ds-pack-stamp\">404 ARCADE PACK</span><span class=\"ds-brand-inline\">이게뭔겜? 실물 손일 컬렉션</span></div><nav class=\"ds-tool-cluster\" aria-label=\"아케이드 도구\"><button type=\"button\" class=\"ds-nav-keycap\">실제 1cm 보정</button><button type=\"button\" class=\"ds-nav-keycap is-yellow\">응원과 후원</button></nav></header>",
+      "css": ".ds-nameplate { background: var(--label-paper, #F5F7FA); border: 2px solid var(--ink, #15171A); border-radius: 3px; padding: 10px 14px; box-shadow: 0 8px 20px -10px rgba(21, 23, 26, 0.18); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-family: var(--font-body, 'Pretendard', sans-serif); } .ds-brand-cluster { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .ds-pack-stamp { font-family: var(--font-serial, 'Chakra Petch', sans-serif); font-weight: 700; font-size: 19px; letter-spacing: -0.02em; background: var(--ink, #15171A); color: var(--plate-yellow, #F2BE18); padding: 4px 11px; border-radius: 2px; line-height: 1.1; } .ds-brand-inline { font-size: 15.5px; font-weight: 900; letter-spacing: -0.02em; color: var(--ink, #15171A); } .ds-tool-cluster { display: flex; align-items: center; gap: 6px; } .ds-nav-keycap { padding: 7px 11px; border-radius: 3px; border: 1.5px solid var(--ink, #15171A); background: var(--label-tint, #E9EDF2); color: var(--ink, #15171A); font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease; } .ds-nav-keycap:hover { background: var(--label-paper, #F5F7FA); transform: translateY(1px); } .ds-nav-keycap.is-yellow { background: var(--plate-yellow, #F2BE18); } .ds-nav-keycap.is-yellow:hover { background: #F6C930; } .ds-nav-keycap:focus-visible { outline: 2.5px solid var(--serial-blue, #163ECA); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "1990년대 용산 다중 합본팩 성형 트레이 (The 404 Multi-Cartridge Molded Tray)",
+    "overview": "「이게뭔겜? 404 아케이드」의 시각 시스템은 어두운 보라색 그라데이션, 네온 번짐 그림자, 둥근 알약 배지로 대표되는 흔한 웹 게임 포털·서비스형 소프트웨어 카드 격자를 정면으로 거부한다. 대신 밝은 주광 아래 놓인 차가운 회백색 사출 성형 플라스틱 트레이(`tray-stone`)와 오목하게 파인 슬롯 홈(`tray-well`), 선명하게 인쇄된 코팅 라벨지(`label-paper`), 그리고 묵직한 먹색 실선 테두리(`ink`)로 실물 미니게임 합본팩의 촉각적 밀도를 구현한다.\n\n방문자가 쇼츠·릴스 프로필 링크를 타고 들어온 첫 순간, 기계식 5자리 드럼 적산 계수기와 대표 마스터 카트리지, 4구 성형 트레이에 꽂힌 인쇄 팩이 한눈에 들어오며 모든 게임이 설치 없이 즉시 돌아가는 실제 게임임을 증명한다. 초기 방향 계약에서 구상했던 측면 그립 홈(molded grip notches)은 실제 출고 빌드에서 카트리지 상단 평면 인쇄 커넥터 인덱스 띠(`SLOT-01` 및 5핀 패드)로 정제되어 정보 밀도와 인쇄 라벨의 일관성을 높였다.\n\n이 디자인 시스템의 적용 경계는 아케이드 바깥쪽 메인 포털(`index.html`)과 공용 오버레이 3종(`shared/calibration.js` 실제 1cm 영점 게이지 보정 모달, `shared/donate.js` 응원·후원 모달, `shared/catalog.js` 공개 예정·점검 잠금 화면 및 미리보기 배지)이다. 8개 개별 미니게임 내부 플레이 화면과 인게임 전용 스타일(`shared/styles.css`)은 각 게임 고유의 손일 물리 세계를 담는 별도 런타임 영역으로 분리 보존한다.",
+    "keyCharacteristics": [
+      "사출 성형 도트 질감이 깔린 밝은 스톤 그레이 트레이(`tray-stone`)와 오목한 장착 웰(`tray-well`)의 물리적 층위",
+      "네온 발광 대신 먹색 실선(`1.5px`~`2px`)과 원색 인쇄 스탬프(주홍·코발트 블루·크롬 옐로)로 잡는 명확한 위계",
+      "호버·클릭 시 위로 떠오르지 않고 슬롯 홈 안쪽으로 딸깍 눌려 박히는 역방향 장착 물리 모션",
+      "한글 복고 간판체(`Do Hyeon`), 기계식 시리얼 고정폭 서체(`Chakra Petch`), 본문 고딕(`Pretendard` 스택)의 3단 역할 분리",
+      "알약형 둥근 모서리(`999px`)를 배제한 `1px`~`4px` 칼각 다이컷 모서리 규율"
+    ],
+    "rules": [
+      {
+        "name": "The Inverted Master Pack Rule",
+        "body": "화면 전체에서 어두운 먹색(`ink`)을 넓은 카드 본체 배경으로 뒤집어 쓰는 곳은 최상단 대표 마스터 카트리지 단 하나뿐이다. 나머지 카트리지와 장부, 모달 내부 카드는 모두 밝은 인쇄 라벨지(`label-paper`)를 유지해 시선 중심이 흔들리지 않게 한다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Functional Stamp Triad Rule",
+        "body": "주홍(`stamp-red`)은 즉시 실행·신작·저장, 코발트 블루(`serial-blue`)는 일련번호·기록·키보드 포커스, 크롬 옐로(`plate-yellow`)는 합본팩 명판·기계 계기·후원 유틸리티에만 배정하며 장식용 그라데이션으로 섞지 않는다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Counter Rule",
+        "body": "실행 횟수, 쇼츠·릴스 조회수, 플레이 시간, 1위 기록, `1cm = px` 보정 눈금, 도감 번호를 표기하는 모든 요소에는 반드시 `font-variant-numeric: tabular-nums`를 선언해 실시간 동기화나 슬라이더 조작 중 숫자가 좌우로 떨리지 않게 한다.",
+        "section": "typography"
+      },
+      {
+        "name": "The Natural Weight Display Rule",
+        "body": "`Do Hyeon`은 단일 굵기(`400`)로 설계된 디스플레이 서체이므로 모든 제목에서 `font-weight: 400`을 유지해 브라우저의 인위적인 합성 볼드(faux-bold) 번짐을 막는다.",
+        "section": "typography"
+      },
+      {
+        "name": "The Seated-Detent Press Rule",
+        "body": "모든 카트리지와 키캡 단추는 호버·클릭 시 위(`-Y`)로 떠오르지 않고 반드시 아래쪽(`+Y`)으로 내려앉는다(`keycap-btn` `1px`→`2px`, `master-cartridge` `3px`→`5px`, `cart-pack` `4px`→`6px`). 상태 전환에는 기계식 걸쇠 곡선인 `cubic-bezier(0.16, 1, 0.3, 1)`을 쓰며 `prefers-reduced-motion: reduce` 환경에서는 즉시(`0.01ms`) 전환한다.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 새로운 포털 모달이나 공용 오버레이를 만들 때 바깥 `tray-stone` 트레이 프레임(`4px` 반경, `9px`~`10px` 패딩, `2px` 먹색 테두리) 안에 `label-paper` 인쇄 카드(`3px` 반경, `2px` 먹색 테두리)를 끼우는 이중 트레이 구조를 사용하라.",
+      "Do 카트리지와 키캡 단추의 호버·활성 상태에 아래쪽으로 눌려 들어가는 양수 `translateY` 변위와 줄어드는 먹색 그림자를 함께 적용해 물리적 장착감을 유지하라.",
+      "Do 실행 수, 조회수, 시간, 1위 점수, 길이 보정치 등 모든 동적 숫자 영역에 `Chakra Petch` 또는 `font-variant-numeric: tabular-nums`를 선언하라.",
+      "Do 모든 아이콘을 `15px`~`20px` 크기의 깔끔한 인라인 SVG로만 그리고, 런타임 데이터에서 넘어올 수 있는 이모지·특수 그림 문자는 렌더링 전에 제거하라."
+    ],
+    "donts": [
+      "Don't 포털과 공용 모달 안에서 어두운 보라색 배경, 네온 색 번짐 그림자(glow shadow), 그라데이션 단추, 또는 `999px` 알약형 모서리를 사용하지 마라.",
+      "Don't 제목 위에 작은 영문·한글 장식 문구를 얹는 아이브로(eyebrow)나 키커(kicker) 줄을 렌더링하지 마라. 카트리지의 상태와 번호는 상단 시리얼 캡(`cart-cap`)과 스탬프로만 전달한다.",
+      "Don't `Do Hyeon` 디스플레이 제목에 `700`이나 `900` 굵기를 지정해 합성 볼드 번짐을 유발하지 마라.",
+      "Don't 포털 디자인 토큰을 8개 개별 미니게임 내부 플레이 화면이나 인게임 전용 `shared/styles.css`에 강제로 덮어씌워 각 게임 고유의 조작 계기판을 훼손하지 마라."
+    ]
+  }
+}

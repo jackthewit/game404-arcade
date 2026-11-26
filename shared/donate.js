@@ -1,19 +1,29 @@
-// 이게뭔겜? 404 아케이드 — 카카오페이 송금 QR & 링크 심플 후원 모듈
+// 이게뭔겜? 404 아케이드 — 카카오페이 송금 QR & 링크 후원 모듈
 import { getSupabaseConfig } from './challenge.js';
 
 const DONATE_CFG_ID = 'cfg_donate';
 const DEFAULT_KAKAO_LINK = 'https://qr.kakaopay.com/FSGGbIYYt';
 const DEFAULT_QR_ASSET = new URL('../assets/kakaopay-qr.png', import.meta.url).href;
+const FONTS_HREF = new URL('../assets/fonts/arcade-fonts.css', import.meta.url).href;
 
 export const DEFAULT_DONATE_CONFIG = {
   kakaoLink: DEFAULT_KAKAO_LINK,
   qrImageUrl: '',
-  headline: '재밌게 즐기셨나요? 제작자에게 커피 한 잔 응원하기 ☕',
-  subtext: '카메라로 QR 코드를 찍거나 아래 버튼을 누르면 카카오페이로 연결됩니다.',
+  headline: '재밌게 즐기셨나요? 제작자에게 커피 한 잔 응원하기',
+  subtext: '휴대폰 카메라로 QR 코드를 비추거나 아래 단추를 누르면 카카오페이 송금으로 연결됩니다.',
 };
 
 let cachedConfig = null;
 let styleInjected = false;
+
+function ensureArcadeFonts() {
+  if (document.getElementById('g404-arcade-fonts')) return;
+  const link = document.createElement('link');
+  link.id = 'g404-arcade-fonts';
+  link.rel = 'stylesheet';
+  link.href = FONTS_HREF;
+  document.head.appendChild(link);
+}
 
 function esc(s) {
   return String(s || '')
@@ -23,7 +33,12 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
+function cleanLeadingGlyphs(str) {
+  return String(str || '').replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/gu, '').replace(/[\p{Extended_Pictographic}\uFE0F\u200D]+$/gu, '').trim();
+}
+
 function injectDonateStyles() {
+  ensureArcadeFonts();
   if (styleInjected) return;
   styleInjected = true;
   const st = document.createElement('style');
@@ -32,104 +47,143 @@ function injectDonateStyles() {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: #FEE500;
-      color: #191919;
-      border: 1.5px solid #facc15;
+      gap: 7px;
+      padding: 9px 15px;
+      border-radius: 3px;
+      background: #F2BE18;
+      color: #15171A;
+      border: 1.5px solid #15171A;
       font-size: 13.5px;
       font-weight: 900;
       cursor: pointer;
       text-decoration: none;
-      box-shadow: 0 6px 18px rgba(254, 229, 0, 0.26);
-      transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease;
+      transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease;
     }
     .kakao-donate-btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.04);
-      box-shadow: 0 10px 24px rgba(254, 229, 0, 0.36);
+      background: #F6C930;
+      transform: translateY(1px);
     }
     .kakao-donate-btn:active {
-      transform: scale(0.97);
+      transform: translateY(2px);
     }
 
     .don-backdrop {
       position: fixed;
       inset: 0;
       z-index: 9500;
-      background: rgba(10, 8, 18, 0.82);
-      backdrop-filter: blur(9px);
+      background: rgba(21, 23, 26, 0.7);
+      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
       overflow-y: auto;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    }
+
+    .don-backdrop :focus-visible {
+      outline: 2.5px solid #163ECA;
+      outline-offset: 2px;
+    }
+
+    .don-tray-frame {
+      width: min(92vw, 392px);
+      background: #D8DDE4;
+      border: 2px solid #15171A;
+      border-radius: 4px;
+      padding: 9px;
+      box-shadow: 0 24px 52px -14px rgba(21, 23, 26, 0.44);
     }
 
     .don-card {
-      width: min(92vw, 380px);
-      background: #1b1629;
-      border: 1.5px solid rgba(254, 229, 0, 0.45);
-      border-radius: 26px;
-      padding: 26px 22px 22px;
-      color: #f8f5ff;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+      background: #F5F7FA;
+      border: 2px solid #15171A;
+      border-radius: 3px;
+      padding: 20px 18px 18px;
+      color: #15171A;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 13px;
       position: relative;
       text-align: center;
     }
+
+    .don-top-bar {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .don-title {
+      margin: 0;
+      font-family: "Do Hyeon", "Apple SD Gothic Neo", sans-serif;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1.24;
+      letter-spacing: -0.02em;
+      word-break: keep-all;
+      text-wrap: balance;
+      color: #15171A;
+    }
+
     .don-close {
-      position: absolute;
-      top: 14px;
-      right: 14px;
+      flex-shrink: 0;
       width: 32px;
       height: 32px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(255, 255, 255, 0.08);
-      color: #e2dcf5;
-      font-size: 16px;
-      font-weight: 900;
+      border-radius: 3px;
+      border: 1.5px solid #15171A;
+      background: #E9EDF2;
+      color: #15171A;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
     }
-    .don-kicker {
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: rgba(254, 229, 0, 0.16);
-      border: 1px solid rgba(254, 229, 0, 0.48);
-      color: #FEE500;
-      font-size: 11.5px;
-      font-weight: 900;
-    }
-    .don-title {
-      font-size: 18.5px;
-      font-weight: 900;
-      line-height: 1.38;
-      word-break: keep-all;
-      padding: 0 12px;
-    }
+
     .don-sub {
-      font-size: 12.5px;
-      color: #bdb5d6;
-      line-height: 1.5;
+      margin: 0;
+      font-size: 13px;
+      color: #373D45;
+      line-height: 1.52;
       word-break: keep-all;
-      margin: -4px 0 2px;
+      font-weight: 600;
+      text-align: left;
+      width: 100%;
+    }
+
+    .don-qr-well {
+      padding: 10px;
+      background: #D8DDE4;
+      border: 1.5px solid #15171A;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .don-serial-code {
+      font-family: "Chakra Petch", "Pretendard", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #373D45;
     }
 
     .don-qr-box {
-      width: 212px;
-      height: 212px;
-      border-radius: 22px;
-      background: #ffffff;
-      padding: 12px;
+      width: 204px;
+      height: 204px;
+      border-radius: 2px;
+      background: #FFFFFF;
+      border: 1.5px solid #15171A;
+      padding: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
       overflow: hidden;
     }
     .don-qr-box img {
@@ -141,12 +195,12 @@ function injectDonateStyles() {
 
     .don-pay-link-btn {
       width: 100%;
-      margin-top: 4px;
+      margin-top: 2px;
       padding: 14px 18px;
-      border-radius: 15px;
-      border: none;
+      border-radius: 3px;
+      border: 2px solid #15171A;
       background: #FEE500;
-      color: #191919;
+      color: #15171A;
       font-size: 15px;
       font-weight: 900;
       text-decoration: none;
@@ -155,15 +209,14 @@ function injectDonateStyles() {
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 8px 22px rgba(254, 229, 0, 0.28);
-      transition: filter 0.12s ease, transform 0.1s ease;
+      transition: background 0.12s ease, transform 0.12s ease;
     }
     .don-pay-link-btn:hover {
-      filter: brightness(1.04);
-      transform: translateY(-1px);
+      background: #F6DC00;
+      transform: translateY(1px);
     }
     .don-pay-link-btn:active {
-      transform: scale(0.98);
+      transform: translateY(2px);
     }
   `;
   document.head.appendChild(st);
@@ -255,40 +308,83 @@ export function resolveQrImageSrc(cfg) {
 
 export async function openDonateModal() {
   injectDonateStyles();
+  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const cfg = await loadDonateConfig(true);
   const targetLink = (cfg.kakaoLink || DEFAULT_KAKAO_LINK).trim();
   const qrSrc = resolveQrImageSrc(cfg);
+  const cleanTitle = cleanLeadingGlyphs(cfg.headline) || DEFAULT_DONATE_CONFIG.headline;
 
   let backdrop = document.getElementById('g404-donate-modal');
   if (backdrop) backdrop.remove();
+
+  const heartSvg = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>`;
 
   backdrop = document.createElement('div');
   backdrop.id = 'g404-donate-modal';
   backdrop.className = 'don-backdrop';
   backdrop.innerHTML = `
-    <div class="don-card" role="dialog" aria-modal="true" aria-label="응원과 후원">
-      <button type="button" class="don-close" id="don-close-btn" aria-label="닫기">✕</button>
-      <span class="don-kicker">💛 응원과 후원</span>
-      <div class="don-title">${esc(cfg.headline)}</div>
-      <p class="don-sub">${esc(cfg.subtext)}</p>
+    <div class="don-tray-frame">
+      <div class="don-card" role="dialog" aria-modal="true" aria-label="응원과 후원">
+        <div class="don-top-bar">
+          <h2 class="don-title">${esc(cleanTitle)}</h2>
+          <button type="button" class="don-close" id="don-close-btn" aria-label="닫기">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <p class="don-sub">${esc(cleanLeadingGlyphs(cfg.subtext) || DEFAULT_DONATE_CONFIG.subtext)}</p>
 
-      <div class="don-qr-box">
-        <img src="${esc(qrSrc)}" alt="카카오페이 후원 QR 코드">
+        <div class="don-qr-well">
+          <div class="don-qr-box">
+            <img src="${esc(qrSrc)}" alt="카카오페이 후원 QR 코드">
+          </div>
+          <span class="don-serial-code">SUPPORT PASS · KAKAOPAY QR</span>
+        </div>
+
+        <a href="${esc(targetLink)}" target="_blank" rel="noopener noreferrer" class="don-pay-link-btn" id="don-pay-primary">
+          ${heartSvg}
+          <span>카카오페이로 응원 보내기</span>
+        </a>
       </div>
-
-      <a href="${esc(targetLink)}" target="_blank" rel="noopener noreferrer" class="don-pay-link-btn">
-        💛 카카오페이로 후원하기
-      </a>
     </div>
   `;
 
   document.body.appendChild(backdrop);
 
-  backdrop.querySelector('#don-close-btn').onclick = () => backdrop.remove();
+  function closeDonate() {
+    document.removeEventListener('keydown', onKeyDown);
+    backdrop.remove();
+    if (opener && document.contains(opener)) opener.focus();
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeDonate();
+      return;
+    }
+    if (e.key === 'Tab') {
+      const focusables = [...backdrop.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])')].filter(el => !el.disabled);
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+  document.addEventListener('keydown', onKeyDown);
+
+  backdrop.querySelector('#don-close-btn').onclick = closeDonate;
   backdrop.addEventListener('click', e => {
-    if (e.target === backdrop) backdrop.remove();
+    if (e.target === backdrop) closeDonate();
   });
+
+  const primaryLink = backdrop.querySelector('#don-pay-primary');
+  if (primaryLink) primaryLink.focus();
 }
 
-// 하위 호환용 빈 함수 유지
 export function handleDonateReturnQuery() {}
