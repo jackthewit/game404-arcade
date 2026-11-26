@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { SFX, BGM, unlockAudio } from '../shared/audio.js';
 import { enforceGameAccess } from '../shared/catalog.js';
-import { showToast } from '../shared/challenge.js';
+import { showToast, updateBestRecord, saveResultAndBuildShare, getSavedNickname } from '../shared/challenge.js';
 
 enforceGameAccess('cake');
 
@@ -2277,6 +2277,23 @@ function enterShowcase() {
   document.body.classList.add('in-showcase');
 
   SFX.win();
+
+  const completedStage = playMode === 'stage' ? stageIdx + 1 : 5;
+  const cakeScore = completedStage * 95 + Math.min(25, currentStrokes.length * 3);
+  updateBestRecord('cake', {
+    score: cakeScore,
+    actualValue: completedStage,
+    targetValue: 5,
+    rankTitle: currentVerdict.tag || '🎂 수제 케이크 마스터',
+  });
+  saveResultAndBuildShare({
+    gameId: 'cake',
+    nickname: getSavedNickname(),
+    score: cakeScore,
+    actualValue: completedStage,
+    targetValue: 5,
+    rankTitle: currentVerdict.tag || '🎂 수제 케이크 마스터',
+  }).catch(() => {});
 }
 
 btnFinish.addEventListener('click', () => {

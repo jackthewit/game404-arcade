@@ -1,5 +1,5 @@
 // 이게뭔겜? 404 아케이드 — 3대 잣대(① 접속 · ② 플레이 시간 · ③ 릴스·쇼츠 반응) 인기 순위 & 자동 체류 추적 모듈
-import { getSupabaseConfig } from './challenge.js';
+import { getSupabaseConfig, getDefaultSeedsForGame, ensureGameSeededIfEmpty } from './challenge.js';
 
 const LOCAL_POP_KEY = 'fgs.popularity.local.v1';
 const SESSION_VISIT_PREFIX = 'fgs.visited.session.';
@@ -165,18 +165,20 @@ export async function startGameEngagementTracker(gameId) {
   const local = readLocalPop();
   const cur = local[gameId] || { visits: 0, playSec: 0 };
 
-  // 탭 세션당 1회 접속 카운트 증가
+  // 게임 실행 카운트 증가 (5초 이내 단순 새로고침 중복만 제외하고 매 게임 진입 실행마다 반영)
   const sKey = SESSION_VISIT_PREFIX + gameId;
-  const isNewVisit = !sessionStorage.getItem(sKey);
-  if (isNewVisit) {
-    try { sessionStorage.setItem(sKey, '1'); } catch {}
+  const lastAt = Number(sessionStorage.getItem(sKey) || 0);
+  const nowEpoch = Date.now();
+  const isNewLaunch = !lastAt || nowEpoch - lastAt > 5000;
+  if (isNewLaunch) {
+    try { sessionStorage.setItem(sKey, String(nowEpoch)); } catch {}
     cur.visits = (cur.visits || 0) + 1;
     local[gameId] = cur;
     writeLocalPop(local);
   }
 
   const sb = await getSupabaseConfig();
-  if (isNewVisit && sb && !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) {
+  if (isNewLaunch && sb && !/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) {
     postMetricRun(sb, `v_${gameId}`, 1, 1, false);
   }
 
@@ -358,7 +360,35 @@ export async function saveSocialStatsOverride({ gameId, ytViews, igViews, likes,
   return { ok: true, runId, label, total };
 }
 
-// 모든 게임의 3대 잣대(① 접속 · ② 플레이 시간 · ③ 릴스·쇼츠 반응)를 집계하여 종합 인기 점수 계산
+async function fetchTopRun(sb, gameId) {
+  const fallbackSeed = getDefaultSeedsForGame(gameId)[0] || null;
+  if (!sb) return fallbackSeed;
+  try {
+    const res = await fetch(`${sb.url}/rest/v1/rpc/g404_get_ladder`, {
+      method: 'POST',
+      headers: {
+        apikey: sb.key,
+        Authorization: `Bearer ${sb.key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_game_id: gameId, p_my_id: '', p_ref_id: '' }),
+    });
+    if (!res.ok) return fallbackSeed;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      ensureGameSeededIfEmpty(sb, gameId).catch(() => {});
+      return fallbackSeed;
+    }
+    if (Number(rows[0].total_count || rows.length) < 3) {
+      ensureGameSeededIfEmpty(sb, gameId).catch(() => {});
+    }
+    return rows[0];
+  } catch {
+    return fallbackSeed;
+  }
+}
+
+// 모든 게임의 3대 잣대(① 실행 수 · ② 플레이 시간 · ③ 릴스·쇼츠 반응)를 집계하여 종합 인기 점수 계산
 export async function computeGamesPopularity(games) {
   const sb = await getSupabaseConfig();
   const local = readLocalPop();
@@ -366,11 +396,12 @@ export async function computeGamesPopularity(games) {
   const rawList = await Promise.all(
     (games || []).map(async (g) => {
       const id = g.id;
-      const [visitCnt, runCnt, timeBuckets, socOverride] = await Promise.all([
+      const [visitCnt, runCnt, timeBuckets, socOverride, topRun] = await Promise.all([
         fetchCount(sb, `v_${id}`),
         fetchCount(sb, id),
         fetchCount(sb, `m_${id}`),
         fetchSocialOverride(sb, id),
+        fetchTopRun(sb, id),
       ]);
 
       const loc = local[id] || { visits: 0, playSec: 0 };
@@ -382,8 +413,9 @@ export async function computeGamesPopularity(games) {
         shares: 0,
       };
 
-      // ① 접속 지수 원시값: 방문 세션 + 완주 판수 가중 + 로컬 방문 보정
-      const visitsTotal = Math.max(loc.visits || 0, visitCnt + runCnt * 2);
+      // ① 게임 실행 수: 진입 실행 횟수 + 완주 판수 합산 (로컬 실행 보정 포함)
+      const playsTotal = Math.max(loc.visits || 0, visitCnt + runCnt);
+      const visitsTotal = playsTotal;
 
       // ② 플레이 시간 원시값(초): 20초 버킷 합산 + 완주 1판당 평균 42초 체류 반영 + 로컬 체류시간
       const playSecTotal = Math.max(loc.playSec || 0, timeBuckets * 20 + runCnt * 42 + visitCnt * 18);
@@ -398,8 +430,10 @@ export async function computeGamesPopularity(games) {
 
       return {
         id,
+        playsTotal,
         visitsTotal,
         runCnt,
+        topRun,
         playSecTotal,
         socialTotal,
         ytViews: baseSoc.ytViews || 0,
@@ -413,28 +447,30 @@ export async function computeGamesPopularity(games) {
   );
 
   // 로그 스케일 정규화로 특정 지표 하나가 독식하지 않고 3가지 잣대가 균형 있게 반영되도록 산출!
-  const maxLogVisit = Math.max(1, ...rawList.map(x => Math.log10(1 + x.visitsTotal)));
+  const maxLogVisit = Math.max(1, ...rawList.map(x => Math.log10(1 + x.playsTotal)));
   const maxLogTime = Math.max(1, ...rawList.map(x => Math.log10(1 + x.playSecTotal / 30)));
   const maxLogSoc = Math.max(1, ...rawList.map(x => Math.log10(1 + x.socialTotal)));
 
   const map = {};
   for (const item of rawList) {
-    const visitNorm = (Math.log10(1 + item.visitsTotal) / maxLogVisit) * 100;   // 0~100
+    const visitNorm = (Math.log10(1 + item.playsTotal) / maxLogVisit) * 100;   // 0~100
     const timeNorm = (Math.log10(1 + item.playSecTotal / 30) / maxLogTime) * 100; // 0~100
     const socNorm = (Math.log10(1 + item.socialTotal) / maxLogSoc) * 100;       // 0~100
 
-    // 3대 잣대 종합 점수 (접속 35% + 플레이 시간 35% + 릴스·쇼츠 반응 30%)
+    // 3대 잣대 종합 점수 (실행 수 35% + 플레이 시간 35% + 릴스·쇼츠 반응 30%)
     const popularityScore = Number(
       (visitNorm * 0.35 + timeNorm * 0.35 + socNorm * 0.30).toFixed(1)
     );
 
+    const pCount = Math.max(1, item.playsTotal);
     map[item.id] = {
       ...item,
       visitScore: Number(visitNorm.toFixed(1)),
       timeScore: Number(timeNorm.toFixed(1)),
       socialScore: Number(socNorm.toFixed(1)),
       popularityScore,
-      visitsLabel: `접속 ${Math.max(1, item.visitsTotal).toLocaleString()}회`,
+      playsLabel: `실행 ${pCount.toLocaleString()}회`,
+      visitsLabel: `실행 ${pCount.toLocaleString()}회`,
       playTimeLabel: formatPlayTimeLabel(Math.max(60, item.playSecTotal)),
     };
   }

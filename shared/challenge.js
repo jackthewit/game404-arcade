@@ -236,6 +236,109 @@ export async function loadIncomingChallenge(expectedGameId) {
   return null;
 }
 
+export function getDefaultSeedsForGame(gameId) {
+  const table = {
+    snap: [
+      { id: 'SEED_SN1', nickname: '유체리', score: 920000, error_mm: null, actual_value: 7, target_value: 5, rank_title: '📸 구도 천재 월드투어 스냅 사진가' },
+      { id: 'SEED_SN2', nickname: '코난', score: 685000, error_mm: null, actual_value: 6, target_value: 4, rank_title: '✨ 감성 충만 프로 스냅 알바생' },
+      { id: 'SEED_SN3', nickname: '강백호', score: 460000, error_mm: null, actual_value: 4, target_value: 3, rank_title: '📷 열정 가득 수습 포토그래퍼' },
+      { id: 'SEED_SN4', nickname: '신짱구', score: 245000, error_mm: null, actual_value: 3, target_value: 1, rank_title: '🦆 오리만 찍은 동네 사진사' },
+      { id: 'SEED_SN5', nickname: '보노보노', score: 110000, error_mm: null, actual_value: 2, target_value: 0, rank_title: '😅 흔들린 손가락 알바생' },
+    ],
+    jjamppong: [
+      { id: 'SEED_JP1', nickname: '손오공', score: 31.4, error_mm: null, actual_value: 28, target_value: 0, rank_title: '👕 세탁소 단골 아슬아슬 생존자' },
+      { id: 'SEED_JP2', nickname: '비룡', score: 26.8, error_mm: null, actual_value: 24, target_value: 0, rank_title: '🍜 중화요리 회피 달인' },
+      { id: 'SEED_JP3', nickname: '나루토', score: 21.2, error_mm: null, actual_value: 19, target_value: 0, rank_title: '🥢 국물 방어 중급 도전자' },
+      { id: 'SEED_JP4', nickname: '도라에몽', score: 15.6, error_mm: null, actual_value: 14, target_value: 0, rank_title: '💦 앞치마 시급한 흰티족' },
+      { id: 'SEED_JP5', nickname: '맹구', score: 9.4, error_mm: null, actual_value: 8, target_value: 0, rank_title: '🔴 빨간 땡땡이 티셔츠 당첨' },
+    ],
+    boxcut: [
+      { id: 'SEED_BX1', nickname: '조로', score: 10840, error_mm: 7.2, actual_value: 24, target_value: 5, rank_title: '👑 전설의 칼각 언박싱 신(神)' },
+      { id: 'SEED_BX2', nickname: '이누야샤', score: 8420, error_mm: 9.5, actual_value: 19, target_value: 4, rank_title: '📦 현관 택배 수호 마스터' },
+      { id: 'SEED_BX3', nickname: '세라', score: 6150, error_mm: 12.1, actual_value: 15, target_value: 2, rank_title: '🔪 깔끔한 직선 커터 장인' },
+      { id: 'SEED_BX4', nickname: '최자두', score: 3890, error_mm: 16.4, actual_value: 10, target_value: 1, rank_title: '🏃 바쁜 손놀림 언박서' },
+      { id: 'SEED_BX5', nickname: '노진구', score: 1920, error_mm: 22.0, actual_value: 6, target_value: 0, rank_title: '😅 택배 산에 파묻힌 집주인' },
+    ],
+    cake: [
+      { id: 'CKSEED01', nickname: '쇼콜라', score: 485, error_mm: null, actual_value: 5, target_value: 5, rank_title: '👑 전설의 쇼콜라티에' },
+      { id: 'CKSEED02', nickname: '유체리', score: 452, error_mm: null, actual_value: 5, target_value: 5, rank_title: '🎂 수제 케이크 마스터' },
+      { id: 'CKSEED03', nickname: '도레미', score: 398, error_mm: null, actual_value: 4, target_value: 5, rank_title: '🍫 청담동 수석 파티시에' },
+      { id: 'CKSEED04', nickname: '바닐라', score: 345, error_mm: null, actual_value: 4, target_value: 5, rank_title: '🍫 청담동 수석 파티시에' },
+      { id: 'CKSEED05', nickname: '감딸기', score: 276, error_mm: null, actual_value: 3, target_value: 5, rank_title: '✨ 동네 인기 케이크집 사장님' },
+    ],
+    haircut: [
+      { id: 'SEED_HC1', nickname: '서태웅', score: 98.4, error_mm: 0.2, actual_value: 1.02, target_value: 1.0, rank_title: '🏆 전설의 미용사' },
+      { id: 'SEED_HC2', nickname: '유미란', score: 96.5, error_mm: 0.5, actual_value: 0.95, target_value: 1.0, rank_title: '✨ 청담동 수석 원장님' },
+      { id: 'SEED_HC3', nickname: '하인성', score: 93.2, error_mm: 0.9, actual_value: 1.09, target_value: 1.0, rank_title: '✂️ 청담동 수석 원장님' },
+      { id: 'SEED_HC4', nickname: '오영심', score: 86.5, error_mm: 1.8, actual_value: 1.18, target_value: 1.0, rank_title: '💈 동네 단골 미용사' },
+      { id: 'SEED_HC5', nickname: '고길동', score: 74.5, error_mm: 3.4, actual_value: 1.34, target_value: 1.0, rank_title: '😅 아차차 견습생' },
+    ],
+    toilet: [
+      { id: 'SEED_TL1', nickname: '루피', score: 142.8, error_mm: null, actual_value: 142.8, target_value: 0, rank_title: '👑 황금 미라 킹' },
+      { id: 'SEED_TL2', nickname: '케로로', score: 86.4, error_mm: null, actual_value: 86.4, target_value: 0, rank_title: '🧻 전설의 두루마리' },
+      { id: 'SEED_TL3', nickname: '호빵맨', score: 45.2, error_mm: null, actual_value: 45.2, target_value: 0, rank_title: '🩹 붕대 미라 장인' },
+      { id: 'SEED_TL4', nickname: '도우너', score: 22.5, error_mm: null, actual_value: 22.5, target_value: 0, rank_title: '🌀 팔뚝 두꺼워짐' },
+      { id: 'SEED_TL5', nickname: '포로리', score: 8.6, error_mm: null, actual_value: 8.6, target_value: 0, rank_title: '😅 알뜰 휴지러' },
+    ],
+    nail: [
+      { id: 'SEED_NL1', nickname: '네티', score: 134.6, error_mm: 0.0, actual_value: 44.2, target_value: 3, rank_title: '👑 청담동 전설의 마스터 원장님' },
+      { id: 'SEED_NL2', nickname: '채아무', score: 121.4, error_mm: 0.08, actual_value: 39.5, target_value: 2, rank_title: '💅 무결점 스피드 네일 마스터' },
+      { id: 'SEED_NL3', nickname: '진이슬', score: 108.2, error_mm: 0.15, actual_value: 22.8, target_value: 1, rank_title: '💅 무결점 스피드 네일 마스터' },
+      { id: 'SEED_NL4', nickname: '한유리', score: 92.5, error_mm: 0.48, actual_value: 58.0, target_value: 2, rank_title: '✨ 꼼꼼한 살롱 수석 실장님' },
+      { id: 'SEED_NL5', nickname: '또치', score: 62.0, error_mm: 1.45, actual_value: 74.5, target_value: 1, rank_title: '🩸 큐티클 추상화 예술가' },
+    ],
+    film: [
+      { id: 'SEED_FL1', nickname: '장한솔', score: 98, error_mm: 0.14, actual_value: 0, target_value: 0, rank_title: '👑 강화필름의 전설' },
+      { id: 'SEED_FL2', nickname: '괴도키드', score: 93, error_mm: 0.38, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
+      { id: 'SEED_FL3', nickname: '홍장미', score: 85, error_mm: 0.72, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
+      { id: 'SEED_FL4', nickname: '마이콜', score: 72, error_mm: 1.15, actual_value: 1, target_value: 0, rank_title: '🫧 한 톨 타협가' },
+      { id: 'SEED_FL5', nickname: '둘리', score: 51, error_mm: 1.85, actual_value: 2, target_value: 0, rank_title: '💥 굳어버린 기포 농장' },
+    ],
+  };
+  if (table[gameId]) return table[gameId];
+  const tag = String(gameId || 'gm').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'GM';
+  return [
+    { id: `SD_${tag}_1`, nickname: '강백호', score: 950, error_mm: null, actual_value: 10, target_value: 0, rank_title: '👑 전설의 마스터' },
+    { id: `SD_${tag}_2`, nickname: '유체리', score: 820, error_mm: null, actual_value: 8, target_value: 0, rank_title: '✨ 수석 장인' },
+    { id: `SD_${tag}_3`, nickname: '코난', score: 690, error_mm: null, actual_value: 6, target_value: 0, rank_title: '🔥 숙련 도전자' },
+    { id: `SD_${tag}_4`, nickname: '신짱구', score: 510, error_mm: null, actual_value: 4, target_value: 0, rank_title: '🎮 동네 유망주' },
+    { id: `SD_${tag}_5`, nickname: '보노보노', score: 320, error_mm: null, actual_value: 2, target_value: 0, rank_title: '🌱 첫걸음 도전자' },
+  ];
+}
+
+const seededGamesInSession = new Set();
+
+export async function ensureGameSeededIfEmpty(sb, gameId) {
+  if (!sb || !gameId || seededGamesInSession.has(gameId)) return;
+  seededGamesInSession.add(gameId);
+  const seeds = getDefaultSeedsForGame(gameId);
+  await Promise.all(
+    seeds.map((s) =>
+      fetch(`${sb.url}/rest/v1/rpc/g404_submit_run`, {
+        method: 'POST',
+        headers: {
+          apikey: sb.key,
+          Authorization: `Bearer ${sb.key}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          p_id: s.id.slice(0, 16),
+          p_room_id: 'AUTOSEED',
+          p_game_id: gameId,
+          p_nickname: s.nickname,
+          p_target_value: s.target_value ?? 0,
+          p_actual_value: s.actual_value ?? 0,
+          p_score: s.score,
+          p_error_mm: s.error_mm,
+          p_rank_title: s.rank_title || '',
+          p_seed: 1,
+          p_meta: { seeded: true },
+        }),
+      }).catch(() => {})
+    )
+  );
+}
+
 // Supabase 미연결(로컬 테스트) 시에도 전체 랭킹 사다리 + 지인 위치 핀 UX를 체험할 수 있는 기준 풀
 function buildLocalGlobalLadder(gameId, myEntry, refEntry) {
   const key = LOCAL_BOARD_PREFIX + gameId;
@@ -246,46 +349,7 @@ function buildLocalGlobalLadder(gameId, myEntry, refEntry) {
     stored = [];
   }
 
-  // 기본 글로벌 기준 플레이어(로컬 체험용)
-  const seeds = gameId === 'haircut'
-    ? [
-        { id: 'BOT1', nickname: '청담동가위손', score: 99.2, error_mm: 0.1, actual_value: 1.01, target_value: 1.0, rank_title: '🏆 전설의 미용사' },
-        { id: 'BOT2', nickname: '인간자막대', score: 97.8, error_mm: 0.3, actual_value: 0.97, target_value: 1.0, rank_title: '🏆 전설의 미용사' },
-        { id: 'BOT3', nickname: '버니어장인', score: 94.0, error_mm: 0.8, actual_value: 1.08, target_value: 1.0, rank_title: '✂️ 청담동 수석 원장' },
-        { id: 'BOT4', nickname: '단골미용실', score: 86.5, error_mm: 1.8, actual_value: 1.18, target_value: 1.0, rank_title: '💈 동네 단골 미용사' },
-        { id: 'BOT5', nickname: '떨리는가위', score: 74.5, error_mm: 3.4, actual_value: 1.34, target_value: 1.0, rank_title: '😅 아차차 견습생' },
-      ]
-    : gameId === 'toilet'
-      ? [
-          { id: 'BOT1', nickname: '황금미라왕', score: 142.8, error_mm: null, actual_value: 142.8, target_value: 0, rank_title: '👑 황금 미라 킹' },
-          { id: 'BOT2', nickname: '100km도전자', score: 86.4, error_mm: null, actual_value: 86.4, target_value: 0, rank_title: '🧻 전설의 두루마리' },
-          { id: 'BOT3', nickname: '화장실수호자', score: 45.2, error_mm: null, actual_value: 45.2, target_value: 0, rank_title: '🩹 붕대 미라 장인' },
-          { id: 'BOT4', nickname: '돌돌돌고수', score: 22.5, error_mm: null, actual_value: 22.5, target_value: 0, rank_title: '🌀 팔뚝 두꺼워짐' },
-          { id: 'BOT5', nickname: '두칸만씀', score: 8.6, error_mm: null, actual_value: 8.6, target_value: 0, rank_title: '😅 알뜰 휴지러' },
-        ]
-      : gameId === 'cake'
-        ? [
-            { id: 'BOT1', nickname: '청담쇼콜라티에', score: 468, error_mm: null, actual_value: 5, target_value: 5, rank_title: '👑 전설의 쇼콜라티에' },
-            { id: 'BOT2', nickname: '도시락케이크신', score: 412, error_mm: null, actual_value: 5, target_value: 5, rank_title: '🎂 수제 케이크 마스터' },
-            { id: 'BOT3', nickname: '생일축하해장인', score: 318, error_mm: null, actual_value: 4, target_value: 5, rank_title: '🍫 청담동 수석 파티시에' },
-            { id: 'BOT4', nickname: '동네빵집사장', score: 226, error_mm: null, actual_value: 3, target_value: 5, rank_title: '✨ 동네 인기 케이크집 사장님' },
-            { id: 'BOT5', nickname: '초코혹제조기', score: 118, error_mm: null, actual_value: 2, target_value: 5, rank_title: '🧁 초코펜 수습 파티시에' },
-          ]
-        : gameId === 'nail'
-          ? [
-              { id: 'BOT1', nickname: '청담네일원장', score: 148.6, error_mm: 0.0, actual_value: 44.2, target_value: 3, rank_title: '👑 청담동 전설의 마스터 원장님' },
-              { id: 'BOT2', nickname: '세필장인', score: 129.4, error_mm: 0.08, actual_value: 39.5, target_value: 2, rank_title: '💅 무결점 스피드 네일 마스터' },
-              { id: 'BOT3', nickname: '하트네일고수', score: 114.2, error_mm: 0.15, actual_value: 22.8, target_value: 1, rank_title: '💅 무결점 스피드 네일 마스터' },
-              { id: 'BOT4', nickname: '소지에서삐끗', score: 92.5, error_mm: 0.48, actual_value: 58.0, target_value: 2, rank_title: '✨ 꼼꼼한 살롱 수석 실장님' },
-              { id: 'BOT5', nickname: '큐티클화가', score: 62.0, error_mm: 1.45, actual_value: 74.5, target_value: 1, rank_title: '🩸 큐티클 추상화 예술가' },
-            ]
-          : [
-            { id: 'BOT1', nickname: '인간지그', score: 98, error_mm: 0.14, actual_value: 0, target_value: 0, rank_title: '👑 강화필름의 전설' },
-            { id: 'BOT2', nickname: '대리점1타', score: 93, error_mm: 0.38, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
-            { id: 'BOT3', nickname: '먼지사냥꾼', score: 85, error_mm: 0.72, actual_value: 0, target_value: 0, rank_title: '✨ 대리점 1타 장인' },
-            { id: 'BOT4', nickname: '한톨타협가', score: 72, error_mm: 1.15, actual_value: 1, target_value: 0, rank_title: '🫧 한 톨 타협가' },
-            { id: 'BOT5', nickname: '기포농장주', score: 51, error_mm: 1.85, actual_value: 2, target_value: 0, rank_title: '💥 굳어버린 기포 농장' },
-          ];
+  const seeds = getDefaultSeedsForGame(gameId);
 
   // 내 기록 누적 저장(최근 30개)
   const nextStored = [...stored.filter(x => x.id !== myEntry.id), myEntry].slice(-30);
@@ -446,31 +510,37 @@ export async function saveResultAndBuildShare(run, incomingRef = null) {
       }
 
       // 전체 글로벌 랭킹 사다리 + 내가 아는 지인(p_ref_id) 위치 함께 조회!
-      const ladRes = await fetch(`${sb.url}/rest/v1/rpc/g404_get_ladder`, {
-        method: 'POST',
-        headers: {
-          apikey: sb.key,
-          Authorization: `Bearer ${sb.key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          p_game_id: run.gameId,
-          p_my_id: id,
-          p_ref_id: incomingRef && incomingRef.source === 'supabase' ? incomingRef.id : null,
-        }),
-      });
-      if (ladRes.ok) {
-        const rows = await ladRes.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          ladder = rows.map(r => ({ ...r, rank_no: Number(r.rank_no), total_count: Number(r.total_count), score: Number(r.score) }));
-          totalCount = ladder[0].total_count;
-          const me = ladder.find(r => r.is_me);
-          const ref = ladder.find(r => r.is_ref);
-          myRank = me ? me.rank_no : null;
-          refRank = ref ? ref.rank_no : null;
-          if (myRank && totalCount) {
-            topPercent = Number(Math.max(0.1, (myRank / totalCount) * 100).toFixed(1));
-          }
+      const fetchLadderRows = async () => {
+        const ladRes = await fetch(`${sb.url}/rest/v1/rpc/g404_get_ladder`, {
+          method: 'POST',
+          headers: {
+            apikey: sb.key,
+            Authorization: `Bearer ${sb.key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            p_game_id: run.gameId,
+            p_my_id: id,
+            p_ref_id: incomingRef && incomingRef.source === 'supabase' ? incomingRef.id : null,
+          }),
+        });
+        return ladRes.ok ? ladRes.json() : [];
+      };
+
+      let rows = await fetchLadderRows();
+      if (Array.isArray(rows) && (rows.length === 0 || Number(rows[0].total_count || 0) < 5)) {
+        await ensureGameSeededIfEmpty(sb, run.gameId);
+        rows = await fetchLadderRows();
+      }
+      if (Array.isArray(rows) && rows.length > 0) {
+        ladder = rows.map(r => ({ ...r, rank_no: Number(r.rank_no), total_count: Number(r.total_count), score: Number(r.score) }));
+        totalCount = ladder[0].total_count;
+        const me = ladder.find(r => r.is_me);
+        const ref = ladder.find(r => r.is_ref);
+        myRank = me ? me.rank_no : null;
+        refRank = ref ? ref.rank_no : null;
+        if (myRank && totalCount) {
+          topPercent = Number(Math.max(0.1, (myRank / totalCount) * 100).toFixed(1));
         }
       }
     } catch {

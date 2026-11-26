@@ -1,5 +1,5 @@
 // 이게뭔겜? 404 아케이드 — 동적 게임 카탈로그 & 공개 상태(공개/공개예정/숨김) 접근 제어
-import { getSupabaseConfig, getBestRecord } from './challenge.js';
+import { getSupabaseConfig, getBestRecord, getDefaultSeedsForGame } from './challenge.js';
 import { startGameEngagementTracker } from './popularity.js';
 
 export const DEFAULT_GAMES = [
@@ -167,36 +167,61 @@ export async function fetchPublicCatalog() {
   return { games: DEFAULT_GAMES, live: false };
 }
 
-export function formatBestText(gameId) {
-  if (gameId === 'cake') return '📸 360° 돌려보고 공유';
+function formatRunMetric(gameId, score, errorMm, actualValue) {
+  if (gameId === 'cake') {
+    const st = actualValue ? Math.round(Number(actualValue)) : 5;
+    return `${st}단계 완성`;
+  }
+  if (gameId === 'snap' && score != null) {
+    const st = actualValue ? ` (${Math.round(Number(actualValue))}단계)` : '';
+    return `${Math.round(Number(score)).toLocaleString()}원${st}`;
+  }
+  if (gameId === 'jjamppong' && score != null) {
+    const wv = actualValue ? ` (${Math.round(Number(actualValue))}젓가락)` : '';
+    return `${Number(score).toFixed(1)}초${wv}`;
+  }
+  if (gameId === 'boxcut' && score != null) {
+    const bx = actualValue ? ` (${Math.round(Number(actualValue))}상자)` : '';
+    return `${Math.round(Number(score)).toLocaleString()}점${bx}`;
+  }
+  if (gameId === 'haircut' && errorMm != null) {
+    return `오차 ${Number(errorMm).toFixed(1)}mm`;
+  }
+  if (gameId === 'toilet' && score != null) {
+    const m = Number(score);
+    return m >= 1000 ? `${(m / 1000).toFixed(2)}km` : `${m.toFixed(1)}m`;
+  }
+  if (gameId === 'nail' && score != null) {
+    return `${Number(score).toFixed(1)}점`;
+  }
+  if (score != null) {
+    return `${Math.round(Number(score)).toLocaleString()}점`;
+  }
+  return '';
+}
+
+export function formatBestText(gameId, topRun = null) {
   const b = getBestRecord(gameId);
-  if (!b) return '기록 없음';
-  if (gameId === 'snap' && b.score != null) {
-    const st = b.actualValue ? ` (STAGE ${Math.round(Number(b.actualValue))})` : '';
-    return `최고 ${Math.round(Number(b.score)).toLocaleString()}원${st}`;
+  if (b) {
+    const myMetric = formatRunMetric(gameId, b.score, b.errorMm, b.actualValue);
+    if (myMetric) return `내 최고 ${myMetric}`;
   }
-  if (gameId === 'jjamppong' && b.score != null) {
-    const wv = b.actualValue ? ` (${Math.round(Number(b.actualValue))}젓가락)` : '';
-    return `최고 ${Number(b.score).toFixed(2)}초${wv}`;
+  const top = topRun || getDefaultSeedsForGame(gameId)[0];
+  if (top) {
+    const topMetric = formatRunMetric(
+      gameId,
+      top.score,
+      top.error_mm ?? top.errorMm,
+      top.actual_value ?? top.actualValue
+    );
+    const rawNick = String(top.nickname || '').trim();
+    const isAnon = !rawNick || /^익명/.test(rawNick);
+    if (topMetric) {
+      return isAnon ? `🏆 1위 기록 · ${topMetric}` : `🏆 1위 ${rawNick} · ${topMetric}`;
+    }
   }
-  if (gameId === 'boxcut' && b.score != null) {
-    const bx = b.actualValue ? ` (${Math.round(Number(b.actualValue))}상자)` : '';
-    return `최고 ${Math.round(Number(b.score)).toLocaleString()}점${bx}`;
-  }
-  if (gameId === 'haircut' && b.errorMm != null) {
-    return `최고 오차 ${Number(b.errorMm).toFixed(1)}mm`;
-  }
-  if (gameId === 'toilet' && b.score != null) {
-    const m = Number(b.score);
-    return m >= 1000 ? `최고 ${(m / 1000).toFixed(2)}km` : `최고 ${m.toFixed(1)}m`;
-  }
-  if (gameId === 'nail' && b.score != null) {
-    return `최고 ${Number(b.score).toFixed(1)}점`;
-  }
-  if (b.score != null) {
-    return `최고 ${Math.round(Number(b.score))}점`;
-  }
-  return '기록 있음';
+  if (gameId === 'cake') return '📸 360° 돌려보고 공유';
+  return '도전 가능';
 }
 
 function escHtml(s) {

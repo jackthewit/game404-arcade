@@ -402,6 +402,12 @@
       border-color: rgba(255, 216, 74, 0.28);
       color: #fde68a;
     }
+    .pop-metric-pill.plays {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: rgba(56, 189, 248, 0.45);
+      color: #7dd3fc;
+      font-weight: 900;
+    }
 
     /* 하단 카카오페이 응원 배너 */
     .donate-banner {
@@ -662,7 +668,7 @@
 <body>
   <main class="hub">
     <section class="hero">
-      <div class="rank-chip">🎮 이게뭔겜? 404 아케이드</div>
+      <div class="rank-chip">🎮 이게뭔겜? 404 아케이드 <span id="hub-total-plays" style="color:#7dd3fc;margin-left:4px;"></span></div>
       <h1>직접 만든 미니 게임, 바로 플레이!</h1>
       <p>
         404가지 즐거움이 있는 AI 제작 게임과 리뷰.<br>
@@ -710,6 +716,7 @@
         </div>
         <div class="sort-tabs" id="sort-tabs">
           <button type="button" class="sort-chip active" data-sort="custom">📌 기본순</button>
+          <button type="button" class="sort-chip" data-sort="plays">🎮 실행순</button>
           <button type="button" class="sort-chip" data-sort="popular">🔥 인기순</button>
           <button type="button" class="sort-chip" data-sort="social">📱 릴스·쇼츠순</button>
           <button type="button" class="sort-chip" data-sort="playtime">⏱ 플레이 시간순</button>
@@ -797,8 +804,11 @@
         if (lockA !== lockB) return lockA - lockB;
 
         if (normalSort !== 'custom') {
-          const pa = popMap[a.id] || { popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
-          const pb = popMap[b.id] || { popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
+          const pa = popMap[a.id] || { playsTotal: 0, popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
+          const pb = popMap[b.id] || { playsTotal: 0, popularityScore: 0, socialTotal: 0, playSecTotal: 0 };
+          if (normalSort === 'plays' && (pb.playsTotal || 0) !== (pa.playsTotal || 0)) {
+            return (pb.playsTotal || 0) - (pa.playsTotal || 0);
+          }
           if (normalSort === 'popular' && pb.popularityScore !== pa.popularityScore) {
             return pb.popularityScore - pa.popularityScore;
           }
@@ -854,6 +864,12 @@
       normalSec.style.display = normalGames.length > 0 ? 'flex' : 'none';
       divider.style.display = (topGames.length > 0 && normalGames.length > 0) ? 'block' : 'none';
 
+      const totalPlaysEl = document.getElementById('hub-total-plays');
+      if (totalPlaysEl) {
+        const sumPlays = visible.reduce((acc, g) => acc + ((popMap[g.id] && popMap[g.id].playsTotal) || 0), 0);
+        totalPlaysEl.textContent = sumPlays > 0 ? `· 누적 실행 ${sumPlays.toLocaleString()}회` : '';
+      }
+
       // NEW 카드를 제외한 인기 카드들에 순서대로 1·2·3위 메달 부여
       let popRankCounter = 0;
 
@@ -874,10 +890,10 @@
         else if (!isLocked) classes.push('featured');
         if (isLocked) classes.push('is-locked');
 
-        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id);
+        const p = popMap[g.id];
+        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id, p && p.topRun);
         const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
         const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
-        const p = popMap[g.id];
 
         let ribbonHtml = '';
         if (isNew && !isLocked) {
@@ -905,11 +921,15 @@
 
         const metricsHtml = p ? `
           <div class="pop-metrics-row">
+            <span class="pop-metric-pill plays">🎮 ${esc(p.playsLabel || p.visitsLabel)}</span>
             <span class="pop-metric-pill hot">📱 ${esc(p.socialLabel)}</span>
             <span class="pop-metric-pill">⏱ ${esc(p.playTimeLabel)}</span>
-            <span class="pop-metric-pill">👁 ${esc(p.visitsLabel)}</span>
           </div>
-        ` : '';
+        ` : `
+          <div class="pop-metrics-row">
+            <span class="pop-metric-pill plays">🎮 실행 수 불러오는 중…</span>
+          </div>
+        `;
 
         return `
           <a class="${classes.join(' ')}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
@@ -947,19 +967,23 @@
       const sortedNormals = sortNormalGames(normalGames);
       normalList.innerHTML = sortedNormals.map((g, idx) => {
         const isLocked = g.status === 'coming_soon';
-        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id);
+        const p = popMap[g.id];
+        const bestText = isLocked ? '🔒 공개 대기 중' : formatBestText(g.id, p && p.topRun);
         const lockMsg = g.lock_message || '곧 공개 예정입니다! 조금만 기다려 주세요.';
         const href = isLocked ? '#locked' : (g.href || `./${encodeURIComponent(g.id)}/`);
-        const p = popMap[g.id];
         const numTxt = String(idx + 1).padStart(2, '0');
 
         const metricsHtml = p ? `
           <div class="pop-metrics-row" style="margin-top:2px;">
+            <span class="pop-metric-pill plays">🎮 ${esc(p.playsLabel || p.visitsLabel)}</span>
             <span class="pop-metric-pill hot">📱 ${esc(p.socialLabel)}</span>
             <span class="pop-metric-pill">⏱ ${esc(p.playTimeLabel)}</span>
-            <span class="pop-metric-pill">👁 ${esc(p.visitsLabel)}</span>
           </div>
-        ` : '';
+        ` : `
+          <div class="pop-metrics-row" style="margin-top:2px;">
+            <span class="pop-metric-pill plays">🎮 실행 수 불러오는 중…</span>
+          </div>
+        `;
 
         return `
           <a class="normal-item ${isLocked ? 'is-locked' : ''}" href="${esc(href)}" data-game-id="${esc(g.id)}" data-locked="${isLocked ? '1' : '0'}" data-lock-msg="${esc(lockMsg)}">
